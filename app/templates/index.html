@@ -2294,10 +2294,9 @@
         });
       });
 
-      console.log("更新排序 (仅前端模拟):", items);
+      console.log("更新排序:", items);
 
-      // 前端模拟成功响应，暂时不发送到服务器
-      /* 数据库迁移完成后取消注释
+      // 发送排序数据到服务器
       fetch('/api/website/update_order', {
         method: 'POST',
         headers: {
@@ -2305,21 +2304,21 @@
         },
         body: JSON.stringify({
           category_id: categoryId,
-          items: items
+          items: items,
+        }),
+        credentials: 'same-origin'
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log("排序保存成功:", data.message);
+          } else {
+            console.error("保存排序失败:", data.message);
+          }
         })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          console.log("排序保存成功");
-        } else {
-          console.error('保存排序失败:', data.message);
-        }
-      })
-      .catch(error => {
-        console.error('保存排序出错:', error);
-      });
-      */
+        .catch(error => {
+          console.error("保存排序出错:", error);
+        });
     }
     {% endif %}
   });

@@ -93,6 +93,7 @@ class Website(db.Model):
     views = db.Column(db.Integer, default=0)
     is_featured = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sort_order = db.Column(db.Integer, default=0)
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     

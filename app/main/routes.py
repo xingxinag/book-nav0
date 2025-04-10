@@ -1,6 +1,6 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify, abort
 from flask_login import current_user, login_required
-from app import db
+from app import db, csrf
 from app.main import bp
 from app.models import Category, Website
 from datetime import datetime, timedelta
@@ -14,16 +14,16 @@ def index():
     categories = Category.query.order_by(Category.order.asc()).all()
     featured_sites = Website.query.filter_by(is_featured=True).order_by(Website.views.desc()).limit(6).all()
     
-    # 预先加载每个分类下的网站，暂时只按照访问量排序
+    # 预先加载每个分类下的网站，按照自定义排序顺序
     for category in categories:
-        category.website_list = Website.query.filter_by(category_id=category.id).order_by(Website.views.desc()).all()
+        category.website_list = Website.query.filter_by(category_id=category.id).order_by(Website.sort_order.asc(), Website.views.desc()).all()
         
     return render_template('index.html', title='首页', categories=categories, featured_sites=featured_sites)
 
 @bp.route('/category/<int:id>')
 def category(id):
     category = Category.query.get_or_404(id)
-    websites = Website.query.filter_by(category_id=id).order_by(Website.views.desc()).all()
+    websites = Website.query.filter_by(category_id=id).order_by(Website.sort_order.asc(), Website.views.desc()).all()
     return render_template('category.html', title=category.name, category=category, websites=websites)
 
 @bp.route('/site/<int:id>')
@@ -302,51 +302,85 @@ def api_delete_website(id):
         db.session.rollback()
         return jsonify({'success': False, 'message': f'删除失败: {str(e)}'}), 500
 
-@bp.route('/api/website/modify_link', methods=['POST'])
+@bp.route('/api/modify_link', methods=['POST'])
 @login_required
 def api_modify_link():
-    """处理快速修改链接请求的API接口"""
+    """修改链接的API接口"""
+    # 检查用户权限
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': '权限不足'}), 403
+    
+    # 获取请求数据
+    data = request.get_json()
+    if not data or 'url' not in data or not data['url']:
+        return jsonify({'success': False, 'message': '无效的请求数据'}), 400
+    
+    # 获取要修改的网站
+    website_id = data.get('id')
+    if not website_id:
+        return jsonify({'success': False, 'message': '未提供网站ID'}), 400
+    
+    try:
+        website = Website.query.get_or_404(website_id)
+        
+        # 更新URL
+        website.url = data['url']
+        
+        # 更新其他可选字段
+        if 'title' in data and data['title']:
+            website.title = data['title']
+        if 'description' in data and data['description']:
+            website.description = data['description']
+        if 'icon' in data and data['icon']:
+            website.icon = data['icon']
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': '链接已更新'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'修改失败: {str(e)}'}), 500
+
+@bp.route('/api/website/update_order', methods=['POST'])
+@login_required
+@csrf.exempt
+def update_website_order():
+    """更新网站排序顺序的API接口"""
     # 检查当前用户是否为管理员
     if not current_user.is_admin:
         return jsonify({'success': False, 'message': '权限不足'}), 403
     
     # 获取请求数据
     data = request.get_json()
-    if not data:
+    if not data or 'items' not in data:
         return jsonify({'success': False, 'message': '无效的请求数据'}), 400
     
-    # 验证必要的参数
-    website_id = data.get('website_id')
-    new_url = data.get('url')
-    
-    if not website_id or not isinstance(website_id, int):
-        return jsonify({'success': False, 'message': '无效的网站ID'}), 400
-    
-    if not new_url or not new_url.startswith(('http://', 'https://')):
-        return jsonify({'success': False, 'message': 'URL格式不正确，必须包含http://或https://前缀'}), 400
+    items = data['items']
+    print(f"收到排序请求: {items}") # 记录排序数据
     
     try:
-        # 获取要修改的网站
-        website = Website.query.get_or_404(website_id)
-        
-        # 更新URL
-        old_url = website.url
-        website.url = new_url
+        # 更新每个网站的排序顺序
+        updated_count = 0
+        for item in items:
+            website_id = item.get('id')
+            sort_order = item.get('sort_order')
+            
+            if website_id is not None and sort_order is not None:
+                website = Website.query.get(website_id)
+                if website:
+                    old_sort = website.sort_order
+                    website.sort_order = sort_order
+                    updated_count += 1
+                    print(f"更新站点ID {website_id} 排序: {old_sort} -> {sort_order}")
         
         # 保存更改
         db.session.commit()
         
         return jsonify({
             'success': True, 
-            'message': '链接修改成功',
-            'website': {
-                'id': website.id,
-                'title': website.title,
-                'url': website.url,
-                'old_url': old_url,
-                'icon': website.icon
-            }
+            'message': f'排序顺序已更新 ({updated_count} 个站点)'
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': f'修改失败: {str(e)}'}), 500 
+        print(f"排序更新失败: {str(e)}")
+        return jsonify({'success': False, 'message': f'更新排序失败: {str(e)}'}), 500 
