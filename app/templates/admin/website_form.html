@@ -1,0 +1,286 @@
+{% extends "base.html" %} {% block head %}
+<style>
+  .btn-spin {
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* 默认网站图标样式 */
+  .default-site-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    border-radius: 8px;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="admin-sidebar mb-4">
+        <h5 class="mb-3">管理菜单</h5>
+        <a href="{{ url_for('admin.index') }}" class="admin-sidebar-item">
+          <i class="bi bi-speedometer2"></i> 仪表盘
+        </a>
+        <a href="{{ url_for('admin.categories') }}" class="admin-sidebar-item">
+          <i class="bi bi-folder"></i> 分类管理
+        </a>
+        <a
+          href="{{ url_for('admin.websites') }}"
+          class="admin-sidebar-item active"
+        >
+          <i class="bi bi-globe"></i> 网站管理
+        </a>
+        <a href="{{ url_for('admin.invitations') }}" class="admin-sidebar-item">
+          <i class="bi bi-envelope"></i> 邀请码
+        </a>
+        <a href="{{ url_for('admin.users') }}" class="admin-sidebar-item">
+          <i class="bi bi-people"></i> 用户管理
+        </a>
+        <hr />
+        <a href="{{ url_for('main.index') }}" class="admin-sidebar-item">
+          <i class="bi bi-arrow-left"></i> 返回前台
+        </a>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            {% if form.title.data %}编辑{% else %}添加{% endif %}网站
+          </h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.title.label(class="form-label") }} {{
+              form.title(class="form-control", placeholder="请输入网站名称") }}
+              {% for error in form.title.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="mb-3">
+              {{ form.url.label(class="form-label") }}
+              <div class="input-group">
+                {{ form.url(class="form-control",
+                placeholder="请输入网站URL，例如: https://www.example.com") }}
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  id="fetchWebsiteInfo"
+                  title="获取网站信息"
+                >
+                  <i class="bi bi-cloud-download"></i>
+                </button>
+              </div>
+              {% for error in form.url.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+              <div class="form-text">必须包含http://或https://前缀</div>
+            </div>
+            <div class="mb-3">
+              {{ form.description.label(class="form-label") }} {{
+              form.description(class="form-control", rows=3,
+              placeholder="请输入网站描述") }} {% for error in
+              form.description.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="mb-3">
+              {{ form.icon.label(class="form-label") }}
+              <div class="input-group">
+                {{ form.icon(class="form-control",
+                placeholder="请输入网站图标的URL", id="iconInput") }}
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  id="fetchIconBtn"
+                  title="自动获取图标"
+                >
+                  <i class="bi bi-arrow-repeat"></i>
+                </button>
+              </div>
+              {% for error in form.icon.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+              <div class="form-text">可留空，将使用默认图标</div>
+            </div>
+            <div class="mb-3">
+              {{ form.category_id.label(class="form-label") }} {{
+              form.category_id(class="form-select") }} {% for error in
+              form.category_id.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %} {% if form.category_id.choices|length == 0 %}
+              <div class="text-danger small mt-1">请先添加分类</div>
+              {% endif %}
+            </div>
+            <div class="mb-3 form-check">
+              {{ form.is_featured(class="form-check-input") }} {{
+              form.is_featured.label(class="form-check-label") }}
+              <div class="form-text">
+                设置为推荐后，该网站将显示在首页推荐区域
+              </div>
+            </div>
+            <div class="d-flex">
+              <a
+                href="{{ url_for('admin.websites') }}"
+                class="btn btn-outline-secondary me-2"
+              >
+                <i class="bi bi-arrow-left"></i> 返回
+              </a>
+              {{ form.submit(class="btn btn-primary") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const urlInput = document.querySelector('input[name="url"]');
+    const iconInput = document.getElementById("iconInput");
+    const fetchIconBtn = document.getElementById("fetchIconBtn");
+    const fetchWebsiteInfoBtn = document.getElementById("fetchWebsiteInfo");
+    const titleInput = document.querySelector('input[name="title"]');
+    const descriptionInput = document.querySelector(
+      'textarea[name="description"]'
+    );
+
+    // 自动获取网站信息（标题、描述）
+    fetchWebsiteInfoBtn.addEventListener("click", function () {
+      const url = urlInput.value.trim();
+
+      if (!url) {
+        alert("请先输入网站链接地址");
+        return;
+      }
+
+      // 显示加载状态
+      const icon = this.querySelector("i");
+      icon.classList.add("btn-spin");
+
+      // 创建一个代理服务器URL来获取网站信息并避免跨域问题
+      fetch("/api/fetch_website_info?url=" + encodeURIComponent(url))
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("网络响应错误");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (data.success) {
+            // 填充标题和描述
+            if (data.title && !titleInput.value.trim()) {
+              titleInput.value = data.title;
+            }
+
+            if (data.description && !descriptionInput.value.trim()) {
+              descriptionInput.value = data.description;
+            }
+
+            // 同时也获取图标URL
+            if (!iconInput.value.trim()) {
+              // 解析域名
+              let domain = url;
+              if (url.startsWith("http")) {
+                const urlObj = new URL(url);
+                domain = urlObj.hostname;
+              } else if (url.includes("/")) {
+                domain = url.split("/")[0];
+              }
+
+              // 检查图标是否可用
+              const testImg = new Image();
+              testImg.onload = function () {
+                if (testImg.width < 8 || testImg.height < 8) {
+                  // 如果图标太小，使用备用图标（使用Google的favicon服务）
+                  iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+                } else {
+                  iconInput.value = `https://favicon.cccyun.cc/${domain}`;
+                }
+              };
+              testImg.onerror = function () {
+                // 如果图标加载失败，使用备用图标
+                iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+              };
+              testImg.src = `https://favicon.cccyun.cc/${domain}`;
+
+              // 默认先填入，如果有错误会被上面的回调更新
+              iconInput.value = `https://favicon.cccyun.cc/${domain}`;
+            }
+
+            alert("已自动填充网站信息！");
+          } else {
+            alert("无法获取网站信息: " + (data.message || "未知错误"));
+          }
+        })
+        .catch((error) => {
+          console.error("获取网站信息出错:", error);
+          alert("获取网站信息失败，请手动填写或检查网址格式。");
+        })
+        .finally(() => {
+          // 移除加载状态
+          icon.classList.remove("btn-spin");
+        });
+    });
+
+    // 自动获取网站图标
+    fetchIconBtn.addEventListener("click", function () {
+      const url = urlInput.value.trim();
+
+      if (!url) {
+        alert("请先输入网站链接地址");
+        return;
+      }
+
+      // 显示加载状态
+      const icon = this.querySelector("i");
+      icon.classList.add("btn-spin");
+
+      try {
+        // 解析域名
+        let domain = url;
+        if (url.startsWith("http")) {
+          const urlObj = new URL(url);
+          domain = urlObj.hostname;
+        } else if (url.includes("/")) {
+          domain = url.split("/")[0];
+        }
+
+        // 使用favicon.cccyun.cc的API获取图标
+        const iconUrl = `https://favicon.cccyun.cc/${domain}`;
+
+        // 设置图标URL
+        iconInput.value = iconUrl;
+
+        // 移除加载状态
+        setTimeout(() => {
+          icon.classList.remove("btn-spin");
+        }, 500);
+      } catch (error) {
+        console.error("获取网站图标出错:", error);
+        alert("无法解析网址，请检查链接格式");
+        icon.classList.remove("btn-spin");
+      }
+    });
+  });
+</script>
+{% endblock %}

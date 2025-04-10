@@ -1,0 +1,108 @@
+{% extends "base.html" %} {% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="admin-sidebar mb-4">
+        <h5 class="mb-3">管理菜单</h5>
+        <a href="{{ url_for('admin.index') }}" class="admin-sidebar-item">
+          <i class="bi bi-speedometer2"></i> 仪表盘
+        </a>
+        <a
+          href="{{ url_for('admin.categories') }}"
+          class="admin-sidebar-item active"
+        >
+          <i class="bi bi-folder"></i> 分类管理
+        </a>
+        <a href="{{ url_for('admin.websites') }}" class="admin-sidebar-item">
+          <i class="bi bi-globe"></i> 网站管理
+        </a>
+        <a href="{{ url_for('admin.invitations') }}" class="admin-sidebar-item">
+          <i class="bi bi-envelope"></i> 邀请码
+        </a>
+        <a href="{{ url_for('admin.users') }}" class="admin-sidebar-item">
+          <i class="bi bi-people"></i> 用户管理
+        </a>
+        <hr />
+        <a href="{{ url_for('main.index') }}" class="admin-sidebar-item">
+          <i class="bi bi-arrow-left"></i> 返回前台
+        </a>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            {% if form.name.data %}编辑{% else %}添加{% endif %}分类
+          </h5>
+        </div>
+        <div class="card-body">
+          <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.name.label(class="form-label") }} {{
+              form.name(class="form-control", placeholder="请输入分类名称") }}
+              {% for error in form.name.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="mb-3">
+              {{ form.description.label(class="form-label") }} {{
+              form.description(class="form-control", rows=3,
+              placeholder="请输入分类描述") }} {% for error in
+              form.description.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  {{ form.icon.label(class="form-label") }} {{
+                  form.icon(class="form-control", placeholder="例如: folder,
+                  star, globe等") }} {% for error in form.icon.errors %}
+                  <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                  <div class="form-text">
+                    <a href="https://icons.getbootstrap.com/" target="_blank"
+                      >查看可用图标</a
+                    >
+                    （使用图标名称，不需要bi-前缀）
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  {{ form.color.label(class="form-label") }} {{
+                  form.color(class="form-control", placeholder="#3498db,
+                  rgba(0,0,0,0.5)等") }} {% for error in form.color.errors %}
+                  <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                  <div class="form-text">
+                    使用十六进制颜色代码，例如 #3498db
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              {{ form.order.label(class="form-label") }} {{
+              form.order(class="form-control", type="number") }} {% for error in
+              form.order.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+              <div class="form-text">数字越小排序越靠前</div>
+            </div>
+            <div class="d-flex">
+              <a
+                href="{{ url_for('admin.categories') }}"
+                class="btn btn-outline-secondary me-2"
+              >
+                <i class="bi bi-arrow-left"></i> 返回
+              </a>
+              {{ form.submit(class="btn btn-primary") }}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "base.html" %} {% block head %}
+<style>
+  /* 默认网站图标样式 */
+  .default-site-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    border-radius: 4px;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="admin-sidebar mb-4">
+        <h5 class="mb-3">管理菜单</h5>
+        <a href="{{ url_for('admin.index') }}" class="admin-sidebar-item">
+          <i class="bi bi-speedometer2"></i> 仪表盘
+        </a>
+        <a href="{{ url_for('admin.categories') }}" class="admin-sidebar-item">
+          <i class="bi bi-folder"></i> 分类管理
+        </a>
+        <a
+          href="{{ url_for('admin.websites') }}"
+          class="admin-sidebar-item active"
+        >
+          <i class="bi bi-globe"></i> 网站管理
+        </a>
+        <a href="{{ url_for('admin.invitations') }}" class="admin-sidebar-item">
+          <i class="bi bi-envelope"></i> 邀请码
+        </a>
+        <a href="{{ url_for('admin.users') }}" class="admin-sidebar-item">
+          <i class="bi bi-people"></i> 用户管理
+        </a>
+        <hr />
+        <a href="{{ url_for('main.index') }}" class="admin-sidebar-item">
+          <i class="bi bi-arrow-left"></i> 返回前台
+        </a>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-globe"></i> 网站管理</h2>
+        <a href="{{ url_for('admin.add_website') }}" class="btn btn-primary">
+          <i class="bi bi-plus-circle"></i> 添加网站
+        </a>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          {% if websites %}
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>网站</th>
+                  <th>分类</th>
+                  <th>访问量</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for website in websites %}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      {% if website.icon %}
+                      <img
+                        src="{{ website.icon }}"
+                        alt="{{ website.title }}"
+                        class="me-2"
+                        style="width: 24px; height: 24px; object-fit: contain"
+                      />
+                      {% else %}
+                      <i class="bi bi-globe me-2 text-primary"></i>
+                      {% endif %}
+                      <div>
+                        <div>{{ website.title }}</div>
+                        <div class="text-muted small">
+                          {{ website.url|truncate(40) }}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    {% if website.category %}
+                    <span
+                      class="badge"
+                      style="background-color: {{ website.category.color or '#3498db' }};"
+                    >
+                      {% if website.category.icon %}
+                      <i class="bi bi-{{ website.category.icon }} me-1"></i>
+                      {% endif %} {{ website.category.name }}
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary">未分类</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ website.views }}</td>
+                  <td>
+                    {% if website.is_featured %}
+                    <span class="badge bg-warning">推荐</span>
+                    {% else %}
+                    <span class="badge bg-light text-dark">普通</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a
+                      href="{{ url_for('main.site', id=website.id) }}"
+                      class="btn btn-sm btn-outline-secondary"
+                      target="_blank"
+                    >
+                      <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                    <a
+                      href="{{ url_for('admin.edit_website', id=website.id) }}"
+                      class="btn btn-sm btn-outline-primary"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <a
+                      href="{{ url_for('admin.delete_website', id=website.id) }}"
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('确定要删除此网站吗？')"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5">
+            <i class="bi bi-emoji-frown fs-1 text-muted"></i>
+            <p class="mt-3 text-muted">暂无网站数据</p>
+            <a
+              href="{{ url_for('admin.add_website') }}"
+              class="btn btn-primary mt-2"
+            >
+              <i class="bi bi-plus-circle"></i> 添加第一个网站
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 处理网站图标加载错误
+    const siteIcons = document.querySelectorAll(".d-flex img");
+    siteIcons.forEach((img) => {
+      img.onerror = function () {
+        // 获取网站名称的第一个字母
+        const siteName = this.alt;
+        const firstLetter = siteName ? siteName.charAt(0).toUpperCase() : "S";
+
+        // 创建默认图标
+        const defaultIcon = document.createElement("div");
+        defaultIcon.className = "default-site-icon me-2";
+        defaultIcon.textContent = firstLetter;
+
+        // 替换图像
+        const parent = this.parentNode;
+        parent.replaceChild(defaultIcon, this);
+      };
+
+      // 检查图片是否已经加载
+      if (img.complete && (img.naturalWidth < 8 || img.naturalHeight < 8)) {
+        img.onerror();
+      }
+    });
+  });
+</script>
+{% endblock %}

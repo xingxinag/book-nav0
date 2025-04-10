@@ -1,0 +1,225 @@
+{% extends "base.html" %} {% block head %}
+<style>
+  .admin-container {
+    margin-top: 2rem;
+  }
+  .admin-sidebar {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    position: sticky;
+    top: 20px;
+  }
+  .admin-sidebar-item {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+    color: #333;
+    transition: all 0.2s ease;
+  }
+  .admin-sidebar-item:hover,
+  .admin-sidebar-item.active {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+  }
+  .admin-sidebar-item i {
+    margin-right: 10px;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 2.5rem;
+    opacity: 0.1;
+  }
+  .stat-card-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .stat-card-label {
+    font-size: 1rem;
+    color: #6c757d;
+  }
+  .stat-card.purple {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+  }
+  .stat-card.purple .stat-card-label {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .stat-card.green {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+  }
+  .stat-card.green .stat-card-label {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .stat-card.orange {
+    background: linear-gradient(135deg, #f46b45 0%, #eea849 100%);
+    color: white;
+  }
+  .stat-card.orange .stat-card-label {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .stat-card.pink {
+    background: linear-gradient(135deg, #ee9ca7 0%, #ffdde1 100%);
+    color: #333;
+  }
+  .stat-card.pink .stat-card-label {
+    color: rgba(0, 0, 0, 0.6);
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container admin-container">
+  <div class="row">
+    <div class="col-md-3">
+      <div class="admin-sidebar mb-4">
+        <h5 class="mb-3">管理菜单</h5>
+        <a
+          href="{{ url_for('admin.index') }}"
+          class="admin-sidebar-item active"
+        >
+          <i class="bi bi-speedometer2"></i> 仪表盘
+        </a>
+        <a href="{{ url_for('admin.categories') }}" class="admin-sidebar-item">
+          <i class="bi bi-folder"></i> 分类管理
+        </a>
+        <a href="{{ url_for('admin.websites') }}" class="admin-sidebar-item">
+          <i class="bi bi-globe"></i> 网站管理
+        </a>
+        <a href="{{ url_for('admin.invitations') }}" class="admin-sidebar-item">
+          <i class="bi bi-envelope"></i> 邀请码
+        </a>
+        <a href="{{ url_for('admin.users') }}" class="admin-sidebar-item">
+          <i class="bi bi-people"></i> 用户管理
+        </a>
+        <hr />
+        <a href="{{ url_for('main.index') }}" class="admin-sidebar-item">
+          <i class="bi bi-arrow-left"></i> 返回前台
+        </a>
+      </div>
+    </div>
+    <div class="col-md-9">
+      <h2 class="mb-4"><i class="bi bi-speedometer2"></i> 管理面板</h2>
+
+      <div class="row">
+        <div class="col-md-6 col-lg-3">
+          <div class="stat-card purple animate__animated animate__fadeIn">
+            <div class="stat-card-icon">
+              <i class="bi bi-people"></i>
+            </div>
+            <div class="stat-card-value">
+              <span class="stat-number" data-value="{{ stats.users }}"
+                >{{ stats.users }}</span
+              >
+            </div>
+            <div class="stat-card-label">用户</div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div
+            class="stat-card green animate__animated animate__fadeIn"
+            style="animation-delay: 0.1s"
+          >
+            <div class="stat-card-icon">
+              <i class="bi bi-folder"></i>
+            </div>
+            <div class="stat-card-value">
+              <span class="stat-number" data-value="{{ stats.categories }}"
+                >{{ stats.categories }}</span
+              >
+            </div>
+            <div class="stat-card-label">分类</div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div
+            class="stat-card orange animate__animated animate__fadeIn"
+            style="animation-delay: 0.2s"
+          >
+            <div class="stat-card-icon">
+              <i class="bi bi-globe"></i>
+            </div>
+            <div class="stat-card-value">
+              <span class="stat-number" data-value="{{ stats.websites }}"
+                >{{ stats.websites }}</span
+              >
+            </div>
+            <div class="stat-card-label">网站</div>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div
+            class="stat-card pink animate__animated animate__fadeIn"
+            style="animation-delay: 0.3s"
+          >
+            <div class="stat-card-icon">
+              <i class="bi bi-envelope"></i>
+            </div>
+            <div class="stat-card-value">
+              <span
+                class="stat-number"
+                data-value="{{ stats.invitation_codes }}"
+                >{{ stats.invitation_codes }}</span
+              >
+            </div>
+            <div class="stat-card-label">可用邀请码</div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        class="card mt-4 animate__animated animate__fadeIn"
+        style="animation-delay: 0.4s"
+      >
+        <div class="card-header">
+          <h5 class="mb-0">快速导航</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <a
+                href="{{ url_for('admin.add_category') }}"
+                class="btn btn-outline-primary d-block"
+              >
+                <i class="bi bi-folder-plus"></i> 添加分类
+              </a>
+            </div>
+            <div class="col-md-4 mb-3">
+              <a
+                href="{{ url_for('admin.add_website') }}"
+                class="btn btn-outline-primary d-block"
+              >
+                <i class="bi bi-plus-circle"></i> 添加网站
+              </a>
+            </div>
+            <div class="col-md-4 mb-3">
+              <a
+                href="{{ url_for('admin.invitations') }}"
+                class="btn btn-outline-primary d-block"
+              >
+                <i class="bi bi-envelope-plus"></i> 生成邀请码
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 可以在这里添加更多管理面板组件，如最近活动、系统通知等 -->
+    </div>
+  </div>
+</div>
+{% endblock %}
