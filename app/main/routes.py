@@ -163,32 +163,60 @@ def parse_website_info(url):
         # 添加超时和请求头以模拟浏览器
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         }
         response = requests.get(url, headers=headers, timeout=10)
         response.raise_for_status()  # 确保请求成功
         
-        # 使用正确的编码方式解析内容
-        if response.encoding.lower() in ['gb2312', 'gbk']:
-            response.encoding = 'gb2312'
-        elif 'charset=gb' in response.text.lower():
-            response.encoding = 'gb2312'
+        # 检测网页编码
+        content_type = response.headers.get('content-type', '').lower()
+        if 'charset=' in content_type:
+            charset = content_type.split('charset=')[-1]
+            response.encoding = charset
+        else:
+            # 尝试从网页内容中检测编码
+            content = response.content
+            soup = BeautifulSoup(content, 'html.parser')
+            meta_charset = soup.find('meta', charset=True)
+            if meta_charset:
+                response.encoding = meta_charset.get('charset')
+            else:
+                meta_content_type = soup.find('meta', {'http-equiv': lambda x: x and x.lower() == 'content-type'})
+                if meta_content_type and 'charset=' in meta_content_type.get('content', '').lower():
+                    charset = meta_content_type.get('content').lower().split('charset=')[-1]
+                    response.encoding = charset
+                elif 'charset=gb' in response.text.lower() or 'charset="gb' in response.text.lower():
+                    response.encoding = 'gb18030'
+                else:
+                    # 如果没有明确指定编码，尝试用 apparent_encoding
+                    response.encoding = response.apparent_encoding
             
         soup = BeautifulSoup(response.text, 'html.parser')
         
         # 提取网站标题
-        title = soup.title.string.strip() if soup.title else ""
+        title = ""
+        if soup.title:
+            title = soup.title.string.strip() if soup.title.string else ""
+        if not title:
+            h1 = soup.find('h1')
+            if h1:
+                title = h1.get_text().strip()
         
         # 提取描述信息
         description = ""
-        meta_desc = soup.find('meta', attrs={'name': 'description'})
+        meta_desc = soup.find('meta', attrs={'name': ['description', 'Description']})
         if meta_desc and meta_desc.get('content'):
             description = meta_desc.get('content').strip()
         
-        # 如果没有描述标签，提取页面的第一段文字作为描述
+        # 如果没有描述标签，提取页面的第一段有意义的文字作为描述
         if not description:
-            first_p = soup.find('p')
-            if first_p and first_p.text:
-                description = first_p.text.strip()
+            # 尝试查找第一个非空的p标签
+            for p in soup.find_all('p'):
+                text = p.get_text().strip()
+                if text and len(text) > 20:  # 确保文本有一定长度
+                    description = text
+                    break
         
         # 如果描述太长，截断
         if description and len(description) > 200:
@@ -200,6 +228,7 @@ def parse_website_info(url):
             "description": description
         }
     except Exception as e:
+        print(f"解析网站信息出错: {str(e)}")  # 添加错误日志
         return {
             "success": False,
             "message": str(e)
@@ -383,4 +412,53 @@ def update_website_order():
     except Exception as e:
         db.session.rollback()
         print(f"排序更新失败: {str(e)}")
-        return jsonify({'success': False, 'message': f'更新排序失败: {str(e)}'}), 500 
+        return jsonify({'success': False, 'message': f'更新排序失败: {str(e)}'}), 500
+
+@bp.route('/api/website/quick-add', methods=['POST'])
+@login_required
+def quick_add_website():
+    """快速添加网站的API接口"""
+    # 检查用户权限
+    if not current_user.is_admin:
+        return jsonify({'success': False, 'message': '权限不足'}), 403
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'message': '无效的请求数据'}), 400
+        
+        # 验证必要字段
+        required_fields = ['url', 'category_id']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'success': False, 'message': f'缺少必要字段: {field}'}), 400
+        
+        # 创建新网站
+        website = Website(
+            title=data.get('title', ''),
+            url=data['url'],
+            description=data.get('description', ''),
+            icon=data.get('icon', ''),
+            category_id=data['category_id'],
+            created_by_id=current_user.id,
+            sort_order=1  # 新添加的链接权重为1
+        )
+        
+        db.session.add(website)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': '网站添加成功',
+            'website': {
+                'id': website.id,
+                'title': website.title,
+                'url': website.url,
+                'description': website.description,
+                'icon': website.icon,
+                'category_id': website.category_id
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'添加失败: {str(e)}'}), 500 
