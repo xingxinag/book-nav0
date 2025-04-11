@@ -239,35 +239,9 @@
               descriptionInput.value = data.description;
             }
 
-            // 同时也获取图标URL
-            if (!iconInput.value.trim()) {
-              // 解析域名
-              let domain = url;
-              if (url.startsWith("http")) {
-                const urlObj = new URL(url);
-                domain = urlObj.hostname;
-              } else if (url.includes("/")) {
-                domain = url.split("/")[0];
-              }
-
-              // 检查图标是否可用
-              const testImg = new Image();
-              testImg.onload = function () {
-                if (testImg.width < 8 || testImg.height < 8) {
-                  // 如果图标太小，使用备用图标（使用Google的favicon服务）
-                  iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-                } else {
-                  iconInput.value = `https://favicon.cccyun.cc/${domain}`;
-                }
-              };
-              testImg.onerror = function () {
-                // 如果图标加载失败，使用备用图标
-                iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-              };
-              testImg.src = `https://favicon.cccyun.cc/${domain}`;
-
-              // 默认先填入，如果有错误会被上面的回调更新
-              iconInput.value = `https://favicon.cccyun.cc/${domain}`;
+            // 使用后端返回的图标URL
+            if (!iconInput.value.trim() && data.icon_url) {
+              iconInput.value = data.icon_url;
             }
 
             alert("已自动填充网站信息！");
@@ -298,31 +272,45 @@
       const icon = this.querySelector("i");
       icon.classList.add("btn-spin");
 
-      try {
-        // 解析域名
-        let domain = url;
-        if (url.startsWith("http")) {
-          const urlObj = new URL(url);
-          domain = urlObj.hostname;
-        } else if (url.includes("/")) {
-          domain = url.split("/")[0];
-        }
+      // 使用API获取图标
+      const requestOptions = {
+        method: "GET",
+        redirect: "follow",
+      };
 
-        // 使用favicon.cccyun.cc的API获取图标
-        const iconUrl = `https://favicon.cccyun.cc/${domain}`;
-
-        // 设置图标URL
-        iconInput.value = iconUrl;
-
-        // 移除加载状态
-        setTimeout(() => {
+      fetch(
+        `/api/get_website_icon?url=${encodeURIComponent(url)}`,
+        requestOptions
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success && data.icon_url) {
+            // 设置图标URL
+            iconInput.value = data.icon_url;
+          } else {
+            // 如果获取失败且没有备用URL，使用cccyun服务
+            if (data.fallback_url) {
+              iconInput.value = data.fallback_url;
+            } else {
+              let domain = url;
+              if (url.startsWith("http")) {
+                const urlObj = new URL(url);
+                domain = urlObj.hostname;
+              } else if (url.includes("/")) {
+                domain = url.split("/")[0];
+              }
+              iconInput.value = `https://favicon.cccyun.cc/${domain}`;
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("获取网站图标出错:", error);
+          alert("无法获取图标，请检查网址格式");
+        })
+        .finally(() => {
+          // 移除加载状态
           icon.classList.remove("btn-spin");
-        }, 500);
-      } catch (error) {
-        console.error("获取网站图标出错:", error);
-        alert("无法解析网址，请检查链接格式");
-        icon.classList.remove("btn-spin");
-      }
+        });
     });
 
     // 检查URL是否存在

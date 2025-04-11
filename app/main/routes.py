@@ -299,18 +299,115 @@ def parse_website_info(url):
             "message": str(e)
         }
 
+# 获取网站图标的函数
+def get_website_icon(url):
+    try:
+        # 确保URL有协议前缀
+        if not url.startswith(('http://', 'https://')):
+            url = 'http://' + url
+        
+        # 使用小小API获取图标
+        headers = {
+            'User-Agent': 'xiaoxiaoapi/1.0.0 (https://xxapi.cn)'
+        }
+        
+        # 根据文档示例，完整URL作为参数
+        api_url = f"https://v2.xxapi.cn/api/ico?url={url}"
+        
+        # 添加调试日志
+        print(f"请求小小API: {api_url}")
+        
+        # 发送请求获取响应
+        response = requests.get(api_url, headers=headers)
+        
+        # 打印原始响应内容，帮助调试
+        print(f"小小API响应: {response.text}")
+        
+        # 根据文档示例，尝试解析为JSON
+        try:
+            result = response.json()
+            # 从返回的JSON中获取data字段作为实际图标URL
+            if result.get('code') == 200 and 'data' in result:
+                print(f"成功获取图标URL: {result['data']}")
+                return {
+                    "success": True,
+                    "icon_url": result['data']
+                }
+            else:
+                # 如果API没有返回正确格式，记录错误信息
+                error_msg = result.get('msg', '无法获取图标')
+                print(f"小小API返回错误: {error_msg}")
+                # 备用方案：使用cccyun的favicon服务
+                parsed_url = urlparse(url)
+                domain = parsed_url.netloc
+                return {
+                    "success": False,
+                    "message": error_msg,
+                    "fallback_url": f"https://favicon.cccyun.cc/{domain}"
+                }
+        except ValueError:
+            # 如果不是JSON格式，可能直接返回了图标URL（根据文档返回示例 `123`）
+            if response.status_code == 200 and response.text:
+                icon_url = response.text.strip()
+                if icon_url.startswith('http'):
+                    print(f"成功获取图标URL(纯文本): {icon_url}")
+                    return {
+                        "success": True,
+                        "icon_url": icon_url
+                    }
+        
+        # 如果以上都失败，使用备用图标
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc
+        return {
+            "success": False,
+            "message": "无法解析API返回内容",
+            "fallback_url": f"https://favicon.cccyun.cc/{domain}"
+        }
+    except Exception as e:
+        print(f"获取网站图标出错: {str(e)}")
+        try:
+            parsed_url = urlparse(url)
+            domain = parsed_url.netloc
+            return {
+                "success": False,
+                "message": str(e),
+                "fallback_url": f"https://favicon.cccyun.cc/{domain}"
+            }
+        except:
+            return {
+                "success": False,
+                "message": "URL解析失败",
+                "fallback_url": None
+            }
+
 @bp.route('/api/fetch_website_info')
 def fetch_website_info():
     url = request.args.get('url', '')
     if not url:
         return jsonify({"success": False, "message": "未提供URL参数"})
     
-    # 确保URL有协议前缀
-    if not url.startswith(('http://', 'https://')):
-        url = 'http://' + url
-        
     # 获取网站信息
     result = parse_website_info(url)
+    
+    # 添加图标信息
+    icon_result = get_website_icon(url)
+    if icon_result["success"]:
+        result["icon_url"] = icon_result["icon_url"]
+    elif "fallback_url" in icon_result:
+        result["icon_url"] = icon_result["fallback_url"]
+        
+    return jsonify(result)
+
+@bp.route('/api/get_website_icon')
+def api_get_website_icon():
+    """获取网站图标的API接口"""
+    url = request.args.get('url', '')
+    if not url:
+        return jsonify({"success": False, "message": "未提供URL参数"})
+    
+    # 获取网站图标
+    result = get_website_icon(url)
     return jsonify(result)
 
 @bp.route('/api/website/update/<int:id>', methods=['POST'])

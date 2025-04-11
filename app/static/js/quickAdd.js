@@ -36,12 +36,15 @@ document.addEventListener("paste", async function (e) {
     }
 
     // 获取网站信息和图标
-    const [websiteInfo, iconUrl] = await Promise.all([
-      fetch(
-        `/api/fetch_website_info?url=${encodeURIComponent(pastedData)}`
-      ).then((r) => r.json()),
-      getFaviconUrl(pastedData),
-    ]);
+    const requestOptions = {
+      method: "GET",
+      redirect: "follow",
+    };
+
+    const websiteInfo = await fetch(
+      `/api/fetch_website_info?url=${encodeURIComponent(pastedData)}`,
+      requestOptions
+    ).then((r) => r.json());
 
     // 填充表单
     document.getElementById("quickAddTitle").value = websiteInfo.title || "";
@@ -50,11 +53,11 @@ document.addEventListener("paste", async function (e) {
       websiteInfo.description || "";
 
     // 设置图标
-    if (iconUrl) {
+    if (websiteInfo.success && websiteInfo.icon_url) {
       const iconInput = document.getElementById("quickAddIcon");
       const iconPreview = document.getElementById("quickAddIconPreview");
-      iconInput.value = iconUrl;
-      iconPreview.src = iconUrl;
+      iconInput.value = websiteInfo.icon_url;
+      iconPreview.src = websiteInfo.icon_url;
       iconPreview.style.display = "block";
     }
   } catch (error) {
@@ -66,23 +69,12 @@ document.addEventListener("paste", async function (e) {
   }
 });
 
-// 获取网站图标的函数
-function getFaviconUrl(url) {
+// 验证URL是否合法
+function isValidUrl(url) {
   try {
     const urlObj = new URL(url);
-    const domain = urlObj.hostname;
-    return `https://favicon.cccyun.cc/${domain}`;
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:";
   } catch (error) {
-    console.error("解析域名失败:", error);
-    return null;
-  }
-}
-
-function isValidUrl(string) {
-  try {
-    const url = new URL(string);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch (_) {
     return false;
   }
 }

@@ -202,22 +202,32 @@ document.addEventListener("DOMContentLoaded", function () {
               domain = url.split("/")[0];
             }
 
-            // 设置新的图标URL
-            iconInput.value = `https://favicon.cccyun.cc/${domain}`;
+            // 使用API获取图标
+            const requestOptions = {
+              method: "GET",
+              redirect: "follow",
+            };
 
-            // 检查图标是否可用
-            const testImg = new Image();
-            testImg.onload = function () {
-              if (testImg.width < 8 || testImg.height < 8) {
-                // 如果图标太小，使用备用图标（使用Google的favicon服务）
-                iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-              }
-            };
-            testImg.onerror = function () {
-              // 如果图标加载失败，使用备用图标
-              iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-            };
-            testImg.src = `https://favicon.cccyun.cc/${domain}`;
+            fetch(
+              `/api/get_website_icon?url=${encodeURIComponent(url)}`,
+              requestOptions
+            )
+              .then((response) => response.json())
+              .then((iconData) => {
+                if (iconData.success && iconData.icon_url) {
+                  iconInput.value = iconData.icon_url;
+                } else if (iconData.fallback_url) {
+                  // 如果API获取失败但有备用服务
+                  iconInput.value = iconData.fallback_url;
+                } else {
+                  // 如果API获取失败，使用备用服务
+                  iconInput.value = `https://favicon.cccyun.cc/${domain}`;
+                }
+              })
+              .catch(() => {
+                // 如果请求出错，使用备用服务
+                iconInput.value = `https://favicon.cccyun.cc/${domain}`;
+              });
           } catch (error) {
             console.error("解析域名出错:", error);
           }
