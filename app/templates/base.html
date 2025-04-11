@@ -25,6 +25,11 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
     />
+    <!-- Tooltip CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/tooltip.css') }}"
+    />
     <!-- Favicon -->
     <link
       rel="shortcut icon"
@@ -37,6 +42,51 @@
         .dummy-class {
           color: inherit;
         }
+      }
+
+      /* 自定义Bootstrap tooltip样式 */
+      .tooltip .tooltip-inner {
+        background: linear-gradient(
+          135deg,
+          rgba(112, 73, 240, 0.95),
+          rgba(87, 50, 218, 0.98)
+        );
+        color: white;
+        font-size: 14px;
+        padding: 12px 18px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(112, 73, 240, 0.35);
+        max-width: 300px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        font-weight: 300;
+        line-height: 1.5;
+      }
+
+      /* 上方箭头颜色 */
+      .tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+        border-bottom-color: rgba(112, 73, 240, 0.95);
+      }
+
+      /* 下方箭头颜色 */
+      .tooltip.bs-tooltip-top .tooltip-arrow::before {
+        border-top-color: rgba(87, 50, 218, 0.98);
+      }
+
+      /* 左侧箭头颜色 */
+      .tooltip.bs-tooltip-start .tooltip-arrow::before {
+        border-left-color: rgba(112, 73, 240, 0.95);
+      }
+
+      /* 右侧箭头颜色 */
+      .tooltip.bs-tooltip-end .tooltip-arrow::before {
+        border-right-color: rgba(112, 73, 240, 0.95);
+      }
+
+      /* 确保tooltip显示 */
+      .tooltip {
+        opacity: 1 !important;
+        z-index: 9999 !important;
       }
     </style>
     {% block head %}{% endblock %}

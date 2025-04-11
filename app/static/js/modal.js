@@ -119,9 +119,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const data = await response.json();
       if (data.success) {
-        // 关闭对话框
-        editLinkModal.style.display = "none";
-
         // 更新卡片显示
         if (window.currentCard) {
           const titleEl = window.currentCard.querySelector(".site-title");
@@ -145,14 +142,18 @@ document.addEventListener("DOMContentLoaded", function () {
             iconContainer.innerHTML =
               '<i class="bi bi-globe text-primary"></i>';
           }
+
+          // 更新卡片的data-description属性
+          window.currentCard.setAttribute(
+            "data-description",
+            description.trim()
+          );
         }
 
         alert("网站信息修改成功!");
 
-        // 刷新页面以确保所有内容都是最新的
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
+        // 关闭模态框而不刷新页面
+        editLinkModal.style.display = "none";
       } else {
         alert("修改失败: " + data.message);
       }
