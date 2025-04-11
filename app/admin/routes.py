@@ -47,7 +47,8 @@ def add_category():
             description=form.description.data,
             icon=form.icon.data,
             color=form.color.data,
-            order=form.order.data
+            order=form.order.data,
+            display_limit=form.display_limit.data
         )
         db.session.add(category)
         db.session.commit()

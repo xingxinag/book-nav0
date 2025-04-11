@@ -47,6 +47,7 @@
                   <th>名称</th>
                   <th>描述</th>
                   <th>网站数</th>
+                  <th>首页展示数量</th>
                   <th>操作</th>
                 </tr>
               </thead>
@@ -71,6 +72,7 @@
                   </td>
                   <td>{{ category.description|truncate(30) }}</td>
                   <td>{{ category.websites.count() }}</td>
+                  <td>{{ category.display_limit }}</td>
                   <td>
                     <a
                       href="{{ url_for('admin.edit_category', id=category.id) }}"

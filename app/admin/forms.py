@@ -9,6 +9,8 @@ class CategoryForm(FlaskForm):
     icon = StringField('图标类名', validators=[Length(max=64)])
     color = StringField('颜色代码', validators=[Length(max=16)])
     order = IntegerField('排序顺序', default=0)
+    display_limit = IntegerField('首页展示数量', default=8, 
+                               validators=[DataRequired()])
     submit = SubmitField('提交')
 
 class WebsiteForm(FlaskForm):
