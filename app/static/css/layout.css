@@ -1,0 +1,131 @@
+body {
+  background: var(--bg-primary);
+  padding-top: var(--navbar-height);
+  min-height: 100vh;
+  font-family: var(--font-family-base);
+  color: var(--text-primary);
+}
+
+.main-content {
+  transition: var(--transition-base);
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-md)
+    calc(var(--sidebar-width) + var(--spacing-lg));
+}
+
+body:not(.sidebar-active) .main-content {
+  padding-left: var(--spacing-lg);
+}
+
+.category-heading {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text-primary);
+  position: relative;
+  font-family: var(--font-family-heading);
+  letter-spacing: -0.01em;
+}
+
+.category-heading::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: var(--primary-gradient);
+  border-radius: 3px;
+}
+
+.category-icon {
+  margin-right: var(--spacing-sm);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: var(--font-size-base);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-left: var(--spacing-lg);
+  }
+
+  body:not(.sidebar-active) .main-content {
+    padding-left: var(--spacing-lg);
+  }
+}
+
+/* 卡片容器 */
+.card-container {
+  margin: 0 calc(-1 * var(--spacing-sm));
+  overflow: hidden;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* 拖拽说明 */
+.drag-instructions {
+  width: 100%;
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  display: none;
+}
+
+.drag-instructions.active {
+  display: block;
+  animation: fadeInDown 0.3s ease;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 通用工具类 */
+.text-center {
+  text-align: center;
+}
+.text-muted {
+  color: var(--text-muted);
+}
+.mb-4 {
+  margin-bottom: var(--spacing-md);
+}
+.mb-5 {
+  margin-bottom: var(--spacing-lg);
+}
+.mt-3 {
+  margin-top: var(--spacing-sm);
+}
+.py-4 {
+  padding-top: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+}
+.py-5 {
+  padding-top: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
+}
+.me-1 {
+  margin-right: var(--spacing-xs);
+}
+.me-2 {
+  margin-right: var(--spacing-sm);
+}
