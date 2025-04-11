@@ -1,8 +1,8 @@
 from datetime import datetime
 from functools import wraps
-from flask import render_template, redirect, url_for, flash, request, abort
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify
 from flask_login import current_user, login_required
-from app import db
+from app import db, csrf
 from app.admin import bp
 from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm
 from app.models import Category, Website, InvitationCode, User
@@ -86,8 +86,95 @@ def delete_category(id):
 @login_required
 @admin_required
 def websites():
-    websites = Website.query.order_by(Website.created_at.desc()).all()
-    return render_template('admin/websites.html', title='网站管理', websites=websites)
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  # 每页显示的数量
+    category_id = request.args.get('category_id', type=int)
+    
+    # 构建查询
+    query = Website.query
+    
+    # 应用分类筛选
+    if category_id:
+        query = query.filter_by(category_id=category_id)
+    
+    # 获取分页数据
+    pagination = query.order_by(Website.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    websites = pagination.items
+    
+    # 获取所有分类供筛选使用
+    categories = Category.query.order_by(Category.order.asc()).all()
+    
+    return render_template(
+        'admin/websites.html',
+        title='网站管理',
+        websites=websites,
+        pagination=pagination,
+        categories=categories
+    )
+
+@bp.route('/api/website/batch-delete', methods=['POST'])
+@login_required
+@admin_required
+@csrf.exempt  # 豁免CSRF保护
+def batch_delete_websites():
+    """批量删除网站"""
+    try:
+        data = request.get_json()
+        if not data or 'ids' not in data:
+            return jsonify({'success': False, 'message': '无效的请求数据'}), 400
+            
+        website_ids = data['ids']
+        if not isinstance(website_ids, list):
+            return jsonify({'success': False, 'message': '无效的ID列表'}), 400
+            
+        # 删除选中的网站
+        deleted_count = Website.query.filter(Website.id.in_(website_ids)).delete(synchronize_session=False)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'成功删除 {deleted_count} 个网站'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'删除失败: {str(e)}'}), 500
+
+@bp.route('/api/website/batch-update', methods=['POST'])
+@login_required
+@admin_required
+@csrf.exempt  # 豁免CSRF保护
+def batch_update_websites():
+    """批量更新网站"""
+    try:
+        data = request.get_json()
+        if not data or 'ids' not in data or 'data' not in data:
+            return jsonify({'success': False, 'message': '无效的请求数据'}), 400
+            
+        website_ids = data['ids']
+        update_data = data['data']
+        
+        if not isinstance(website_ids, list):
+            return jsonify({'success': False, 'message': '无效的ID列表'}), 400
+            
+        # 更新选中的网站
+        websites = Website.query.filter(Website.id.in_(website_ids)).all()
+        updated_count = 0
+        for website in websites:
+            if 'is_private' in update_data:
+                website.is_private = update_data['is_private']
+                updated_count += 1
+                
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': f'成功更新 {updated_count} 个网站'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'更新失败: {str(e)}'}), 500
 
 @bp.route('/website/add', methods=['GET', 'POST'])
 @login_required

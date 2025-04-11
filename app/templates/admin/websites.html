@@ -1,4 +1,5 @@
 {% extends "base.html" %} {% block head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <style>
   /* 默认网站图标样式 */
   .default-site-icon {
@@ -13,6 +14,28 @@
     width: 24px;
     height: 24px;
     font-size: 14px;
+  }
+  
+  /* 工具栏样式 */
+  .toolbar {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* 分页样式 */
+  .pagination {
+    margin: 0;
+  }
+  
+  /* 批量操作按钮样式 */
+  .batch-actions {
+    display: none;
+  }
+  
+  .batch-actions.show {
+    display: block;
   }
 </style>
 {% endblock %} {% block content %}
@@ -53,6 +76,32 @@
         </a>
       </div>
 
+      <!-- 工具栏 -->
+      <div class="toolbar">
+        <div class="row align-items-center">
+          <div class="col-md-4">
+            <select class="form-select" id="categoryFilter">
+              <option value="">所有分类</option>
+              {% for category in categories %}
+              <option value="{{ category.id }}" {% if request.args.get('category_id')|int == category.id %}selected{% endif %}>
+                {{ category.name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-8">
+            <div class="batch-actions" id="batchActions">
+              <button type="button" class="btn btn-danger btn-sm" onclick="batchDelete()">
+                <i class="bi bi-trash"></i> 删除选中
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="togglePrivate()">
+                <i class="bi bi-lock"></i> 切换私有状态
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-body">
           {% if websites %}
@@ -60,6 +109,9 @@
             <table class="table table-hover">
               <thead>
                 <tr>
+                  <th>
+                    <input type="checkbox" class="form-check-input" id="selectAll">
+                  </th>
                   <th>网站</th>
                   <th>分类</th>
                   <th>访问量</th>
@@ -70,6 +122,9 @@
               <tbody>
                 {% for website in websites %}
                 <tr>
+                  <td>
+                    <input type="checkbox" class="form-check-input website-checkbox" value="{{ website.id }}">
+                  </td>
                   <td>
                     <div class="d-flex align-items-center">
                       {% if website.icon %}
@@ -108,8 +163,11 @@
                   <td>
                     {% if website.is_featured %}
                     <span class="badge bg-warning">推荐</span>
+                    {% endif %}
+                    {% if website.is_private %}
+                    <span class="badge bg-danger badge-private">私有</span>
                     {% else %}
-                    <span class="badge bg-light text-dark">普通</span>
+                    <span class="badge bg-success badge-public">公开</span>
                     {% endif %}
                   </td>
                   <td>
@@ -139,6 +197,38 @@
               </tbody>
             </table>
           </div>
+
+          <!-- 分页 -->
+          {% if pagination and pagination.pages > 1 %}
+          <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+              <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.websites', page=pagination.prev_num, category_id=request.args.get('category_id', '')) }}">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+              {% for page in pagination.iter_pages() %}
+                {% if page %}
+                  <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.websites', page=page, category_id=request.args.get('category_id', '')) }}">
+                      {{ page }}
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                  </li>
+                {% endif %}
+              {% endfor %}
+              <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.websites', page=pagination.next_num, category_id=request.args.get('category_id', '')) }}">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+          {% endif %}
+
           {% else %}
           <div class="text-center py-5">
             <i class="bi bi-emoji-frown fs-1 text-muted"></i>
@@ -182,6 +272,121 @@
         img.onerror();
       }
     });
+
+    // 分类筛选
+    const categoryFilter = document.getElementById('categoryFilter');
+    categoryFilter.addEventListener('change', function() {
+      const categoryId = this.value;
+      const url = new URL(window.location.href);
+      if (categoryId) {
+        url.searchParams.set('category_id', categoryId);
+      } else {
+        url.searchParams.delete('category_id');
+      }
+      url.searchParams.set('page', '1');  // 切换分类时重置页码
+      window.location.href = url.toString();
+    });
+
+    // 全选/取消全选
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.website-checkbox');
+    const batchActions = document.getElementById('batchActions');
+
+    selectAll.addEventListener('change', function() {
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+      });
+      updateBatchActions();
+    });
+
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', updateBatchActions);
+    });
+
+    function updateBatchActions() {
+      const checkedCount = document.querySelectorAll('.website-checkbox:checked').length;
+      if (checkedCount > 0) {
+        batchActions.classList.add('show');
+      } else {
+        batchActions.classList.remove('show');
+      }
+    }
   });
+
+  // 批量删除
+  function batchDelete() {
+    const selectedIds = getSelectedIds();
+    if (!selectedIds.length) return;
+    
+    if (!confirm(`确定要删除选中的 ${selectedIds.length} 个网站吗？`)) return;
+
+    fetch('/admin/api/website/batch-delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ ids: selectedIds })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || '删除失败');
+      }
+    })
+    .catch(error => {
+      console.error('批量删除出错:', error);
+      alert('操作失败，请重试');
+    });
+  }
+
+  // 切换私有状态
+  function togglePrivate() {
+    const selectedIds = getSelectedIds();
+    if (!selectedIds.length) return;
+
+    // 获取选中项的当前状态
+    const selectedItems = selectedIds.map(id => {
+      const row = document.querySelector(`input[value="${id}"]`).closest('tr');
+      const isPrivate = row.querySelector('.badge-private') !== null;
+      return { id, isPrivate };
+    });
+
+    // 根据多数项的状态决定切换方向
+    const privateCount = selectedItems.filter(item => item.isPrivate).length;
+    const shouldBePrivate = privateCount <= selectedItems.length / 2;
+
+    fetch('/admin/api/website/batch-update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({
+        ids: selectedIds,
+        data: { is_private: shouldBePrivate }
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || '操作失败');
+      }
+    })
+    .catch(error => {
+      console.error('批量更新出错:', error);
+      alert('操作失败，请重试');
+    });
+  }
+
+  // 获取选中的网站ID
+  function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.website-checkbox:checked'))
+      .map(checkbox => parseInt(checkbox.value));
+  }
 </script>
 {% endblock %}
