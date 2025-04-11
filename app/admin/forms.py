@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, BooleanField, SubmitField, SelectField, HiddenField, IntegerField
-from wtforms.validators import DataRequired, Length, URL, Optional, ValidationError
-from app.models import Category
+from wtforms import StringField, TextAreaField, BooleanField, SubmitField, SelectField, HiddenField, IntegerField, PasswordField
+from wtforms.validators import DataRequired, Length, URL, Optional, ValidationError, Email, EqualTo
+from app.models import Category, User
 
 class CategoryForm(FlaskForm):
     name = StringField('分类名称', validators=[DataRequired(), Length(max=64)])
@@ -29,4 +29,29 @@ class WebsiteForm(FlaskForm):
 
 class InvitationForm(FlaskForm):
     count = IntegerField('生成数量', default=1)
-    submit = SubmitField('生成邀请码') 
+    submit = SubmitField('生成邀请码')
+
+class UserEditForm(FlaskForm):
+    username = StringField('用户名', validators=[DataRequired(), Length(min=3, max=64)])
+    email = StringField('邮箱', validators=[DataRequired(), Email(), Length(max=120)])
+    password = PasswordField('新密码', validators=[Optional(), Length(min=6)])
+    password2 = PasswordField('确认密码', validators=[Optional(), EqualTo('password')])
+    is_admin = BooleanField('管理员权限')
+    submit = SubmitField('保存更改')
+    
+    def __init__(self, original_username, original_email, *args, **kwargs):
+        super(UserEditForm, self).__init__(*args, **kwargs)
+        self.original_username = original_username
+        self.original_email = original_email
+    
+    def validate_username(self, username):
+        if username.data != self.original_username:
+            user = User.query.filter_by(username=username.data).first()
+            if user is not None:
+                raise ValidationError('该用户名已被使用，请选择其他用户名。')
+    
+    def validate_email(self, email):
+        if email.data != self.original_email:
+            user = User.query.filter_by(email=email.data).first()
+            if user is not None:
+                raise ValidationError('该邮箱已被注册，请使用其他邮箱。') 

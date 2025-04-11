@@ -46,6 +46,7 @@
                   <th>角色</th>
                   <th>注册时间</th>
                   <th>状态</th>
+                  <th>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -78,6 +79,22 @@
                     {% else %}
                     <span class="badge bg-light text-dark">在线</span>
                     {% endif %}
+                  </td>
+                  <td>
+                    <div class="btn-group">
+                      <a
+                        href="{{ url_for('admin.user_detail', id=user.id) }}"
+                        class="btn btn-sm btn-info"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      <a
+                        href="{{ url_for('admin.edit_user', id=user.id) }}"
+                        class="btn btn-sm btn-primary"
+                      >
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                    </div>
                   </td>
                 </tr>
                 {% endfor %}

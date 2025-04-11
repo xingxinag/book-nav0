@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, flash, request, abort, jso
 from flask_login import current_user, login_required
 from app import db, csrf
 from app.admin import bp
-from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm
+from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm, UserEditForm
 from app.models import Category, Website, InvitationCode, User
 
 def admin_required(f):
@@ -272,4 +272,40 @@ def delete_invitation(id):
 @admin_required
 def users():
     users = User.query.all()
-    return render_template('admin/users.html', title='用户管理', users=users) 
+    return render_template('admin/users.html', title='用户管理', users=users)
+
+@bp.route('/user/<int:id>')
+@login_required
+@admin_required
+def user_detail(id):
+    user = User.query.get_or_404(id)
+    websites = Website.query.filter_by(created_by_id=user.id).all()
+    return render_template('admin/user_detail.html', title='用户详情', user=user, websites=websites)
+
+@bp.route('/user/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def edit_user(id):
+    user = User.query.get_or_404(id)
+    # 只有超级管理员或本人可以编辑用户信息
+    if not current_user.is_admin and current_user.id != user.id:
+        abort(403)
+    
+    form = UserEditForm(user.username, user.email, obj=user)
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.email = form.email.data
+        
+        # 如果提供了新密码，则更新密码
+        if form.password.data:
+            user.set_password(form.password.data)
+        
+        # 只有管理员可以更改权限
+        if current_user.is_admin:
+            user.is_admin = form.is_admin.data
+        
+        db.session.commit()
+        flash('用户信息更新成功!', 'success')
+        return redirect(url_for('admin.users'))
+    
+    return render_template('admin/user_edit.html', title='编辑用户', form=form, user=user) 
