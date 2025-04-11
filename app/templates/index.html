@@ -214,6 +214,11 @@ render_icon(icon_name='folder', color='#3498db') %}
           data-id="{{ website.id }}"
           data-sort="{{ website.sort_order|default(loop.index0*10) }}"
         >
+          {% if website.is_private %}
+          <div class="private-badge" title="私有链接">
+            <i class="bi bi-lock-fill"></i>
+          </div>
+          {% endif %}
           <div class="site-header">
             <div class="site-icon">
               {% if website.icon %}

@@ -324,6 +324,40 @@
         icon.classList.remove("btn-spin");
       }
     });
+
+    // 检查URL是否存在
+    async function checkUrlExists(url) {
+      try {
+        const response = await fetch(
+          `/api/check_url_exists?url=${encodeURIComponent(url)}`
+        );
+        return await response.json();
+      } catch (error) {
+        console.error("检查URL失败:", error);
+        return { exists: false };
+      }
+    }
+
+    // 在表单提交前检查URL
+    const form = document.querySelector("form");
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const url = urlInput.value.trim();
+      const checkResult = await checkUrlExists(url);
+
+      if (checkResult.exists) {
+        const confirmAdd = confirm(
+          `该链接已存在于分类"${checkResult.website.category_name}"中，标题为"${checkResult.website.title}"。\n\n是否仍要添加？`
+        );
+        if (!confirmAdd) {
+          return;
+        }
+      }
+
+      // 继续提交表单
+      this.submit();
+    });
   });
 </script>
 {% endblock %}

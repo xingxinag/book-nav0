@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // 处理表单提交
-  editLinkForm.addEventListener("submit", function (e) {
+  editLinkForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const siteId = document.getElementById("editLinkId").value;
@@ -84,69 +84,82 @@ document.addEventListener("DOMContentLoaded", function () {
     const icon = document.getElementById("editIcon").value;
     const description = document.getElementById("editDescription").value;
 
-    // 发送修改请求到服务器
-    fetch(`/api/website/update/${siteId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')
-          .content,
-      },
-      body: JSON.stringify({
-        title: title,
-        url: url,
-        icon: icon,
-        description: description,
-        is_private: document.getElementById("editPrivate").checked ? 1 : 0,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          // 关闭对话框
-          editLinkModal.style.display = "none";
+    try {
+      // 检查URL是否已存在（排除当前编辑的链接）
+      const checkResponse = await fetch(
+        `/api/check_url_exists?url=${encodeURIComponent(url)}`
+      );
+      const checkResult = await checkResponse.json();
 
-          // 更新卡片显示
-          if (window.currentCard) {
-            const titleEl = window.currentCard.querySelector(".site-title");
-            const descEl =
-              window.currentCard.querySelector(".site-description");
-            const iconImg = window.currentCard.querySelector(".site-icon img");
-            const iconContainer =
-              window.currentCard.querySelector(".site-icon");
-
-            if (titleEl) titleEl.textContent = title.trim();
-            if (descEl) descEl.textContent = description.trim();
-
-            // 更新图标
-            if (icon) {
-              if (iconImg) {
-                iconImg.src = icon;
-              } else {
-                // 如果之前没有图标，创建一个
-                iconContainer.innerHTML = `<img src="${icon}" alt="${title}">`;
-              }
-            } else if (iconImg) {
-              // 如果清除了图标，显示默认图标
-              iconContainer.innerHTML =
-                '<i class="bi bi-globe text-primary"></i>';
-            }
-          }
-
-          alert("网站信息修改成功!");
-
-          // 刷新页面以确保所有内容都是最新的
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        } else {
-          alert("修改失败: " + data.message);
+      if (checkResult.exists && checkResult.website.id !== parseInt(siteId)) {
+        const confirmUpdate = confirm(
+          `该链接已存在于分类"${checkResult.website.category_name}"中，标题为"${checkResult.website.title}"。\n\n是否仍要保存？`
+        );
+        if (!confirmUpdate) {
+          return;
         }
-      })
-      .catch((error) => {
-        console.error("修改链接出错:", error);
-        alert("修改链接时发生错误，请重试");
+      }
+
+      // 发送修改请求到服务器
+      const response = await fetch(`/api/website/update/${siteId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')
+            .content,
+        },
+        body: JSON.stringify({
+          title: title,
+          url: url,
+          icon: icon,
+          description: description,
+          is_private: document.getElementById("editPrivate").checked ? 1 : 0,
+        }),
       });
+
+      const data = await response.json();
+      if (data.success) {
+        // 关闭对话框
+        editLinkModal.style.display = "none";
+
+        // 更新卡片显示
+        if (window.currentCard) {
+          const titleEl = window.currentCard.querySelector(".site-title");
+          const descEl = window.currentCard.querySelector(".site-description");
+          const iconImg = window.currentCard.querySelector(".site-icon img");
+          const iconContainer = window.currentCard.querySelector(".site-icon");
+
+          if (titleEl) titleEl.textContent = title.trim();
+          if (descEl) descEl.textContent = description.trim();
+
+          // 更新图标
+          if (icon) {
+            if (iconImg) {
+              iconImg.src = icon;
+            } else {
+              // 如果之前没有图标，创建一个
+              iconContainer.innerHTML = `<img src="${icon}" alt="${title}">`;
+            }
+          } else if (iconImg) {
+            // 如果清除了图标，显示默认图标
+            iconContainer.innerHTML =
+              '<i class="bi bi-globe text-primary"></i>';
+          }
+        }
+
+        alert("网站信息修改成功!");
+
+        // 刷新页面以确保所有内容都是最新的
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        alert("修改失败: " + data.message);
+      }
+    } catch (error) {
+      console.error("修改链接出错:", error);
+      alert("修改链接时发生错误，请重试");
+    }
   });
 
   // 自动获取网站信息

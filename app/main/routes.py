@@ -529,4 +529,30 @@ def quick_add_website():
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'success': False, 'message': f'添加失败: {str(e)}'}), 500 
+        return jsonify({'success': False, 'message': f'添加失败: {str(e)}'}), 500
+
+@bp.route('/api/check_url_exists')
+def check_url_exists():
+    """检查URL是否已存在"""
+    url = request.args.get('url', '').strip()
+    if not url:
+        return jsonify({'exists': False, 'message': '请提供URL'})
+    
+    # 标准化URL（移除末尾的斜杠）
+    if url.endswith('/'):
+        url = url[:-1]
+    
+    # 查找是否存在相同的URL
+    website = Website.query.filter(Website.url.in_([url, url + '/'])).first()
+    
+    if website:
+        return jsonify({
+            'exists': True,
+            'message': '该链接已存在',
+            'website': {
+                'title': website.title,
+                'category_name': website.category.name if website.category else None
+            }
+        })
+    
+    return jsonify({'exists': False}) 

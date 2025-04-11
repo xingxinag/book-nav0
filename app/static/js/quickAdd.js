@@ -18,6 +18,23 @@ document.addEventListener("paste", async function (e) {
   setQuickAddLoading(true);
 
   try {
+    // 检查URL是否已存在
+    const checkResponse = await fetch(
+      `/api/check_url_exists?url=${encodeURIComponent(pastedData)}`
+    );
+    const checkResult = await checkResponse.json();
+
+    if (checkResult.exists) {
+      const confirmAdd = confirm(
+        `该链接已存在于分类"${checkResult.website.category_name}"中，标题为"${checkResult.website.title}"。\n\n是否仍要添加？`
+      );
+      if (!confirmAdd) {
+        closeQuickAddModal();
+        setQuickAddLoading(false);
+        return;
+      }
+    }
+
     // 获取网站信息和图标
     const [websiteInfo, iconUrl] = await Promise.all([
       fetch(
@@ -106,21 +123,38 @@ async function submitQuickAdd() {
     return;
   }
 
-  const submitBtn = document.querySelector("#quickAddModal .btn-primary");
-  submitBtn.disabled = true;
-  submitBtn.innerHTML =
-    '<span class="spinner-border spinner-border-sm me-1"></span>提交中...';
-
-  const data = {
-    title: document.getElementById("quickAddTitle").value.trim(),
-    url: document.getElementById("quickAddUrl").value.trim(),
-    description: document.getElementById("quickAddDescription").value.trim(),
-    icon: document.getElementById("quickAddIcon").value.trim(),
-    category_id: parseInt(categoryId),
-    is_private: document.getElementById("quickAddPrivate").checked ? 1 : 0,
-  };
+  const url = document.getElementById("quickAddUrl").value.trim();
 
   try {
+    // 检查URL是否已存在
+    const checkResponse = await fetch(
+      `/api/check_url_exists?url=${encodeURIComponent(url)}`
+    );
+    const checkResult = await checkResponse.json();
+
+    if (checkResult.exists) {
+      const confirmAdd = confirm(
+        `该链接已存在于分类"${checkResult.website.category_name}"中，标题为"${checkResult.website.title}"。\n\n是否仍要添加？`
+      );
+      if (!confirmAdd) {
+        return;
+      }
+    }
+
+    const submitBtn = document.querySelector("#quickAddModal .btn-primary");
+    submitBtn.disabled = true;
+    submitBtn.innerHTML =
+      '<span class="spinner-border spinner-border-sm me-1"></span>提交中...';
+
+    const data = {
+      title: document.getElementById("quickAddTitle").value.trim(),
+      url: url,
+      description: document.getElementById("quickAddDescription").value.trim(),
+      icon: document.getElementById("quickAddIcon").value.trim(),
+      category_id: parseInt(categoryId),
+      is_private: document.getElementById("quickAddPrivate").checked ? 1 : 0,
+    };
+
     const response = await fetch("/api/website/quick-add", {
       method: "POST",
       headers: {
