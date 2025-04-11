@@ -378,3 +378,27 @@ body {
 .drag-instructions.active {
   display: block;
 }
+
+/* 编辑对话框样式 */
+.modal-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.modal-input:focus {
+  border-color: #7049f0;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(112, 73, 240, 0.25);
+}
+
+textarea.modal-input {
+  resize: vertical;
+  min-height: 100px;
+  white-space: pre-wrap;
+  overflow-y: auto;
+}

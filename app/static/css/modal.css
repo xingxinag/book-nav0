@@ -84,6 +84,15 @@
   font-size: var(--font-size-sm);
   transition: var(--transition-base);
   box-sizing: border-box;
+  line-height: 1.5;
+}
+
+textarea.modal-input {
+  min-height: 120px;
+  resize: vertical;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: inherit;
 }
 
 .modal-input:focus {

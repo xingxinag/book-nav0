@@ -10,10 +10,12 @@ document.addEventListener("DOMContentLoaded", function () {
   editLinkBtn.addEventListener("click", function () {
     if (window.currentCard) {
       const cardId = window.currentCard.href.split("/").pop();
-      const cardTitle =
-        window.currentCard.querySelector(".site-title").textContent;
-      const cardDesc =
-        window.currentCard.querySelector(".site-description").textContent;
+      const cardTitle = window.currentCard
+        .querySelector(".site-title")
+        .textContent.trim();
+      const cardDesc = window.currentCard
+        .querySelector(".site-description")
+        .textContent.trim();
       const cardIcon = window.currentCard.querySelector(".site-icon img");
 
       // 填充表单
@@ -34,6 +36,11 @@ document.addEventListener("DOMContentLoaded", function () {
         .then((data) => {
           if (data.success) {
             document.getElementById("editUrl").value = data.website.url;
+            // 更新描述，使用服务器返回的完整描述
+            if (data.website.description) {
+              document.getElementById("editDescription").value =
+                data.website.description;
+            }
           }
         })
         .catch((error) => {
@@ -101,8 +108,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const iconContainer =
               window.currentCard.querySelector(".site-icon");
 
-            if (titleEl) titleEl.textContent = title;
-            if (descEl) descEl.textContent = description;
+            if (titleEl) titleEl.textContent = title.trim();
+            if (descEl) descEl.textContent = description.trim();
 
             // 更新图标
             if (icon) {
@@ -156,47 +163,43 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          // 如果当前标题或描述为空，自动填充
-          if (data.title && !titleInput.value.trim()) {
+          // 直接更新标题和描述，无论是否为空
+          if (data.title) {
             titleInput.value = data.title;
           }
 
-          if (data.description && !descInput.value.trim()) {
+          if (data.description) {
             descInput.value = data.description;
           }
 
           // 解析域名获取图标
-          if (!iconInput.value.trim()) {
-            try {
-              let domain = url;
-              if (url.startsWith("http")) {
-                const urlObj = new URL(url);
-                domain = urlObj.hostname;
-              } else if (url.includes("/")) {
-                domain = url.split("/")[0];
-              }
-
-              // 检查图标是否可用
-              const testImg = new Image();
-              testImg.onload = function () {
-                if (testImg.width < 8 || testImg.height < 8) {
-                  // 如果图标太小，使用备用图标（使用Google的favicon服务）
-                  iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-                } else {
-                  iconInput.value = `https://favicon.cccyun.cc/${domain}`;
-                }
-              };
-              testImg.onerror = function () {
-                // 如果图标加载失败，使用备用图标
-                iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
-              };
-              testImg.src = `https://favicon.cccyun.cc/${domain}`;
-
-              // 默认先填入，如果有错误会被上面的回调更新
-              iconInput.value = `https://favicon.cccyun.cc/${domain}`;
-            } catch (error) {
-              console.error("解析域名出错:", error);
+          try {
+            let domain = url;
+            if (url.startsWith("http")) {
+              const urlObj = new URL(url);
+              domain = urlObj.hostname;
+            } else if (url.includes("/")) {
+              domain = url.split("/")[0];
             }
+
+            // 设置新的图标URL
+            iconInput.value = `https://favicon.cccyun.cc/${domain}`;
+
+            // 检查图标是否可用
+            const testImg = new Image();
+            testImg.onload = function () {
+              if (testImg.width < 8 || testImg.height < 8) {
+                // 如果图标太小，使用备用图标（使用Google的favicon服务）
+                iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+              }
+            };
+            testImg.onerror = function () {
+              // 如果图标加载失败，使用备用图标
+              iconInput.value = `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+            };
+            testImg.src = `https://favicon.cccyun.cc/${domain}`;
+          } catch (error) {
+            console.error("解析域名出错:", error);
           }
 
           alert("网站信息获取成功！");
