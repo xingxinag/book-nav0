@@ -226,8 +226,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const categoryId = container.dataset.categoryId;
     const items = [];
+    const totalCards = cards.length; // 获取当前分类下的总链接数
 
-    // 按新顺序重新分配权重
+    // 按新顺序分配权重，权重范围从1到totalCards
     cards.forEach((card, index) => {
       const websiteId = parseInt(card.dataset.id);
       if (isNaN(websiteId)) {
@@ -235,7 +236,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
 
-      const newSortOrder = index * 10; // 每10个单位，方便将来插入
+      // 从前到后分配权重，靠前的权重大（totalCards），靠后的权重小（1）
+      const newSortOrder = totalCards - index;
 
       // 修改data-sort属性
       card.dataset.sort = newSortOrder;

@@ -16,14 +16,14 @@ def index():
     
     # 预先加载每个分类下的网站，按照自定义排序顺序
     for category in categories:
-        category.website_list = Website.query.filter_by(category_id=category.id).order_by(Website.sort_order.asc(), Website.views.desc()).all()
+        category.website_list = Website.query.filter_by(category_id=category.id).order_by(Website.sort_order.desc(), Website.views.desc()).all()
         
     return render_template('index.html', title='首页', categories=categories, featured_sites=featured_sites)
 
 @bp.route('/category/<int:id>')
 def category(id):
     category = Category.query.get_or_404(id)
-    websites = Website.query.filter_by(category_id=id).order_by(Website.sort_order.asc(), Website.views.desc()).all()
+    websites = Website.query.filter_by(category_id=id).order_by(Website.sort_order.desc(), Website.views.desc()).all()
     return render_template('category.html', title=category.name, category=category, websites=websites)
 
 @bp.route('/site/<int:id>')

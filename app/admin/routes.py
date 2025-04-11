@@ -102,7 +102,8 @@ def add_website():
             icon=form.icon.data,
             category_id=form.category_id.data,
             is_featured=form.is_featured.data,
-            created_by_id=current_user.id
+            created_by_id=current_user.id,
+            sort_order=1  # 新链接权重设为1（最小值）
         )
         db.session.add(website)
         db.session.commit()
