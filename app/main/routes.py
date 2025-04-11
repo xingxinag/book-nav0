@@ -12,19 +12,66 @@ import time
 @bp.route('/')
 def index():
     categories = Category.query.order_by(Category.order.asc()).all()
-    featured_sites = Website.query.filter_by(is_featured=True).order_by(Website.views.desc()).limit(6).all()
+    
+    # 获取推荐网站，只显示公开的或当前用户可见的
+    featured_sites_query = Website.query.filter_by(is_featured=True)
+    if not current_user.is_authenticated:
+        featured_sites_query = featured_sites_query.filter_by(is_private=False)
+    elif not current_user.is_admin:
+        featured_sites_query = featured_sites_query.filter(
+            (Website.is_private == False) |  # 公开的
+            (Website.created_by_id == current_user.id) |  # 自己创建的
+            (Website.visible_to.contains(str(current_user.id)))  # 被授权查看的
+        )
+    featured_sites = featured_sites_query.order_by(Website.views.desc()).limit(6).all()
     
     # 预先加载每个分类下的网站，按照自定义排序顺序
     for category in categories:
-        category.website_list = Website.query.filter_by(category_id=category.id).order_by(Website.sort_order.desc(), Website.views.desc()).all()
+        websites_query = Website.query.filter_by(category_id=category.id)
+        if not current_user.is_authenticated:
+            websites_query = websites_query.filter_by(is_private=False)
+        elif not current_user.is_admin:
+            websites_query = websites_query.filter(
+                (Website.is_private == False) |
+                (Website.created_by_id == current_user.id) |
+                (Website.visible_to.contains(str(current_user.id)))
+            )
+        category.website_list = websites_query.order_by(
+            Website.sort_order.desc(), 
+            Website.views.desc()
+        ).all()
         
-    return render_template('index.html', title='首页', categories=categories, featured_sites=featured_sites)
+    return render_template('index.html', 
+                         title='首页', 
+                         categories=categories, 
+                         featured_sites=featured_sites)
 
 @bp.route('/category/<int:id>')
 def category(id):
     category = Category.query.get_or_404(id)
-    websites = Website.query.filter_by(category_id=id).order_by(Website.sort_order.desc(), Website.views.desc()).all()
-    return render_template('category.html', title=category.name, category=category, websites=websites)
+    
+    # 构建查询
+    websites_query = Website.query.filter_by(category_id=id)
+    
+    # 根据用户权限过滤私有链接
+    if not current_user.is_authenticated:
+        websites_query = websites_query.filter_by(is_private=False)
+    elif not current_user.is_admin:
+        websites_query = websites_query.filter(
+            (Website.is_private == False) |
+            (Website.created_by_id == current_user.id) |
+            (Website.visible_to.contains(str(current_user.id)))
+        )
+    
+    websites = websites_query.order_by(
+        Website.sort_order.desc(), 
+        Website.views.desc()
+    ).all()
+    
+    return render_template('category.html', 
+                         title=category.name, 
+                         category=category, 
+                         websites=websites)
 
 @bp.route('/site/<int:id>')
 def site(id):
@@ -45,11 +92,28 @@ def search():
     if not query:
         return redirect(url_for('main.index'))
     
-    websites = Website.query.filter(Website.title.contains(query) | 
-                                  Website.description.contains(query) | 
-                                  Website.url.contains(query)).all()
+    # 构建搜索查询
+    websites_query = Website.query.filter(
+        Website.title.contains(query) |
+        Website.description.contains(query) |
+        Website.url.contains(query)
+    )
     
-    return render_template('search.html', title='搜索结果', websites=websites, query=query)
+    # 根据用户权限过滤私有链接
+    if not current_user.is_authenticated:
+        websites_query = websites_query.filter_by(is_private=False)
+    elif not current_user.is_admin:
+        websites_query = websites_query.filter(
+            (Website.is_private == False) |
+            (Website.created_by_id == current_user.id) |
+            (Website.visible_to.contains(str(current_user.id)))
+        )
+    
+    websites = websites_query.all()
+    return render_template('search.html', 
+                         title='搜索结果', 
+                         websites=websites, 
+                         query=query)
 
 @bp.route('/about')
 def about():
@@ -150,7 +214,8 @@ def site_info(site_id):
             'description': site.description,
             'icon': site.icon,
             'category': category_data,
-            'views': site.views
+            'views': site.views,
+            'is_private': site.is_private
         }
         
         return jsonify({"success": True, "website": website_data})
@@ -286,6 +351,8 @@ def api_update_website(id):
         category = Category.query.get(data['category_id'])
         if category:
             website.category_id = data['category_id']
+    if 'is_private' in data:
+        website.is_private = bool(data['is_private'])
     
     # 保存更改
     db.session.commit()
@@ -441,7 +508,8 @@ def quick_add_website():
             icon=data.get('icon', ''),
             category_id=data['category_id'],
             created_by_id=current_user.id,
-            sort_order=1  # 新添加的链接权重为1
+            sort_order=1,  # 新添加的链接权重为1
+            is_private=data.get('is_private', 0)  # 默认为公开
         )
         
         db.session.add(website)

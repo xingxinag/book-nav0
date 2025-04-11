@@ -41,6 +41,12 @@ document.addEventListener("DOMContentLoaded", function () {
               document.getElementById("editDescription").value =
                 data.website.description;
             }
+            // 设置私有/公开状态
+            if (data.website.is_private) {
+              document.getElementById("editPrivate").checked = true;
+            } else {
+              document.getElementById("editPublic").checked = true;
+            }
           }
         })
         .catch((error) => {
@@ -91,6 +97,7 @@ document.addEventListener("DOMContentLoaded", function () {
         url: url,
         icon: icon,
         description: description,
+        is_private: document.getElementById("editPrivate").checked ? 1 : 0,
       }),
     })
       .then((response) => response.json())

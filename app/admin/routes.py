@@ -189,6 +189,7 @@ def add_website():
             icon=form.icon.data,
             category_id=form.category_id.data,
             is_featured=form.is_featured.data,
+            is_private=form.is_private.data,
             created_by_id=current_user.id,
             sort_order=1  # 新链接权重设为1（最小值）
         )
@@ -206,6 +207,8 @@ def edit_website(id):
     form = WebsiteForm(obj=website)
     if form.validate_on_submit():
         form.populate_obj(website)
+        # 处理私有/公开选项
+        website.is_private = form.is_private.data
         db.session.commit()
         flash('网站更新成功', 'success')
         return redirect(url_for('admin.websites'))

@@ -18,6 +18,7 @@ class WebsiteForm(FlaskForm):
     icon = StringField('图标URL', validators=[Length(max=256)])
     category_id = SelectField('所属分类', coerce=int, validators=[DataRequired()])
     is_featured = BooleanField('设为推荐')
+    is_private = BooleanField('设为私有')
     submit = SubmitField('提交')
     
     def __init__(self, *args, **kwargs):

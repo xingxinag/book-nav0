@@ -97,9 +97,34 @@ class Website(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
     created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     
-    # 以下字段在原始模型中可能不存在但在应用中被引用，我们将它们添加到模型中
+    # 私有链接相关字段
+    is_private = db.Column(db.Boolean, default=False)
+    visible_to = db.Column(db.String(512), default='')  # 存储可见用户ID，用逗号分隔
+    
+    # 统计相关字段
     views_today = db.Column(db.Integer, default=0)
     last_view = db.Column(db.DateTime, nullable=True)
     
     def __repr__(self):
-        return f'<Website {self.title}>' 
+        return f'<Website {self.title}>'
+        
+    def is_visible_to(self, user):
+        """检查链接是否对指定用户可见"""
+        # 如果不是私有链接，对所有人可见
+        if not self.is_private:
+            return True
+            
+        # 如果是私有链接
+        if user is None:  # 未登录用户
+            return False
+            
+        # 创建者和管理员可见
+        if user.is_admin or user.id == self.created_by_id:
+            return True
+            
+        # 检查是否在可见用户列表中
+        if self.visible_to:
+            visible_user_ids = [int(id) for id in self.visible_to.split(',') if id]
+            return user.id in visible_user_ids
+            
+        return False 

@@ -41,7 +41,9 @@
     </style>
     {% block head %}{% endblock %}
   </head>
-  <body>
+  <body
+    class="{% if current_user.is_authenticated and current_user.is_admin %}user-admin{% endif %}"
+  >
     <main>
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
       messages %}
@@ -111,58 +113,17 @@
           });
         }
 
-        // 验证图片是否是有效的图标（检查尺寸和内容）
+        // 验证图片是否有效
         function validateImage(img) {
-          // 如果图片非常小或是透明的，视为无效
-          if (img.naturalWidth < 8 || img.naturalHeight < 8) {
+          if (img.naturalWidth === 0 || img.naturalHeight === 0) {
             img.onerror();
-            return;
-          }
-
-          // 创建canvas来分析图片内容
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-
-          try {
-            // 绘制图片到canvas
-            ctx.drawImage(img, 0, 0);
-
-            // 获取图像数据
-            const imageData = ctx.getImageData(
-              0,
-              0,
-              canvas.width,
-              canvas.height
-            );
-            const data = imageData.data;
-
-            // 检查是否全透明或全白
-            let isBlank = true;
-            for (let i = 0; i < data.length; i += 4) {
-              // 如果不是透明的并且不是白色的，那么图片有内容
-              if (
-                data[i + 3] > 10 &&
-                !(data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240)
-              ) {
-                isBlank = false;
-                break;
-              }
-            }
-
-            if (isBlank) {
-              img.onerror();
-            }
-          } catch (e) {
-            console.error("验证图片时出错:", e);
           }
         }
 
-        // 初始调用一次
+        // 初始化图片处理
         handleSiteImages();
 
-        // 监听DOM变化，处理动态加载的内容
+        // 监听动态加载的内容
         const observer = new MutationObserver(function (mutations) {
           mutations.forEach(function (mutation) {
             if (mutation.addedNodes.length) {
@@ -171,7 +132,11 @@
           });
         });
 
-        observer.observe(document.body, { childList: true, subtree: true });
+        // 配置观察器
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
       });
     </script>
     {% block scripts %}{% endblock %}

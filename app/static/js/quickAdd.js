@@ -117,6 +117,7 @@ async function submitQuickAdd() {
     description: document.getElementById("quickAddDescription").value.trim(),
     icon: document.getElementById("quickAddIcon").value.trim(),
     category_id: parseInt(categoryId),
+    is_private: document.getElementById("quickAddPrivate").checked ? 1 : 0,
   };
 
   try {
