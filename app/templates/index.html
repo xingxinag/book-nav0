@@ -49,6 +49,54 @@ render_icon(icon_name='folder', color='#3498db') %}
   rel="stylesheet"
   href="{{ url_for('static', filename='css/contextMenu.css') }}"
 />
+<style>
+  /* 添加自定义tooltip样式 */
+  .custom-tooltip {
+    position: fixed; /* 使用fixed定位确保滚动时跟随 */
+    z-index: 9999;
+    display: none;
+    padding: 10px 15px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    min-width: 100px;
+    max-width: 300px;
+    width: auto;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    line-height: 1.5;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    white-space: normal;
+  }
+
+  /* 添加统一的箭头样式 */
+  .custom-tooltip::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid rgba(0, 0, 0, 0.8);
+    bottom: -8px;
+    left: 50%;
+    margin-left: -8px;
+  }
+
+  /* 当tooltip显示在卡片下方时的箭头 */
+  .custom-tooltip.bottom-arrow::after {
+    border-top: none;
+    border-bottom: 8px solid rgba(0, 0, 0, 0.8);
+    top: -8px;
+    bottom: auto;
+  }
+
+  /* 添加多行显示样式 */
+  .custom-tooltip.multiline {
+    width: 300px;
+  }
+</style>
 {% endblock %} {% block content %} {# 顶部导航栏 #}
 <div class="top-navbar">
   <div class="menu-toggle" id="menuToggle">
@@ -213,6 +261,9 @@ render_icon(icon_name='folder', color='#3498db') %}
           class="site-card {% if current_user.is_authenticated and current_user.is_admin %}draggable{% endif %}"
           data-id="{{ website.id }}"
           data-sort="{{ website.sort_order|default(loop.index0*10) }}"
+          title="{{ website.description }}"
+          data-bs-toggle="tooltip"
+          data-bs-title="{{ website.description }}"
         >
           {% if website.is_private %}
           <div class="private-badge" title="私有链接">
@@ -491,4 +542,157 @@ render_icon(icon_name='folder', color='#3498db') %}
 {% if current_user.is_authenticated and current_user.is_admin %}
 <script src="{{ url_for('static', filename='js/dragSort.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quickAdd.js') }}"></script>
-{% endif %} {% endblock %}
+{% endif %}
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 移除可能存在的旧tooltip
+    const oldTooltips = document.querySelectorAll(".custom-tooltip");
+    oldTooltips.forEach((tooltip) => tooltip.remove());
+
+    // 创建单个全局tooltip元素
+    const tooltip = document.createElement("div");
+    tooltip.classList.add("custom-tooltip");
+    document.body.appendChild(tooltip);
+
+    // 全局变量跟踪上次显示的卡片
+    let lastDisplayedCard = null;
+
+    // 获取所有网站卡片
+    const siteCards = document.querySelectorAll(".site-card");
+
+    // 存储当前激活的卡片
+    let activeCard = null;
+
+    // 为图标添加错误处理
+    document.querySelectorAll(".site-icon img").forEach((img) => {
+      img.onerror = function () {
+        this.style.display = "none";
+        const icon = document.createElement("i");
+        icon.className = "bi bi-globe text-primary";
+        this.parentNode.appendChild(icon);
+      };
+    });
+
+    // 更新tooltip位置
+    function updateTooltipPosition(card) {
+      const description = card.getAttribute("data-description");
+      if (!description) return;
+
+      // 获取卡片位置
+      const cardRect = card.getBoundingClientRect();
+
+      // 设置tooltip内容
+      tooltip.textContent = description;
+
+      // 判断是否需要多行显示
+      if (description.length > 50) {
+        tooltip.classList.add("multiline");
+        tooltip.style.width = "300px";
+      } else {
+        tooltip.classList.remove("multiline");
+
+        // 确保隐藏状态并重置宽度进行测量
+        const oldDisplay = tooltip.style.display;
+        tooltip.style.display = "block";
+        tooltip.style.visibility = "hidden";
+        tooltip.style.width = "auto";
+
+        // 获取实际宽度
+        const tempWidth = tooltip.offsetWidth;
+        const tooltipWidth = Math.max(Math.min(tempWidth, 300), 100);
+
+        // 恢复原来的显示状态
+        tooltip.style.visibility = "visible";
+        tooltip.style.display = oldDisplay;
+
+        // 设置宽度
+        tooltip.style.width = tooltipWidth + "px";
+      }
+
+      // 检查下方空间是否足够
+      const bottomSpace = window.innerHeight - cardRect.bottom;
+      const tooltipHeight = tooltip.offsetHeight;
+
+      // 计算tooltip的初始位置（水平居中对齐卡片）
+      const tooltipWidth = tooltip.offsetWidth;
+      let leftPos = cardRect.left + cardRect.width / 2 - tooltipWidth / 2;
+
+      // 边界检查 - 水平方向
+      if (leftPos < 10) {
+        leftPos = 10;
+      } else if (leftPos + tooltipWidth > window.innerWidth - 10) {
+        leftPos = window.innerWidth - tooltipWidth - 10;
+      }
+
+      tooltip.style.left = leftPos + "px";
+
+      // 优先显示在下方（除非空间不足）
+      if (bottomSpace >= tooltipHeight + 15) {
+        // 显示在下方，箭头指向上方
+        tooltip.style.top = cardRect.bottom + 10 + "px";
+        tooltip.classList.add("bottom-arrow");
+      } else {
+        // 下方空间不足，显示在上方，箭头指向下方
+        tooltip.style.top = cardRect.top - tooltipHeight - 10 + "px";
+        tooltip.classList.remove("bottom-arrow");
+
+        // 检查上方空间是否足够，如果不够就再次调整
+        if (cardRect.top < tooltipHeight + 15) {
+          // 上下都不够空间，强制显示在下方并调整垂直位置
+          tooltip.style.top = window.innerHeight - tooltipHeight - 10 + "px";
+          tooltip.classList.add("bottom-arrow");
+        }
+      }
+    }
+
+    // 监听鼠标事件
+    siteCards.forEach((card) => {
+      const description = card.getAttribute("title");
+
+      // 保存描述到自定义属性
+      if (description && description.trim()) {
+        card.setAttribute("data-description", description);
+      }
+
+      // 移除原始title以避免浏览器默认tooltip
+      card.removeAttribute("title");
+      card.removeAttribute("data-bs-toggle");
+      card.removeAttribute("data-bs-title");
+
+      if (description && description.trim()) {
+        card.addEventListener("mouseenter", function (e) {
+          // 重置之前的卡片
+          if (lastDisplayedCard && lastDisplayedCard !== card) {
+            tooltip.style.display = "none";
+          }
+
+          activeCard = card;
+          lastDisplayedCard = card;
+          tooltip.style.display = "block";
+          updateTooltipPosition(card);
+        });
+
+        card.addEventListener("mouseleave", function () {
+          tooltip.style.display = "none";
+          activeCard = null;
+        });
+      }
+    });
+
+    // 监听滚动事件
+    window.addEventListener("scroll", function () {
+      if (activeCard) {
+        updateTooltipPosition(activeCard);
+      }
+    });
+
+    // 监听窗口大小变化
+    window.addEventListener("resize", function () {
+      if (activeCard) {
+        updateTooltipPosition(activeCard);
+      }
+    });
+  });
+</script>
+{% endblock %}
