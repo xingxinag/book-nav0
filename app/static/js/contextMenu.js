@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const contextMenu = document.getElementById("contextMenu");
   const editLinkBtn = document.getElementById("editLink");
   const visitLinkBtn = document.getElementById("visitLink");
-  const addFavoriteBtn = document.getElementById("addFavorite");
+  const addLinkBtn = document.getElementById("addLink");
   const shareSiteBtn = document.getElementById("shareSite");
   const deleteLinkBtn = document.getElementById("deleteLink");
 
@@ -40,37 +40,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
-  // 添加收藏按钮点击事件
-  if (addFavoriteBtn) {
-    addFavoriteBtn.addEventListener("click", function () {
-      if (window.currentCard) {
-        // 隐藏上下文菜单
-        contextMenu.style.display = "none";
-
-        const cardId = window.currentCard.href.split("/").pop();
-        const cardTitle =
-          window.currentCard.querySelector(".site-title").textContent;
-
-        // 发送添加收藏的请求
-        fetch(`/api/favorite/add/${cardId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              alert(`已将"${cardTitle}"添加到收藏!`);
-            } else {
-              alert(data.message || "添加收藏失败，请重试");
-            }
-          })
-          .catch((error) => {
-            console.error("添加收藏出错:", error);
-            alert("添加收藏时发生错误，请重试");
-          });
-      }
+  // 添加链接按钮点击事件
+  if (addLinkBtn) {
+    addLinkBtn.addEventListener("click", function () {
+      // 隐藏上下文菜单
+      contextMenu.style.display = "none";
+      // 跳转到添加网站页面
+      window.location.href = "/admin/website/add";
     });
   }
 
