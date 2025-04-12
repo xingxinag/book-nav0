@@ -124,7 +124,7 @@ async function submitQuickAdd() {
   const url = document.getElementById("quickAddUrl").value.trim();
 
   try {
-    // 检查URL是否已存在
+    // 检查URL是否已存在（这里是新增，不需要排除ID）
     const checkResponse = await fetch(
       `/api/check_url_exists?url=${encodeURIComponent(url)}`
     );

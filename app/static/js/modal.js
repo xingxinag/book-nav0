@@ -87,11 +87,13 @@ document.addEventListener("DOMContentLoaded", function () {
     try {
       // 检查URL是否已存在（排除当前编辑的链接）
       const checkResponse = await fetch(
-        `/api/check_url_exists?url=${encodeURIComponent(url)}`
+        `/api/check_url_exists?url=${encodeURIComponent(
+          url
+        )}&exclude_id=${siteId}`
       );
       const checkResult = await checkResponse.json();
 
-      if (checkResult.exists && checkResult.website.id !== parseInt(siteId)) {
+      if (checkResult.exists) {
         const confirmUpdate = confirm(
           `该链接已存在于分类"${checkResult.website.category_name}"中，标题为"${checkResult.website.title}"。\n\n是否仍要保存？`
         );

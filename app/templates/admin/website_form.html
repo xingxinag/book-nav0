@@ -67,7 +67,13 @@
         </div>
         <div class="card-body">
           <form method="POST" action="">
-            {{ form.hidden_tag() }}
+            {{ form.hidden_tag() }} {% if form.title.data %}
+            <input
+              type="hidden"
+              id="website_id"
+              value="{{ request.view_args.id }}"
+            />
+            {% endif %}
             <div class="mb-3">
               {{ form.title.label(class="form-label") }} {{
               form.title(class="form-control", placeholder="请输入网站名称") }}
@@ -316,9 +322,18 @@
     // 检查URL是否存在
     async function checkUrlExists(url) {
       try {
-        const response = await fetch(
-          `/api/check_url_exists?url=${encodeURIComponent(url)}`
-        );
+        // 如果是编辑模式，需要排除当前网站ID
+        const currentWebsiteId = document.getElementById("website_id")
+          ? document.getElementById("website_id").value
+          : null;
+        let apiUrl = `/api/check_url_exists?url=${encodeURIComponent(url)}`;
+
+        // 如果是编辑模式且有ID，添加排除参数
+        if (currentWebsiteId) {
+          apiUrl += `&exclude_id=${currentWebsiteId}`;
+        }
+
+        const response = await fetch(apiUrl);
         return await response.json();
       } catch (error) {
         console.error("检查URL失败:", error);

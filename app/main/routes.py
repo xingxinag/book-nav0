@@ -632,6 +632,8 @@ def quick_add_website():
 def check_url_exists():
     """检查URL是否已存在"""
     url = request.args.get('url', '').strip()
+    exclude_id = request.args.get('exclude_id', None)
+    
     if not url:
         return jsonify({'exists': False, 'message': '请提供URL'})
     
@@ -639,14 +641,22 @@ def check_url_exists():
     if url.endswith('/'):
         url = url[:-1]
     
-    # 查找是否存在相同的URL
-    website = Website.query.filter(Website.url.in_([url, url + '/'])).first()
+    # 构建查询
+    query = Website.query.filter(Website.url.in_([url, url + '/']))
+    
+    # 如果提供了exclude_id，排除该ID的网站
+    if exclude_id and exclude_id.isdigit():
+        query = query.filter(Website.id != int(exclude_id))
+    
+    # 执行查询
+    website = query.first()
     
     if website:
         return jsonify({
             'exists': True,
             'message': '该链接已存在',
             'website': {
+                'id': website.id,
                 'title': website.title,
                 'category_name': website.category.name if website.category else None
             }
