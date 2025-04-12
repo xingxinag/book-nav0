@@ -1,7 +1,23 @@
 {% extends "base.html" %} {% block head %}
 <link
   rel="stylesheet"
+  href="{{ url_for('static', filename='css/variables.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/layout.css') }}"
+/>
+<link
+  rel="stylesheet"
   href="{{ url_for('static', filename='css/card.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/contextMenu.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/modal.css') }}"
 />
 <style>
   .category-header {
@@ -34,29 +50,6 @@
 
   .category-description {
     color: #6c757d;
-  }
-
-  /* 拖拽指导信息 */
-  .drag-instructions {
-    background-color: #e9f5ff;
-    color: #0c63e4;
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .drag-instructions.active {
-    opacity: 1;
-  }
-
-  .drag-instructions i {
-    margin-right: 5px;
-    font-size: 16px;
   }
 </style>
 {% endblock %} {% block content %}
@@ -91,13 +84,7 @@
   </div>
 
   <div class="row">
-    {% if current_user.is_authenticated and current_user.is_admin %}
-    <div class="col-12 mb-3">
-      <div class="drag-instructions active">
-        <i class="bi bi-info-circle-fill me-1"></i>
-      </div>
-    </div>
-    {% endif %}
+    {% if current_user.is_authenticated and current_user.is_admin %} {% endif %}
 
     <div
       class="card-container {% if current_user.is_authenticated and current_user.is_admin %}draggable{% endif %}"
@@ -140,6 +127,116 @@
         </div>
       </div>
       {% endfor %}
+    </div>
+  </div>
+</div>
+
+{# 卡片右键菜单 #}
+<div id="contextMenu" class="context-menu" style="display: none">
+  <div class="context-menu-item" id="visitLink">
+    <i class="bi bi-box-arrow-up-right"></i> 访问链接
+  </div>
+  {% if current_user.is_authenticated %} {% if current_user.is_admin %}
+  <div class="context-menu-item" id="editLink">
+    <i class="bi bi-pencil"></i> 修改链接
+  </div>
+  <div class="context-menu-item" id="addLink">
+    <i class="bi bi-plus-circle"></i> 添加链接
+  </div>
+  <div class="context-menu-item" id="deleteLink">
+    <i class="bi bi-trash"></i> 删除链接
+  </div>
+  {% endif %}
+  <div class="context-menu-item" id="shareSite">
+    <i class="bi bi-share"></i> 分享
+  </div>
+  {% endif %}
+</div>
+
+{# 修改链接对话框 #}
+<div class="modal-overlay" id="editLinkModal" style="display: none">
+  <div class="edit-modal">
+    <div class="modal-header">
+      <h4>修改链接</h4>
+      <button class="modal-close" id="closeModal">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="editLinkForm">
+        <div class="form-group">
+          <label for="editTitle">标题</label>
+          <input type="text" id="editTitle" class="modal-input" required />
+        </div>
+        <div class="form-group">
+          <label for="editUrl">链接地址</label>
+          <div class="url-input-group">
+            <input type="url" id="editUrl" class="modal-input" required />
+            <button
+              type="button"
+              id="fetchInfo"
+              class="icon-fetch-btn"
+              title="获取网站信息"
+            >
+              <i class="bi bi-cloud-download"></i>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="editIcon">图标地址</label>
+          <input
+            type="url"
+            id="editIcon"
+            class="modal-input"
+            placeholder="输入图标URL或留空使用默认图标"
+          />
+        </div>
+        <div class="form-group">
+          <label for="editDescription">描述</label>
+          <textarea
+            id="editDescription"
+            class="modal-input"
+            rows="5"
+          ></textarea>
+        </div>
+        <div class="form-group">
+          <label>访问权限</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="editPrivacy"
+                id="editPublic"
+                value="0"
+                checked
+              />
+              <label class="form-check-label" for="editPublic">
+                <i class="bi bi-globe"></i> 公开
+              </label>
+            </div>
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="radio"
+                name="editPrivacy"
+                id="editPrivate"
+                value="1"
+              />
+              <label class="form-check-label" for="editPrivate">
+                <i class="bi bi-lock"></i> 私有
+              </label>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="editLinkId" />
+        <div class="modal-actions">
+          <button type="button" class="modal-btn cancel" id="cancelEdit">
+            取消
+          </button>
+          <button type="submit" class="modal-btn save">保存</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -448,4 +545,7 @@ current_user.is_admin %}
     });
   });
 </script>
+
+<script src="{{ url_for('static', filename='js/contextMenu.js') }}"></script>
+<script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 {% endblock %}
