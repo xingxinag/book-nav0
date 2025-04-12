@@ -265,6 +265,8 @@ body {
   width: calc(20% - 20px);
   display: block;
   position: relative;
+  border: 3px solid transparent;
+  box-sizing: border-box;
 }
 
 /* 调整不同屏幕尺寸下卡片宽度 */
@@ -311,7 +313,9 @@ body {
 
 .site-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(74, 136, 252, 0.3);
+  border: 0px solid #4a88fc;
+  filter: drop-shadow(0 0 5px rgba(74, 136, 252, 0.5));
 }
 
 /* 卡片拖拽样式 */
