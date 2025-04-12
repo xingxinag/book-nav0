@@ -270,9 +270,9 @@ render_icon(icon_name='folder', color='#3498db') %}
   {# 快速添加链接对话框 #} {% if current_user.is_authenticated and
   current_user.is_admin %}
   <div id="quickAddModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content quick-add-modal">
       <div class="modal-header">
-        <h5>快速添加链接</h5>
+        <h5><i class="bi bi-plus-circle me-2"></i>快速添加链接</h5>
         <button
           type="button"
           class="btn-close"
@@ -280,85 +280,117 @@ render_icon(icon_name='folder', color='#3498db') %}
         ></button>
       </div>
       <div class="modal-body">
-        <div class="mb-3">
-          <label class="form-label">网站标题</label>
-          <input type="text" id="quickAddTitle" class="form-control" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">网站链接</label>
-          <input type="text" id="quickAddUrl" class="form-control" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">网站图标</label>
-          <div class="d-flex align-items-center">
-            <img
-              id="quickAddIconPreview"
-              src=""
-              alt=""
-              style="
-                width: 24px;
-                height: 24px;
-                margin-right: 10px;
-                display: none;
-              "
+        <div class="row g-3">
+          <div class="col-md-12">
+            <label class="form-label">网站标题</label>
+            <input
+              type="text"
+              id="quickAddTitle"
+              class="form-control"
+              placeholder="请输入网站标题"
             />
-            <input type="text" id="quickAddIcon" class="form-control" />
           </div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">网站描述</label>
-          <textarea
-            id="quickAddDescription"
-            class="form-control"
-            rows="3"
-          ></textarea>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">访问权限</label>
-          <div class="d-flex gap-3">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="quickAddPrivacy"
-                id="quickAddPublic"
-                value="0"
-                checked
-              />
-              <label class="form-check-label" for="quickAddPublic">
-                <i class="bi bi-globe"></i> 公开
-              </label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="quickAddPrivacy"
-                id="quickAddPrivate"
-                value="1"
-              />
-              <label class="form-check-label" for="quickAddPrivate">
-                <i class="bi bi-lock"></i> 私有
-              </label>
+
+          <div class="col-md-12">
+            <label class="form-label"
+              >所属分类 <span class="text-danger">*</span></label
+            >
+            <div class="category-select-container">
+              <select id="quickAddCategory" class="form-select" required>
+                <option value="">请选择分类</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+              </select>
             </div>
           </div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label"
-            >所属分类 <span class="text-danger">*</span></label
-          >
-          <select id="quickAddCategory" class="form-select" required>
-            <option value="">请选择分类</option>
-            {% for category in categories %}
-            <option value="{{ category.id }}">{{ category.name }}</option>
-            {% endfor %}
-          </select>
+
+          <div class="col-md-12">
+            <label class="form-label">网站链接</label>
+            <input
+              type="text"
+              id="quickAddUrl"
+              class="form-control"
+              placeholder="https://example.com"
+            />
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">网站图标</label>
+            <div class="input-group">
+              <span
+                class="input-group-text p-0 border-0 bg-transparent"
+                style="width: 32px"
+              >
+                <img
+                  id="quickAddIconPreview"
+                  src=""
+                  alt=""
+                  style="
+                    width: 24px;
+                    height: 24px;
+                    object-fit: contain;
+                    display: none;
+                  "
+                />
+              </span>
+              <input
+                type="text"
+                id="quickAddIcon"
+                class="form-control"
+                placeholder="图标URL（自动获取）"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">网站描述</label>
+            <textarea
+              id="quickAddDescription"
+              class="form-control"
+              rows="2"
+              placeholder="简要描述网站内容和功能"
+            ></textarea>
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">访问权限</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="quickAddPrivacy"
+                  id="quickAddPublic"
+                  value="0"
+                  checked
+                />
+                <label class="form-check-label" for="quickAddPublic">
+                  <i class="bi bi-globe"></i> 公开
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="quickAddPrivacy"
+                  id="quickAddPrivate"
+                  value="1"
+                />
+                <label class="form-check-label" for="quickAddPrivate">
+                  <i class="bi bi-lock"></i> 私有
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <input type="hidden" id="quickAddWeight" value="1" />
         </div>
       </div>
       <div class="modal-footer">
         <button
           type="button"
-          class="btn btn-secondary"
+          class="btn btn-outline-secondary"
           onclick="closeQuickAddModal()"
         >
           取消
@@ -368,7 +400,7 @@ render_icon(icon_name='folder', color='#3498db') %}
           class="btn btn-primary"
           onclick="submitQuickAdd()"
         >
-          添加
+          <i class="bi bi-plus-lg me-1"></i>添加
         </button>
       </div>
     </div>

@@ -100,6 +100,7 @@ function closeQuickAddModal() {
   document.getElementById("quickAddIcon").value = "";
   document.getElementById("quickAddIconPreview").style.display = "none";
   document.getElementById("quickAddCategory").value = "";
+  document.getElementById("quickAddWeight").value = "1"; // 重置权重为默认值
 }
 
 function setQuickAddLoading(isLoading) {
@@ -151,6 +152,8 @@ async function submitQuickAdd() {
       icon: document.getElementById("quickAddIcon").value.trim(),
       category_id: parseInt(categoryId),
       is_private: document.getElementById("quickAddPrivate").checked ? 1 : 0,
+      sort_order:
+        parseInt(document.getElementById("quickAddWeight").value) || 1,
     };
 
     const response = await fetch("/api/website/quick-add", {
@@ -175,7 +178,8 @@ async function submitQuickAdd() {
     console.error("提交失败:", error);
     alert("提交失败，请重试");
   } finally {
+    const submitBtn = document.querySelector("#quickAddModal .btn-primary");
     submitBtn.disabled = false;
-    submitBtn.innerHTML = "添加";
+    submitBtn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>添加';
   }
 }
