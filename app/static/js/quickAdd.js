@@ -4,6 +4,12 @@ document.addEventListener("paste", async function (e) {
     return;
   }
 
+  // 如果编辑链接窗口打开中，不触发快速添加
+  const editLinkModal = document.getElementById("editLinkModal");
+  if (editLinkModal && editLinkModal.style.display === "flex") {
+    return;
+  }
+
   // 获取剪贴板内容
   const clipboardData = e.clipboardData || window.clipboardData;
   const pastedData = clipboardData.getData("text");

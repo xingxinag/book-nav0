@@ -6,7 +6,7 @@
   box-shadow: var(--shadow-md);
   padding: var(--spacing-xs) 0;
   min-width: 150px;
-  z-index: 1050;
+  z-index: 10000;
   border: 1px solid rgba(112, 73, 240, 0.1);
   animation: menuFadeIn 0.2s ease;
 }
