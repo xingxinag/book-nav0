@@ -13,8 +13,8 @@
   padding: 0.8rem;
   text-decoration: none;
   color: var(--text-primary);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 3px solid transparent;
+  transition: box-shadow 0.3s ease;
+  border: 1px solid transparent;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: hidden;
@@ -50,7 +50,7 @@
 }
 */
 .site-card:hover {
-  box-shadow: 0 0 0 2.5px rgba(126, 37, 227, 0.6) inset; /* 鼠标悬停时加深边框颜色，但保持相同风格 */
+  box-shadow: 0 0 0 1.5px rgba(126, 37, 227, 0.6) inset; /* 鼠标悬停时加深边框颜色，但保持相同风格 */
 }
 
 /* 卡片头部 */
