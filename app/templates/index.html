@@ -498,16 +498,6 @@ render_icon(icon_name='folder', color='#3498db') %}
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // 为图标添加错误处理
-    document.querySelectorAll(".site-icon img").forEach((img) => {
-      img.onerror = function () {
-        this.style.display = "none";
-        const icon = document.createElement("i");
-        icon.className = "bi bi-globe text-primary";
-        this.parentNode.appendChild(icon);
-      };
-    });
-
     // 初始化所有Bootstrap tooltips
     var tooltipTriggerList = [].slice.call(
       document.querySelectorAll('[data-bs-toggle="tooltip"]')
@@ -518,6 +508,8 @@ render_icon(icon_name='folder', color='#3498db') %}
         fallbackPlacements: ["top"],
       });
     });
+
+    // 注意：图标错误处理已移至base.html全局处理
   });
 </script>
 {% endblock %}
