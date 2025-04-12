@@ -8,14 +8,14 @@
 
 /* 网站卡片 */
 .site-card {
-  background: var(--bg-secondary);
-  border-radius: var(--border-radius);
+  background: white;
+  border-radius: 15px;
   padding: 1rem;
   text-decoration: none;
   color: var(--text-primary);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(0, 0, 0, 0.03);
-  box-shadow: var(--shadow-sm);
+  border: 3px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: hidden;
   margin: 0.5rem;
@@ -25,7 +25,7 @@
   display: flex;
 }
 
-/* 卡片光效果 */
+/* 卡片光效果 
 .site-card::before {
   content: "";
   position: absolute;
@@ -48,13 +48,9 @@
 .site-card:hover::before {
   transform: translateX(100%);
 }
-
+*/
 .site-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
-  border-color: rgba(112, 73, 240, 0.2);
-  text-decoration: none;
-  color: inherit;
+  box-shadow: 0 0 0 2.5px rgba(126, 37, 227, 0.6) inset; /* 鼠标悬停时加深边框颜色，但保持相同风格 */
 }
 
 /* 卡片头部 */
@@ -85,12 +81,6 @@
   overflow: hidden;
 }
 
-.site-card:hover .site-icon {
-  transform: scale(1.02);
-  border-color: rgba(112, 73, 240, 0.2);
-  box-shadow: 0 2px 4px rgba(112, 73, 240, 0.1);
-}
-
 .site-icon img {
   width: 75%;
   height: 75%;
@@ -98,19 +88,10 @@
   transition: transform 0.3s ease;
 }
 
-.site-card:hover .site-icon img {
-  transform: scale(1.1);
-}
-
 .site-icon i {
   font-size: 24px;
   color: var(--primary-color);
   transition: all 0.3s ease;
-}
-
-.site-card:hover .site-icon i {
-  transform: scale(1.1);
-  color: var(--secondary-color);
 }
 
 /* 网站文本 */
