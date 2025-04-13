@@ -461,101 +461,133 @@ render_icon(icon_name='folder', color='#3498db') %}
 <div class="modal-overlay" id="editLinkModal" style="display: none">
   <div class="edit-modal">
     <div class="modal-header">
-      <h4>修改链接</h4>
+      <h5><i class="bi bi-pencil me-2"></i>修改链接</h5>
       <button class="modal-close" id="closeModal">
         <i class="bi bi-x"></i>
       </button>
     </div>
     <div class="modal-body">
       <form id="editLinkForm">
-        <div class="form-group">
-          <label for="editTitle">标题</label>
-          <input type="text" id="editTitle" class="modal-input" required />
-        </div>
+        <div class="row g-3">
+          <div class="col-md-12">
+            <label class="form-label">网站标题</label>
+            <input type="text" id="editTitle" class="form-control" required />
+          </div>
 
-        <div class="form-group">
-          <label for="editCategory">所属分类</label>
-          <select id="editCategory" class="modal-input">
-            <option value="">请选择分类</option>
-            {% for category in categories %} {% if category.parent_id is none %}
-            <option value="{{ category.id }}">{{ category.name }}</option>
-            {% for child in category.children %}
-            <option value="{{ child.id }}">
-              &nbsp;&nbsp;└ {{ child.name }}
-            </option>
-            {% endfor %} {% endif %} {% endfor %}
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="editUrl">链接地址</label>
-          <div class="url-input-group">
-            <input type="url" id="editUrl" class="modal-input" required />
-            <button
-              type="button"
-              id="fetchInfo"
-              class="icon-fetch-btn"
-              title="获取网站信息"
+          <div class="col-md-12">
+            <label class="form-label"
+              >所属分类 <span class="text-danger">*</span></label
             >
-              <i class="bi bi-cloud-download"></i>
-            </button>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="editIcon">图标地址</label>
-          <input
-            type="url"
-            id="editIcon"
-            class="modal-input"
-            placeholder="输入图标URL或留空使用默认图标"
-          />
-        </div>
-        <div class="form-group">
-          <label for="editDescription">描述</label>
-          <textarea
-            id="editDescription"
-            class="modal-input"
-            rows="5"
-          ></textarea>
-        </div>
-        <div class="form-group">
-          <label>访问权限</label>
-          <div class="d-flex gap-3">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="editPrivacy"
-                id="editPublic"
-                value="0"
-                checked
-              />
-              <label class="form-check-label" for="editPublic">
-                <i class="bi bi-globe"></i> 公开
-              </label>
-            </div>
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="radio"
-                name="editPrivacy"
-                id="editPrivate"
-                value="1"
-              />
-              <label class="form-check-label" for="editPrivate">
-                <i class="bi bi-lock"></i> 私有
-              </label>
+            <div class="category-select-container">
+              <select id="editCategory" class="form-select" required>
+                <option value="">请选择分类</option>
+                {% for category in categories %} {% if category.parent_id is
+                none %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% for child in category.children %}
+                <option value="{{ child.id }}">
+                  &nbsp;&nbsp;└ {{ child.name }}
+                </option>
+                {% endfor %} {% endif %} {% endfor %}
+              </select>
             </div>
           </div>
-        </div>
-        <input type="hidden" id="editLinkId" />
-        <div class="modal-actions">
-          <button type="button" class="modal-btn cancel" id="cancelEdit">
-            取消
-          </button>
-          <button type="submit" class="modal-btn save">保存</button>
+
+          <div class="col-md-12">
+            <label class="form-label">链接地址</label>
+            <div class="input-group">
+              <input type="url" id="editUrl" class="form-control" required />
+              <button
+                type="button"
+                id="fetchInfo"
+                class="btn btn-outline-secondary"
+                title="获取网站信息"
+              >
+                <i class="bi bi-cloud-download"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">网站图标</label>
+            <div class="input-group">
+              <span
+                class="input-group-text p-0 border-0 bg-transparent"
+                style="width: 32px"
+              >
+                <img
+                  id="editIconPreview"
+                  src=""
+                  alt=""
+                  style="
+                    width: 24px;
+                    height: 24px;
+                    object-fit: contain;
+                    display: none;
+                  "
+                />
+              </span>
+              <input
+                type="url"
+                id="editIcon"
+                class="form-control"
+                placeholder="图标URL（自动获取）"
+              />
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">网站描述</label>
+            <textarea
+              id="editDescription"
+              class="form-control"
+              rows="1"
+              placeholder="简要描述网站内容和功能"
+            ></textarea>
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label">访问权限</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="editPrivacy"
+                  id="editPublic"
+                  value="0"
+                  checked
+                />
+                <label class="form-check-label" for="editPublic">
+                  <i class="bi bi-globe"></i> 公开
+                </label>
+              </div>
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="editPrivacy"
+                  id="editPrivate"
+                  value="1"
+                />
+                <label class="form-check-label" for="editPrivate">
+                  <i class="bi bi-lock"></i> 私有
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <input type="hidden" id="editLinkId" />
         </div>
       </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-secondary" id="cancelEdit">
+        取消
+      </button>
+      <button type="submit" form="editLinkForm" class="btn btn-primary">
+        <i class="bi bi-check-lg me-1"></i>保存
+      </button>
     </div>
   </div>
 </div>
