@@ -1,4 +1,13 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/iconPicker.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/colorPicker.css') }}"
+/>
+{% endblock %} {% block content %}
 <div class="container">
   <div class="row">
     <div class="col-md-3">
@@ -62,10 +71,7 @@
                   <div class="text-danger small">{{ error }}</div>
                   {% endfor %}
                   <div class="form-text">
-                    <a href="https://icons.getbootstrap.com/" target="_blank"
-                      >查看可用图标</a
-                    >
-                    （使用图标名称，不需要bi-前缀）
+                    选择Bootstrap图标，无需添加bi-前缀
                   </div>
                 </div>
               </div>
@@ -76,31 +82,57 @@
                   rgba(0,0,0,0.5)等") }} {% for error in form.color.errors %}
                   <div class="text-danger small">{{ error }}</div>
                   {% endfor %}
+                  <div class="form-text">选择或输入十六进制颜色代码</div>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  {{ form.order.label(class="form-label") }} {{
+                  form.order(class="form-control", type="number") }} {% for
+                  error in form.order.errors %}
+                  <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
+                  <div class="form-text">数字越小排序越靠前</div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  {{ form.display_limit.label(class="form-label") }} {{
+                  form.display_limit(class="form-control", type="number",
+                  min="1") }} {% for error in form.display_limit.errors %}
+                  <div class="text-danger small">{{ error }}</div>
+                  {% endfor %}
                   <div class="form-text">
-                    使用十六进制颜色代码，例如 #3498db
+                    设置首页该分类显示的链接数量，推荐4-12之间，超过此数量会显示"查看全部"按钮
                   </div>
                 </div>
               </div>
             </div>
-            <div class="mb-3">
-              {{ form.order.label(class="form-label") }} {{
-              form.order(class="form-control", type="number") }} {% for error in
-              form.order.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-              <div class="form-text">数字越小排序越靠前</div>
-            </div>
-            <div class="mb-3">
-              {{ form.display_limit.label(class="form-label") }} {{
-              form.display_limit(class="form-control", type="number", min="1")
-              }} {% for error in form.display_limit.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-              <div class="form-text">
-                设置首页该分类显示的链接数量，推荐4-12之间，超过此数量会显示"查看全部"按钮
+            <div class="row mt-3">
+              <div class="col-md-12">
+                <div class="preview-section">
+                  <label class="form-label">预览效果</label>
+                  <div class="d-flex align-items-center">
+                    <div
+                      id="categoryIconPreview"
+                      class="category-icon me-3"
+                      style="background-color: {{ form.color.data or '#7049f0' }}"
+                    >
+                      <i class="bi bi-{{ form.icon.data or 'folder' }}"></i>
+                    </div>
+                    <div>
+                      <h5 class="mb-0">{{ form.name.data or '分类名称' }}</h5>
+                      <div class="small text-muted">
+                        {{ form.description.data or '分类描述' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="d-flex">
+            <div class="d-flex mt-4">
               <a
                 href="{{ url_for('admin.categories') }}"
                 class="btn btn-outline-secondary me-2"
@@ -115,4 +147,67 @@
     </div>
   </div>
 </div>
+
+<style>
+  .preview-section {
+    background-color: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+
+  .category-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 10px rgba(112, 73, 240, 0.15);
+  }
+</style>
+{% endblock %} {% block scripts %}
+<script src="{{ url_for('static', filename='js/iconPicker.js') }}"></script>
+<script src="{{ url_for('static', filename='js/colorPicker.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 更新预览
+    const nameInput = document.getElementById("name");
+    const descInput = document.getElementById("description");
+    const iconInput = document.getElementById("icon");
+    const colorInput = document.getElementById("color");
+    const iconPreview = document.getElementById("categoryIconPreview");
+    const iconElement = iconPreview.querySelector("i");
+    const namePreview = iconPreview.nextElementSibling.querySelector("h5");
+    const descPreview = iconPreview.nextElementSibling.querySelector(".small");
+
+    function updatePreview() {
+      // 更新图标
+      if (iconInput.value) {
+        iconElement.className = `bi bi-${iconInput.value}`;
+      } else {
+        iconElement.className = "bi bi-folder";
+      }
+
+      // 更新颜色
+      if (colorInput.value) {
+        iconPreview.style.backgroundColor = colorInput.value;
+      } else {
+        iconPreview.style.backgroundColor = "#7049f0";
+      }
+
+      // 更新标题和描述
+      namePreview.textContent = nameInput.value || "分类名称";
+      descPreview.textContent = descInput.value || "分类描述";
+    }
+
+    // 监听输入变化
+    nameInput.addEventListener("input", updatePreview);
+    descInput.addEventListener("input", updatePreview);
+    iconInput.addEventListener("change", updatePreview);
+    colorInput.addEventListener("change", updatePreview);
+  });
+</script>
 {% endblock %}
