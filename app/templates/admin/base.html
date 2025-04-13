@@ -1,0 +1,167 @@
+{% extends "base.html" %} {% block head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin.css') }}"
+/>
+{% block admin_head %}{% endblock %} {% endblock %} {% block content %}
+<div class="admin-wrapper">
+  <!-- 导航栏 -->
+  <nav class="admin-navbar">
+    <div class="navbar-left">
+      <button class="menu-toggle" id="mobileMenuToggle">
+        <i class="bi bi-list"></i>
+      </button>
+      <a href="{{ url_for('admin.index') }}" class="navbar-brand">
+        <span>后台管理</span>
+      </a>
+    </div>
+
+    <div class="navbar-right">
+      <a
+        href="{{ url_for('main.index') }}"
+        class="navbar-link"
+        title="返回前台"
+      >
+        <i class="bi bi-house-door"></i>
+        <span class="d-none d-md-inline">返回前台</span>
+      </a>
+
+      <a href="#" class="navbar-link" id="toggleThemeBtn" title="切换主题">
+        <i class="bi bi-circle-half"></i>
+      </a>
+
+      <div class="dropdown">
+        <button class="navbar-user dropdown-toggle" id="userDropdown">
+          <div class="user-avatar">{{ current_user.username[0] | upper }}</div>
+          <span class="d-none d-md-inline">{{ current_user.username }}</span>
+        </button>
+        <ul class="dropdown-menu" id="userDropdownMenu">
+          <li>
+            <a href="{{ url_for('auth.logout') }}"
+              ><i class="bi bi-box-arrow-right"></i> 退出登录</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 包含侧边栏 -->
+  {% include 'admin/common/sidebar.html' %}
+
+  <!-- 主内容区域 -->
+  <main class="admin-main">
+    <div class="admin-container">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div
+        class="alert alert-{{ category }} alert-dismissible fade show mb-4"
+        role="alert"
+      >
+        {{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          aria-label="Close"
+        ></button>
+      </div>
+      {% endfor %} {% endif %} {% endwith %} {% block admin_content %}{%
+      endblock %}
+    </div>
+  </main>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 侧边栏切换功能
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const adminWrapper = document.querySelector(".admin-wrapper");
+    const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+    // 检查本地存储中的侧边栏状态
+    const sidebarCollapsed =
+      localStorage.getItem("sidebar-collapsed") === "true";
+    if (sidebarCollapsed) {
+      adminWrapper.classList.add("sidebar-collapsed");
+      updateToggleIcon(true);
+    }
+
+    // 侧边栏折叠/展开切换
+    sidebarToggle.addEventListener("click", function () {
+      adminWrapper.classList.toggle("sidebar-collapsed");
+      const isCollapsed = adminWrapper.classList.contains("sidebar-collapsed");
+      localStorage.setItem("sidebar-collapsed", isCollapsed);
+      updateToggleIcon(isCollapsed);
+    });
+
+    // 移动端菜单开关
+    mobileMenuToggle.addEventListener("click", function () {
+      adminWrapper.classList.toggle("sidebar-mobile-open");
+    });
+
+    // 点击遮罩层关闭侧边栏
+    sidebarOverlay.addEventListener("click", function () {
+      adminWrapper.classList.remove("sidebar-mobile-open");
+    });
+
+    // 更新切换图标方向
+    function updateToggleIcon(isCollapsed) {
+      const icon = sidebarToggle.querySelector("i");
+      if (isCollapsed) {
+        icon.classList.remove("bi-chevron-left");
+        icon.classList.add("bi-chevron-right");
+      } else {
+        icon.classList.remove("bi-chevron-right");
+        icon.classList.add("bi-chevron-left");
+      }
+    }
+
+    // 用户下拉菜单
+    const userDropdown = document.getElementById("userDropdown");
+    const userDropdownMenu = document.getElementById("userDropdownMenu");
+
+    userDropdown.addEventListener("click", function (e) {
+      e.stopPropagation();
+      userDropdownMenu.classList.toggle("show");
+    });
+
+    // 点击其他区域关闭下拉菜单
+    document.addEventListener("click", function () {
+      userDropdownMenu.classList.remove("show");
+    });
+
+    // 主题切换功能
+    const toggleThemeBtn = document.getElementById("toggleThemeBtn");
+    const htmlElement = document.documentElement;
+
+    // 检查本地存储中的主题设置
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme) {
+      htmlElement.setAttribute("data-theme", savedTheme);
+      updateThemeIcon(savedTheme);
+    }
+
+    toggleThemeBtn.addEventListener("click", function () {
+      const currentTheme = htmlElement.getAttribute("data-theme") || "light";
+      const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+      htmlElement.setAttribute("data-theme", newTheme);
+      localStorage.setItem("theme", newTheme);
+      updateThemeIcon(newTheme);
+    });
+
+    function updateThemeIcon(theme) {
+      const icon = toggleThemeBtn.querySelector("i");
+      if (theme === "dark") {
+        icon.classList.remove("bi-moon");
+        icon.classList.add("bi-sun");
+      } else {
+        icon.classList.remove("bi-sun");
+        icon.classList.add("bi-moon");
+      }
+    }
+  });
+</script>
+{% block admin_scripts %}{% endblock %} {% endblock %}
