@@ -68,10 +68,6 @@ class IconPicker {
         <div class="icon-preview-box">
           <i class="bi"></i>
         </div>
-        <div>
-          <button type="button" class="btn btn-sm btn-outline-secondary" id="iconPickerCancel">取消</button>
-          <button type="button" class="btn btn-sm btn-primary" id="iconPickerConfirm">确认选择</button>
-        </div>
       </div>
     `;
     this.container.appendChild(this.dropdown);
@@ -80,8 +76,6 @@ class IconPicker {
     this.iconBody = this.dropdown.querySelector(".icon-picker-body");
     this.searchInput = this.dropdown.querySelector(".icon-picker-search input");
     this.previewIcon = this.dropdown.querySelector(".icon-preview-box i");
-    this.cancelBtn = this.dropdown.querySelector("#iconPickerCancel");
-    this.confirmBtn = this.dropdown.querySelector("#iconPickerConfirm");
     this.categoryBtns = this.dropdown.querySelectorAll(".icon-category-btn");
   }
 
@@ -336,16 +330,6 @@ class IconPicker {
       });
     });
 
-    // 取消按钮
-    this.cancelBtn.addEventListener("click", () => {
-      this.closeDropdown();
-    });
-
-    // 确认按钮
-    this.confirmBtn.addEventListener("click", () => {
-      this.confirmSelection();
-    });
-
     // 点击外部关闭
     document.addEventListener("click", (e) => {
       if (!this.container.contains(e.target)) {
@@ -444,6 +428,9 @@ class IconPicker {
 
     // 更新预览图标
     this.previewIcon.className = `bi bi-${icon}`;
+
+    // 立即应用选择
+    this.confirmSelection();
   }
 
   confirmSelection() {

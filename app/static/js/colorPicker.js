@@ -82,10 +82,6 @@ class ColorPicker {
         <div class="color-preview-box">
           <i class="bi bi-folder"></i>
         </div>
-        <div>
-          <button type="button" class="btn btn-sm btn-outline-secondary" id="colorPickerCancel">取消</button>
-          <button type="button" class="btn btn-sm btn-primary" id="colorPickerConfirm">确认选择</button>
-        </div>
       </div>
     `;
     this.container.appendChild(this.dropdown);
@@ -95,8 +91,6 @@ class ColorPicker {
     this.colorInputText = this.dropdown.querySelector("#colorInputText");
     this.colorPresets = this.dropdown.querySelector("#colorPresets");
     this.previewBox = this.dropdown.querySelector(".color-preview-box");
-    this.cancelBtn = this.dropdown.querySelector("#colorPickerCancel");
-    this.confirmBtn = this.dropdown.querySelector("#colorPickerConfirm");
     this.themeColors = this.dropdown.querySelectorAll(".theme-color-item");
   }
 
@@ -158,16 +152,6 @@ class ColorPicker {
       this.toggleDropdown();
     });
 
-    // 取消按钮
-    this.cancelBtn.addEventListener("click", () => {
-      this.closeDropdown();
-    });
-
-    // 确认按钮
-    this.confirmBtn.addEventListener("click", () => {
-      this.confirmSelection();
-    });
-
     // 颜色输入 - 可视化
     this.colorInputVisual.addEventListener("input", () => {
       const color = this.colorInputVisual.value;
@@ -227,6 +211,9 @@ class ColorPicker {
 
     // 更新预览框
     this.updatePreviewBox();
+
+    // 立即应用选择
+    this.confirmSelection();
   }
 
   updatePreviewBox() {
