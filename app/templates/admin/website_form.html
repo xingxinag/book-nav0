@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block head %}
+{% extends "admin/base.html" %} {% block admin_head %}
 <style>
   .btn-spin {
     animation: spin 1s linear infinite;
@@ -28,180 +28,141 @@
     font-size: 14px;
   }
 </style>
-{% endblock %} {% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-md-3">
-      <div class="admin-sidebar mb-4">
-        <h5 class="mb-3">管理菜单</h5>
-        <a href="{{ url_for('admin.index') }}" class="admin-sidebar-item">
-          <i class="bi bi-speedometer2"></i> 仪表盘
-        </a>
-        <a href="{{ url_for('admin.categories') }}" class="admin-sidebar-item">
-          <i class="bi bi-folder"></i> 分类管理
-        </a>
+{% endblock %} {% block admin_content %}
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0">
+      {% if form.title.data %}编辑{% else %}添加{% endif %}网站
+    </h5>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="">
+      {{ form.hidden_tag() }} {% if form.title.data %}
+      <input type="hidden" id="website_id" value="{{ request.view_args.id }}" />
+      {% endif %}
+      <div class="mb-3">
+        {{ form.title.label(class="form-label") }} {{
+        form.title(class="form-control", placeholder="请输入网站名称") }} {% for
+        error in form.title.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="mb-3">
+        {{ form.url.label(class="form-label") }}
+        <div class="input-group">
+          {{ form.url(class="form-control", placeholder="请输入网站URL，例如:
+          https://www.example.com") }}
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            id="fetchWebsiteInfo"
+            title="获取网站信息"
+          >
+            <i class="bi bi-cloud-download"></i>
+          </button>
+        </div>
+        {% for error in form.url.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+        <div class="form-text">必须包含http://或https://前缀</div>
+      </div>
+      <div class="mb-3">
+        {{ form.description.label(class="form-label") }} {{
+        form.description(class="form-control", rows=3,
+        placeholder="请输入网站描述") }} {% for error in form.description.errors
+        %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+      </div>
+      <div class="mb-3">
+        {{ form.icon.label(class="form-label") }}
+        <div class="input-group">
+          {{ form.icon(class="form-control", placeholder="请输入网站图标的URL",
+          id="iconInput") }}
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            id="fetchIconBtn"
+            title="自动获取图标"
+          >
+            <i class="bi bi-arrow-repeat"></i>
+          </button>
+        </div>
+        {% for error in form.icon.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %}
+        <div class="form-text">可留空，将使用默认图标</div>
+      </div>
+      <div class="mb-3">
+        {{ form.category_id.label(class="form-label") }} {{
+        form.category_id(class="form-select") }} {% for error in
+        form.category_id.errors %}
+        <div class="text-danger small">{{ error }}</div>
+        {% endfor %} {% if form.category_id.choices|length == 0 %}
+        <div class="text-danger small mt-1">请先添加分类</div>
+        {% endif %}
+      </div>
+      <div class="mb-3 form-check">
+        {{ form.is_featured(class="form-check-input") }} {{
+        form.is_featured.label(class="form-check-label") }}
+        <div class="form-text">设置为推荐后，该网站将显示在首页推荐区域</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">访问权限</label>
+        <div class="d-flex gap-3">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="is_private"
+              id="publicRadio"
+              value="0"
+              {%
+              if
+              not
+              form.is_private.data
+              %}checked{%
+              endif
+              %}
+            />
+            <label class="form-check-label" for="publicRadio">
+              <i class="bi bi-globe"></i> 公开
+            </label>
+          </div>
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="radio"
+              name="is_private"
+              id="privateRadio"
+              value="1"
+              {%
+              if
+              form.is_private.data
+              %}checked{%
+              endif
+              %}
+            />
+            <label class="form-check-label" for="privateRadio">
+              <i class="bi bi-lock"></i> 私有
+            </label>
+          </div>
+        </div>
+        <div class="form-text">私有链接仅管理员和被授权的用户可见</div>
+      </div>
+      <div class="d-flex">
         <a
           href="{{ url_for('admin.websites') }}"
-          class="admin-sidebar-item active"
+          class="btn btn-outline-secondary me-2"
         >
-          <i class="bi bi-globe"></i> 网站管理
+          <i class="bi bi-arrow-left"></i> 返回
         </a>
-        <a href="{{ url_for('admin.invitations') }}" class="admin-sidebar-item">
-          <i class="bi bi-envelope"></i> 邀请码
-        </a>
-        <a href="{{ url_for('admin.users') }}" class="admin-sidebar-item">
-          <i class="bi bi-people"></i> 用户管理
-        </a>
-        <hr />
-        <a href="{{ url_for('main.index') }}" class="admin-sidebar-item">
-          <i class="bi bi-arrow-left"></i> 返回前台
-        </a>
+        {{ form.submit(class="btn btn-primary") }}
       </div>
-    </div>
-    <div class="col-md-9">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">
-            {% if form.title.data %}编辑{% else %}添加{% endif %}网站
-          </h5>
-        </div>
-        <div class="card-body">
-          <form method="POST" action="">
-            {{ form.hidden_tag() }} {% if form.title.data %}
-            <input
-              type="hidden"
-              id="website_id"
-              value="{{ request.view_args.id }}"
-            />
-            {% endif %}
-            <div class="mb-3">
-              {{ form.title.label(class="form-label") }} {{
-              form.title(class="form-control", placeholder="请输入网站名称") }}
-              {% for error in form.title.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-            <div class="mb-3">
-              {{ form.url.label(class="form-label") }}
-              <div class="input-group">
-                {{ form.url(class="form-control",
-                placeholder="请输入网站URL，例如: https://www.example.com") }}
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary"
-                  id="fetchWebsiteInfo"
-                  title="获取网站信息"
-                >
-                  <i class="bi bi-cloud-download"></i>
-                </button>
-              </div>
-              {% for error in form.url.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-              <div class="form-text">必须包含http://或https://前缀</div>
-            </div>
-            <div class="mb-3">
-              {{ form.description.label(class="form-label") }} {{
-              form.description(class="form-control", rows=3,
-              placeholder="请输入网站描述") }} {% for error in
-              form.description.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-            </div>
-            <div class="mb-3">
-              {{ form.icon.label(class="form-label") }}
-              <div class="input-group">
-                {{ form.icon(class="form-control",
-                placeholder="请输入网站图标的URL", id="iconInput") }}
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary"
-                  id="fetchIconBtn"
-                  title="自动获取图标"
-                >
-                  <i class="bi bi-arrow-repeat"></i>
-                </button>
-              </div>
-              {% for error in form.icon.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %}
-              <div class="form-text">可留空，将使用默认图标</div>
-            </div>
-            <div class="mb-3">
-              {{ form.category_id.label(class="form-label") }} {{
-              form.category_id(class="form-select") }} {% for error in
-              form.category_id.errors %}
-              <div class="text-danger small">{{ error }}</div>
-              {% endfor %} {% if form.category_id.choices|length == 0 %}
-              <div class="text-danger small mt-1">请先添加分类</div>
-              {% endif %}
-            </div>
-            <div class="mb-3 form-check">
-              {{ form.is_featured(class="form-check-input") }} {{
-              form.is_featured.label(class="form-check-label") }}
-              <div class="form-text">
-                设置为推荐后，该网站将显示在首页推荐区域
-              </div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">访问权限</label>
-              <div class="d-flex gap-3">
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="radio"
-                    name="is_private"
-                    id="publicRadio"
-                    value="0"
-                    {%
-                    if
-                    not
-                    form.is_private.data
-                    %}checked{%
-                    endif
-                    %}
-                  />
-                  <label class="form-check-label" for="publicRadio">
-                    <i class="bi bi-globe"></i> 公开
-                  </label>
-                </div>
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="radio"
-                    name="is_private"
-                    id="privateRadio"
-                    value="1"
-                    {%
-                    if
-                    form.is_private.data
-                    %}checked{%
-                    endif
-                    %}
-                  />
-                  <label class="form-check-label" for="privateRadio">
-                    <i class="bi bi-lock"></i> 私有
-                  </label>
-                </div>
-              </div>
-              <div class="form-text">私有链接仅管理员和被授权的用户可见</div>
-            </div>
-            <div class="d-flex">
-              <a
-                href="{{ url_for('admin.websites') }}"
-                class="btn btn-outline-secondary me-2"
-              >
-                <i class="bi bi-arrow-left"></i> 返回
-              </a>
-              {{ form.submit(class="btn btn-primary") }}
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    </form>
   </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %} {% block admin_scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const urlInput = document.querySelector('input[name="url"]');

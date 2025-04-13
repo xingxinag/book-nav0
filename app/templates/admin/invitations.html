@@ -1,219 +1,181 @@
-{% extends "base.html" %} {% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-md-3">
-      <div class="admin-sidebar mb-4">
-        <h5 class="mb-3">管理菜单</h5>
-        <a href="{{ url_for('admin.index') }}" class="admin-sidebar-item">
-          <i class="bi bi-speedometer2"></i> 仪表盘
-        </a>
-        <a href="{{ url_for('admin.categories') }}" class="admin-sidebar-item">
-          <i class="bi bi-folder"></i> 分类管理
-        </a>
-        <a href="{{ url_for('admin.websites') }}" class="admin-sidebar-item">
-          <i class="bi bi-globe"></i> 网站管理
-        </a>
-        <a
-          href="{{ url_for('admin.invitations') }}"
-          class="admin-sidebar-item active"
-        >
-          <i class="bi bi-envelope"></i> 邀请码
-        </a>
-        <a href="{{ url_for('admin.users') }}" class="admin-sidebar-item">
-          <i class="bi bi-people"></i> 用户管理
-        </a>
-        <hr />
-        <a href="{{ url_for('main.index') }}" class="admin-sidebar-item">
-          <i class="bi bi-arrow-left"></i> 返回前台
-        </a>
+{% extends "admin/base.html" %} {% block admin_content %}
+<h2 class="mb-4"><i class="bi bi-envelope"></i> 邀请码管理</h2>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h5 class="mb-0">生成邀请码</h5>
+  </div>
+  <div class="card-body">
+    <form method="POST" action="{{ url_for('admin.generate_invitation') }}">
+      {{ form.hidden_tag() }}
+      <div class="row align-items-end">
+        <div class="col-md-6">
+          <div class="mb-3 mb-md-0">
+            {{ form.count.label(class="form-label") }} {{
+            form.count(class="form-control", type="number", min=1, max=10) }}
+            <div class="form-text">最多一次可生成10个邀请码</div>
+          </div>
+        </div>
+        <div class="col-md-6">{{ form.submit(class="btn btn-primary") }}</div>
       </div>
-    </div>
-    <div class="col-md-9">
-      <h2 class="mb-4"><i class="bi bi-envelope"></i> 邀请码管理</h2>
-
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0">生成邀请码</h5>
-        </div>
-        <div class="card-body">
-          <form
-            method="POST"
-            action="{{ url_for('admin.generate_invitation') }}"
-          >
-            {{ form.hidden_tag() }}
-            <div class="row align-items-end">
-              <div class="col-md-6">
-                <div class="mb-3 mb-md-0">
-                  {{ form.count.label(class="form-label") }} {{
-                  form.count(class="form-control", type="number", min=1, max=10)
-                  }}
-                  <div class="form-text">最多一次可生成10个邀请码</div>
-                </div>
-              </div>
-              <div class="col-md-6">
-                {{ form.submit(class="btn btn-primary") }}
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <ul class="nav nav-tabs mb-4" id="invitationTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link active"
-            id="active-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#active"
-            type="button"
-            role="tab"
-            aria-controls="active"
-            aria-selected="true"
-          >
-            <i class="bi bi-check-circle me-1"></i> 可用邀请码
-            <span class="badge bg-primary">{{ active_codes|length }}</span>
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link"
-            id="used-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#used"
-            type="button"
-            role="tab"
-            aria-controls="used"
-            aria-selected="false"
-          >
-            <i class="bi bi-x-circle me-1"></i> 已使用
-            <span class="badge bg-secondary">{{ used_codes|length }}</span>
-          </button>
-        </li>
-      </ul>
-
-      <div class="tab-content" id="invitationTabsContent">
-        <div
-          class="tab-pane fade show active"
-          id="active"
-          role="tabpanel"
-          aria-labelledby="active-tab"
-        >
-          {% if active_codes %}
-          <div class="card">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th>邀请码</th>
-                    <th>创建者</th>
-                    <th>创建时间</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for code in active_codes %}
-                  <tr>
-                    <td style="font-family: monospace; font-size: 1.1em">
-                      {{ code.code }}
-                    </td>
-                    <td>{{ code.created_by.username }}</td>
-                    <td>{{ code.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td>
-                      <button
-                        class="btn btn-sm btn-outline-primary copy-btn"
-                        data-clipboard-text="{{ code.code }}"
-                      >
-                        <i class="bi bi-clipboard"></i> 复制
-                      </button>
-                      <a
-                        href="{{ url_for('admin.delete_invitation', id=code.id) }}"
-                        class="btn btn-sm btn-outline-danger"
-                        onclick="return confirm('确定要删除此邀请码吗？')"
-                      >
-                        <i class="bi bi-trash"></i> 删除
-                      </a>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          {% else %}
-          <div class="text-center py-5">
-            <i class="bi bi-envelope-x fs-1 text-muted"></i>
-            <p class="mt-3 text-muted">暂无可用邀请码</p>
-            <button
-              type="button"
-              class="btn btn-primary mt-2"
-              data-bs-toggle="modal"
-              data-bs-target="#generateModal"
-            >
-              <i class="bi bi-plus-circle"></i> 生成邀请码
-            </button>
-          </div>
-          {% endif %}
-        </div>
-
-        <div
-          class="tab-pane fade"
-          id="used"
-          role="tabpanel"
-          aria-labelledby="used-tab"
-        >
-          {% if used_codes %}
-          <div class="card">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead>
-                  <tr>
-                    <th>邀请码</th>
-                    <th>创建者</th>
-                    <th>使用者</th>
-                    <th>使用时间</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for code in used_codes %}
-                  <tr>
-                    <td
-                      style="font-family: monospace; font-size: 1.1em"
-                      class="text-muted"
-                    >
-                      {{ code.code }}
-                    </td>
-                    <td>{{ code.created_by.username }}</td>
-                    <td>{{ code.used_by.username }}</td>
-                    <td>{{ code.used_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                  </tr>
-                  {% endfor %}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          {% else %}
-          <div class="text-center py-5">
-            <i class="bi bi-envelope-open fs-1 text-muted"></i>
-            <p class="mt-3 text-muted">暂无已使用的邀请码</p>
-          </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
+    </form>
   </div>
 </div>
-{% endblock %} {% block scripts %}
+
+<ul class="nav nav-tabs mb-4" id="invitationTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link active"
+      id="active-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#active"
+      type="button"
+      role="tab"
+      aria-controls="active"
+      aria-selected="true"
+    >
+      <i class="bi bi-check-circle me-1"></i> 可用邀请码
+      <span class="badge bg-primary">{{ active_codes|length }}</span>
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button
+      class="nav-link"
+      id="used-tab"
+      data-bs-toggle="tab"
+      data-bs-target="#used"
+      type="button"
+      role="tab"
+      aria-controls="used"
+      aria-selected="false"
+    >
+      <i class="bi bi-x-circle me-1"></i> 已使用
+      <span class="badge bg-secondary">{{ used_codes|length }}</span>
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="invitationTabsContent">
+  <div
+    class="tab-pane fade show active"
+    id="active"
+    role="tabpanel"
+    aria-labelledby="active-tab"
+  >
+    {% if active_codes %}
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>邀请码</th>
+              <th>创建者</th>
+              <th>创建时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for code in active_codes %}
+            <tr>
+              <td style="font-family: monospace; font-size: 1.1em">
+                {{ code.code }}
+              </td>
+              <td>{{ code.created_by.username }}</td>
+              <td>{{ code.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+              <td>
+                <button
+                  class="btn btn-sm btn-outline-primary copy-btn"
+                  data-clipboard-text="{{ code.code }}"
+                >
+                  <i class="bi bi-clipboard"></i> 复制
+                </button>
+                <a
+                  href="{{ url_for('admin.delete_invitation', id=code.id) }}"
+                  class="btn btn-sm btn-outline-danger"
+                  onclick="return confirm('确定要删除此邀请码吗？')"
+                >
+                  <i class="bi bi-trash"></i> 删除
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-envelope-x fs-1 text-muted"></i>
+      <p class="mt-3 text-muted">暂无可用邀请码</p>
+      <button
+        type="button"
+        class="btn btn-primary mt-2"
+        data-bs-toggle="modal"
+        data-bs-target="#generateModal"
+      >
+        <i class="bi bi-plus-circle"></i> 生成邀请码
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div
+    class="tab-pane fade"
+    id="used"
+    role="tabpanel"
+    aria-labelledby="used-tab"
+  >
+    {% if used_codes %}
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>邀请码</th>
+              <th>创建者</th>
+              <th>使用者</th>
+              <th>使用时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for code in used_codes %}
+            <tr>
+              <td
+                style="font-family: monospace; font-size: 1.1em"
+                class="text-muted"
+              >
+                {{ code.code }}
+              </td>
+              <td>{{ code.created_by.username }}</td>
+              <td>{{ code.used_by.username }}</td>
+              <td>{{ code.used_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      <i class="bi bi-envelope-open fs-1 text-muted"></i>
+      <p class="mt-3 text-muted">暂无已使用的邀请码</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {% block admin_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    // 初始化ClipboardJS
     var clipboard = new ClipboardJS(".copy-btn");
 
     clipboard.on("success", function (e) {
-      // 修改按钮文字
+      // 临时改变按钮文本
       var originalText = e.trigger.innerHTML;
       e.trigger.innerHTML = '<i class="bi bi-check"></i> 已复制';
 
-      // 2秒后恢复原样
+      // 3秒后恢复原来的文本
       setTimeout(function () {
         e.trigger.innerHTML = originalText;
       }, 2000);

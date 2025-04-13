@@ -1,135 +1,98 @@
-{% extends "base.html" %} {% block content %}
-<div class="container">
-  <div class="row">
-    <div class="col-md-3">
-      <div class="admin-sidebar mb-4">
-        <h5 class="mb-3">管理菜单</h5>
-        <a href="{{ url_for('admin.index') }}" class="admin-sidebar-item">
-          <i class="bi bi-speedometer2"></i> 仪表盘
-        </a>
-        <a href="{{ url_for('admin.categories') }}" class="admin-sidebar-item">
-          <i class="bi bi-folder"></i> 分类管理
-        </a>
-        <a href="{{ url_for('admin.websites') }}" class="admin-sidebar-item">
-          <i class="bi bi-globe"></i> 网站管理
-        </a>
-        <a href="{{ url_for('admin.invitations') }}" class="admin-sidebar-item">
-          <i class="bi bi-envelope"></i> 邀请码
-        </a>
-        <a
-          href="{{ url_for('admin.users') }}"
-          class="admin-sidebar-item active"
-        >
-          <i class="bi bi-people"></i> 用户管理
-        </a>
-        <hr />
-        <a href="{{ url_for('main.index') }}" class="admin-sidebar-item">
-          <i class="bi bi-arrow-left"></i> 返回前台
-        </a>
-      </div>
-    </div>
-    <div class="col-md-9">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-person-gear"></i> 编辑用户</h2>
-        <div>
-          <a
-            href="{{ url_for('admin.user_detail', id=user.id) }}"
-            class="btn btn-outline-secondary"
-          >
-            <i class="bi bi-arrow-left"></i> 返回用户详情
-          </a>
-        </div>
-      </div>
+{% extends "admin/base.html" %} {% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-person-gear"></i> 编辑用户</h2>
+  <div>
+    <a
+      href="{{ url_for('admin.user_detail', id=user.id) }}"
+      class="btn btn-outline-secondary"
+    >
+      <i class="bi bi-arrow-left"></i> 返回用户详情
+    </a>
+  </div>
+</div>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="d-flex align-items-center">
-            <div
-              class="user-avatar me-3"
-              style="width: 40px; height: 40px; border-radius: 50%; background-color: {% if user.is_admin %}#6a11cb{% else %}#3498db{% endif %}; color: white; text-align: center; line-height: 40px; font-weight: bold;"
-            >
-              {{ user.username[0] | upper }}
-            </div>
-            <h5 class="mb-0">{{ user.username }}</h5>
+<div class="card">
+  <div class="card-header">
+    <div class="d-flex align-items-center">
+      <div
+        class="user-avatar me-3"
+        style="width: 40px; height: 40px; border-radius: 50%; background-color: {% if user.is_admin %}#6a11cb{% else %}#3498db{% endif %}; color: white; text-align: center; line-height: 40px; font-weight: bold;"
+      >
+        {{ user.username[0] | upper }}
+      </div>
+      <h5 class="mb-0">{{ user.username }}</h5>
+    </div>
+  </div>
+  <div class="card-body">
+    <form method="post" action="{{ url_for('admin.edit_user', id=user.id) }}">
+      {{ form.hidden_tag() }}
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            {{ form.username.label(class="form-label") }} {{
+            form.username(class="form-control", placeholder="请输入用户名") }}
+            {% for error in form.username.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
           </div>
         </div>
-        <div class="card-body">
-          <form
-            method="post"
-            action="{{ url_for('admin.edit_user', id=user.id) }}"
-          >
-            {{ form.hidden_tag() }}
-
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  {{ form.username.label(class="form-label") }} {{
-                  form.username(class="form-control",
-                  placeholder="请输入用户名") }} {% for error in
-                  form.username.errors %}
-                  <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                  {{ form.email.label(class="form-label") }} {{
-                  form.email(class="form-control", placeholder="请输入邮箱") }}
-                  {% for error in form.email.errors %}
-                  <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6">
-                <div class="mb-3">
-                  {{ form.password.label(class="form-label") }} {{
-                  form.password(class="form-control",
-                  placeholder="留空表示不修改密码") }}
-                  <small class="text-muted">留空表示不修改密码</small>
-                  {% for error in form.password.errors %}
-                  <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="mb-3">
-                  {{ form.password2.label(class="form-label") }} {{
-                  form.password2(class="form-control", placeholder="请确认密码")
-                  }} {% for error in form.password2.errors %}
-                  <div class="text-danger small mt-1">{{ error }}</div>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-
-            {% if current_user.is_admin %}
-            <div class="mb-3">
-              <div class="form-check form-switch">
-                {{ form.is_admin(class="form-check-input") }} {{
-                form.is_admin.label(class="form-check-label") }}
-                <small class="text-muted d-block mt-1"
-                  >管理员可以管理所有用户和网站数据</small
-                >
-              </div>
-            </div>
-            {% endif %}
-
-            <div class="d-flex justify-content-between mt-4">
-              <a
-                href="{{ url_for('admin.user_detail', id=user.id) }}"
-                class="btn btn-outline-secondary"
-              >
-                <i class="bi bi-x-lg"></i> 取消
-              </a>
-              {{ form.submit(class="btn btn-primary") }}
-            </div>
-          </form>
+        <div class="col-md-6">
+          <div class="mb-3">
+            {{ form.email.label(class="form-label") }} {{
+            form.email(class="form-control", placeholder="请输入邮箱") }} {% for
+            error in form.email.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
         </div>
       </div>
-    </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            {{ form.password.label(class="form-label") }} {{
+            form.password(class="form-control",
+            placeholder="留空表示不修改密码") }}
+            <small class="text-muted">留空表示不修改密码</small>
+            {% for error in form.password.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            {{ form.password2.label(class="form-label") }} {{
+            form.password2(class="form-control", placeholder="请确认密码") }} {%
+            for error in form.password2.errors %}
+            <div class="text-danger small mt-1">{{ error }}</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {% if current_user.is_admin %}
+      <div class="mb-3">
+        <div class="form-check form-switch">
+          {{ form.is_admin(class="form-check-input") }} {{
+          form.is_admin.label(class="form-check-label") }}
+          <small class="text-muted d-block mt-1"
+            >管理员可以管理所有用户和网站数据</small
+          >
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="d-flex justify-content-between mt-4">
+        <a
+          href="{{ url_for('admin.user_detail', id=user.id) }}"
+          class="btn btn-outline-secondary"
+        >
+          <i class="bi bi-x-lg"></i> 取消
+        </a>
+        {{ form.submit(class="btn btn-primary") }}
+      </div>
+    </form>
   </div>
 </div>
 {% endblock %}
