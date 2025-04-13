@@ -126,9 +126,25 @@ def api_search():
     if not query:
         return jsonify({"websites": []})
     
-    websites = Website.query.filter(Website.title.contains(query) | 
-                                  Website.description.contains(query) | 
-                                  Website.url.contains(query)).all()
+    # 构建搜索查询
+    websites_query = Website.query.filter(
+        Website.title.contains(query) | 
+        Website.description.contains(query) | 
+        Website.url.contains(query)
+    )
+    
+    # 根据用户权限过滤私有链接
+    if not current_user.is_authenticated:
+        websites_query = websites_query.filter_by(is_private=False)
+    elif not current_user.is_admin:
+        websites_query = websites_query.filter(
+            (Website.is_private == False) |
+            (Website.created_by_id == current_user.id) |
+            (Website.visible_to.contains(str(current_user.id)))
+        )
+    
+    # 执行查询
+    websites = websites_query.all()
     
     # 将网站对象转换为JSON格式
     websites_data = []
@@ -148,10 +164,15 @@ def api_search():
             'url': site.url,
             'description': site.description,
             'icon': site.icon,
-            'category': category_data
+            'category': category_data,
+            'is_private': site.is_private
         })
     
-    return jsonify({"websites": websites_data})
+    return jsonify({
+        "websites": websites_data,
+        "count": len(websites_data),
+        "keyword": query
+    })
 
 @bp.route('/api/website/<int:site_id>/update', methods=['POST'])
 @login_required

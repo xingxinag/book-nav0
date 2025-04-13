@@ -11,9 +11,20 @@ document.addEventListener("DOMContentLoaded", function () {
   // 搜索功能
   searchForm.addEventListener("submit", function (e) {
     e.preventDefault();
-    const query = searchInput.value.trim().toLowerCase();
+    const query = searchInput.value.trim();
 
     if (query) {
+      // 显示加载状态
+      resultsContent.innerHTML =
+        '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">正在搜索...</p></div>';
+      searchKeyword.textContent = `"${query}"`;
+
+      // 显示搜索结果区域，隐藏分类容器
+      categoriesContainer.style.display = "none";
+      searchResults.style.display = "block";
+      searchResults.style.opacity = "1"; // 确保搜索结果区域可见
+      noResults.style.display = "none";
+
       // 使用Ajax获取搜索结果
       fetch(`/api/search?q=${encodeURIComponent(query)}`)
         .then((response) => response.json())
@@ -22,30 +33,40 @@ document.addEventListener("DOMContentLoaded", function () {
           resultsContent.innerHTML = "";
 
           if (data.websites && data.websites.length > 0) {
-            // 显示搜索关键词
-            searchKeyword.textContent = `"${query}"`;
+            // 显示搜索结果统计
+            const searchCount = document.createElement("div");
+            searchCount.className = "search-count mt-2 mb-4 text-muted";
+            searchCount.innerHTML = `找到 <strong>${data.count}</strong> 个与 "<strong>${data.keyword}</strong>" 相关的网站`;
+            resultsContent.appendChild(searchCount);
 
             // 创建卡片容器
             const cardContainer = document.createElement("div");
             cardContainer.className = "card-container";
-
-            // 根据结果数量添加额外的CSS类
-            if (data.websites.length <= 4) {
-              cardContainer.classList.add(`results-${data.websites.length}`);
-            }
-
             resultsContent.appendChild(cardContainer);
 
             // 循环添加搜索结果
             data.websites.forEach((site) => {
-              // 使用DOM API创建元素，避免innerHTML注入问题
+              // 创建卡片元素
               const siteCard = document.createElement("a");
               siteCard.href = `/site/${site.id}`;
               siteCard.className = "site-card";
+              siteCard.dataset.id = site.id;
+              siteCard.title = site.description || "";
+              siteCard.dataset.bsToggle = "tooltip";
+              siteCard.dataset.bsPlacement = "bottom";
 
+              // 添加私有标记
+              if (site.is_private) {
+                const privateBadge = document.createElement("div");
+                privateBadge.className = "private-badge";
+                privateBadge.title = "私有链接";
+                privateBadge.innerHTML = '<i class="bi bi-lock-fill"></i>';
+                siteCard.appendChild(privateBadge);
+              }
+
+              // 创建网站卡片内容结构
               const siteHeader = document.createElement("div");
               siteHeader.className = "site-header";
-              siteCard.appendChild(siteHeader);
 
               // 创建图标容器
               const iconContainer = document.createElement("div");
@@ -62,8 +83,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 iconContainer.appendChild(icon);
               }
 
-              siteHeader.appendChild(iconContainer);
-
               // 创建文本容器
               const textContainer = document.createElement("div");
               textContainer.className = "site-text";
@@ -78,22 +97,26 @@ document.addEventListener("DOMContentLoaded", function () {
               descEl.textContent = site.description || "";
               textContainer.appendChild(descEl);
 
+              // 组装卡片结构
+              siteHeader.appendChild(iconContainer);
               siteHeader.appendChild(textContainer);
+              siteCard.appendChild(siteHeader);
 
               // 将卡片添加到结果容器
               cardContainer.appendChild(siteCard);
             });
 
-            // 显示搜索结果或无结果提示
-            if (data.websites.length > 0) {
-              noResults.style.display = "none";
-            } else {
-              noResults.style.display = "block";
+            // 初始化工具提示
+            if (typeof bootstrap !== "undefined") {
+              const tooltipTriggerList = [].slice.call(
+                document.querySelectorAll('[data-bs-toggle="tooltip"]')
+              );
+              tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+              });
             }
 
-            // 隐藏分类容器，显示搜索结果
-            categoriesContainer.style.display = "none";
-            searchResults.style.display = "block";
+            noResults.style.display = "none";
           } else {
             // 无结果时显示提示
             noResults.style.display = "block";
@@ -101,6 +124,8 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch((error) => {
           console.error("搜索出错:", error);
+          resultsContent.innerHTML =
+            '<div class="text-center py-5 text-muted"><i class="bi bi-exclamation-circle fs-1"></i><p class="mt-3">搜索过程中发生错误</p></div>';
         });
     } else {
       clearSearch();
@@ -129,6 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
     clearSearchBtn.style.display = "none";
     searchResults.style.display = "none";
     categoriesContainer.style.display = "block";
+    categoriesContainer.style.opacity = "1"; // 确保分类容器可见
   }
 
   // 监听清除搜索事件
