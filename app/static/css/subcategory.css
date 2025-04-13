@@ -1,8 +1,13 @@
 /* 子分类样式 */
 
+/* 调整分类容器的下边距 */
+#categoriesContainer > div.mb-5 {
+  margin-bottom: 1rem !important; /* 约32px，覆盖Bootstrap的mb-5 */
+}
+
 /* 子分类标签导航 */
 .subcategory-tags {
-  margin: 0.75rem 0 1.5rem 0;
+  margin: 0.4rem 0 0.3rem 0.5rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
