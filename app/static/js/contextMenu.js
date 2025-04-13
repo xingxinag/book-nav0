@@ -61,30 +61,84 @@ document.addEventListener("DOMContentLoaded", function () {
         const cardTitle =
           window.currentCard.querySelector(".site-title").textContent;
 
-        // 创建分享链接
-        const shareUrl = `${window.location.origin}/site/${cardId}`;
+        // 获取原始网站URL
+        const getOriginalUrl = async (cardId) => {
+          try {
+            // 获取网站原始URL
+            const response = await fetch(`/site/${cardId}/info`);
+            const data = await response.json();
 
-        // 如果支持原生分享API
-        if (navigator.share) {
-          navigator
-            .share({
+            if (data.success && data.website && data.website.url) {
+              return {
+                url: data.website.url, // 直接使用原始URL
+                title: data.website.title || cardTitle,
+              };
+            }
+            throw new Error("无法获取原始URL");
+          } catch (error) {
+            console.error("获取原始URL失败:", error);
+            // 返回fallback URL (原来的格式)
+            return {
+              url: `${window.location.origin}/site/${cardId}`,
               title: cardTitle,
-              url: shareUrl,
-            })
-            .catch((error) => console.error("分享失败:", error));
-        } else {
-          // 否则复制链接到剪贴板
+            };
+          }
+        };
+
+        // 异步获取URL并复制
+        (async () => {
+          const copyData = await getOriginalUrl(cardId);
+
+          // 复制链接到剪贴板
           const textArea = document.createElement("textarea");
-          textArea.value = shareUrl;
+          textArea.value = copyData.url;
           document.body.appendChild(textArea);
           textArea.select();
           document.execCommand("copy");
           document.body.removeChild(textArea);
 
-          alert("链接已复制到剪贴板");
-        }
+          // 显示优雅的复制成功提示
+          showCopyToast(`"${copyData.title}" 链接已复制`);
+        })();
       }
     });
+  }
+
+  // 显示复制成功的提示
+  function showCopyToast(message) {
+    // 检查是否已存在提示，如果有则移除
+    const existingToast = document.querySelector(".copy-toast");
+    if (existingToast) {
+      document.body.removeChild(existingToast);
+    }
+
+    // 创建新的提示元素
+    const toast = document.createElement("div");
+    toast.className = "copy-toast";
+    toast.innerHTML = `
+      <i class="bi bi-check-circle-fill"></i>
+      <span>${message}</span>
+    `;
+
+    // 添加到页面
+    document.body.appendChild(toast);
+
+    // 延迟一小段时间后显示，以便有渐入效果
+    setTimeout(() => {
+      toast.classList.add("show");
+    }, 10);
+
+    // 2.5秒后自动消失
+    setTimeout(() => {
+      toast.classList.remove("show");
+
+      // 动画结束后从DOM中移除
+      setTimeout(() => {
+        if (toast.parentNode) {
+          document.body.removeChild(toast);
+        }
+      }, 300); // 等待过渡动画完成
+    }, 2500);
   }
 
   // 删除链接按钮点击事件
