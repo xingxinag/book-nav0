@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const cancelEditBtn = document.getElementById("cancelEdit");
   const editLinkForm = document.getElementById("editLinkForm");
   const fetchInfoBtn = document.getElementById("fetchInfo");
+  const editIconPreview = document.getElementById("editIconPreview");
 
   // 修改链接按钮点击事件
   editLinkBtn.addEventListener("click", function () {
@@ -26,8 +27,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
       if (cardIcon) {
         document.getElementById("editIcon").value = cardIcon.src;
+        // 更新图标预览
+        editIconPreview.src = cardIcon.src;
+        editIconPreview.style.display = "block";
       } else {
         document.getElementById("editIcon").value = "";
+        editIconPreview.style.display = "none";
       }
 
       // 从服务器获取完整信息
@@ -63,6 +68,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // 显示对话框
       editLinkModal.style.display = "flex";
+    }
+  });
+
+  // 监听图标输入框变化，更新预览
+  document.getElementById("editIcon").addEventListener("input", function () {
+    const iconUrl = this.value.trim();
+    if (iconUrl) {
+      editIconPreview.src = iconUrl;
+      editIconPreview.style.display = "block";
+
+      // 处理加载错误
+      editIconPreview.onerror = function () {
+        this.style.display = "none";
+      };
+    } else {
+      editIconPreview.style.display = "none";
     }
   });
 
