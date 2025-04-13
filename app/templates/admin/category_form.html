@@ -110,6 +110,16 @@
                 </div>
               </div>
             </div>
+            <div class="mb-3">
+              {{ form.parent_id.label(class="form-label") }} {{
+              form.parent_id(class="form-control") }} {% for error in
+              form.parent_id.errors %}
+              <div class="text-danger small">{{ error }}</div>
+              {% endfor %}
+              <div class="form-text">
+                选择父级分类，如不选择则作为顶级分类。二级分类将显示在父级分类下。
+              </div>
+            </div>
             <div class="row mt-3">
               <div class="col-md-12">
                 <div class="preview-section">

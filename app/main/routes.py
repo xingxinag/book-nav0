@@ -12,6 +12,7 @@ from sqlalchemy import or_
 
 @bp.route('/')
 def index():
+    # 获取所有分类，按照排序顺序
     categories = Category.query.order_by(Category.order.asc()).all()
     
     # 获取推荐网站，只显示公开的或当前用户可见的
@@ -51,7 +52,7 @@ def index():
 def category(id):
     category = Category.query.get_or_404(id)
     
-    # 构建查询
+    # 构建查询：直接查询该分类下的网站
     websites_query = Website.query.filter_by(category_id=id)
     
     # 根据用户权限过滤私有链接
@@ -69,10 +70,28 @@ def category(id):
         Website.views.desc()
     ).all()
     
-    return render_template('category.html', 
-                         title=category.name, 
-                         category=category, 
-                         websites=websites)
+    # 相关分类信息
+    context = {
+        'title': category.name,
+        'category': category,
+        'websites': websites,
+    }
+    
+    # 如果是子分类，获取同级分类（兄弟分类）
+    if category.parent_id is not None:
+        siblings = Category.query.filter_by(parent_id=category.parent_id)\
+                                .order_by(Category.order.asc())\
+                                .all()
+        context['siblings'] = siblings
+    
+    # 获取子分类列表
+    children = Category.query.filter_by(parent_id=id)\
+                            .order_by(Category.order.asc())\
+                            .all()
+    if children:
+        context['children'] = children
+    
+    return render_template('category.html', **context)
 
 @bp.route('/site/<int:id>')
 def site(id):

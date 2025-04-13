@@ -70,10 +70,43 @@ class Category(db.Model):
     order = db.Column(db.Integer, default=0)
     display_limit = db.Column(db.Integer, default=8)  # 首页展示数量限制，默认为8个
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # 添加父分类关系
+    parent_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
+    
+    # 关系定义
+    children = db.relationship('Category', 
+                              backref=db.backref('parent', remote_side=[id]),
+                              lazy='dynamic')
     websites = db.relationship('Website', backref='category', lazy='dynamic')
     
     def __repr__(self):
         return f'<Category {self.name}>'
+        
+    def get_ancestors(self):
+        """获取所有祖先分类，从直接父级到顶级"""
+        ancestors = []
+        current = self.parent
+        while current:
+            ancestors.append(current)
+            current = current.parent
+        return ancestors[::-1]  # 逆序返回，从顶级到直接父级
+    
+    def is_descendant_of(self, category_id):
+        """检查当前分类是否是指定分类的后代"""
+        if self.parent_id is None:
+            return False
+        if self.parent_id == category_id:
+            return True
+        return self.parent.is_descendant_of(category_id)
+    
+    def get_all_descendants(self):
+        """获取所有后代分类（递归）"""
+        result = []
+        for child in self.children:
+            result.append(child)
+            result.extend(child.get_all_descendants())
+        return result
 
 
 class Tag(db.Model):

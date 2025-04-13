@@ -11,7 +11,18 @@ class CategoryForm(FlaskForm):
     order = IntegerField('排序顺序', default=0)
     display_limit = IntegerField('首页展示数量', default=8, 
                                validators=[DataRequired()])
+    parent_id = SelectField('父级分类', coerce=int, validators=[Optional()])
     submit = SubmitField('提交')
+    
+    def __init__(self, *args, **kwargs):
+        super(CategoryForm, self).__init__(*args, **kwargs)
+        self.parent_id.choices = [(0, '-- 无父级分类（作为顶级分类） --')] + [
+            (c.id, c.name) for c in Category.query.filter_by(parent_id=None).order_by(Category.order).all()
+        ]
+        
+    def validate_parent_id(self, field):
+        if field.data == 0:
+            field.data = None
 
 class WebsiteForm(FlaskForm):
     title = StringField('网站名称', validators=[DataRequired(), Length(max=128)])

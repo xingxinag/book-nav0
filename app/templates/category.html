@@ -111,6 +111,81 @@
     white-space: nowrap;
   }
 
+  /* 面包屑导航样式 */
+  .breadcrumb-navigation {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 8px;
+    font-size: 0.9rem;
+  }
+
+  .parent-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.03);
+    transition: all 0.2s;
+  }
+
+  .parent-link:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  .parent-link i {
+    margin-right: 4px;
+    font-size: 0.85rem;
+  }
+
+  .separator {
+    margin: 0 6px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+  }
+
+  /* 子分类标签样式 */
+  .subcategory-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .subcategory-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    background-color: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.7);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .subcategory-tag:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+    color: rgba(0, 0, 0, 0.85);
+    text-decoration: none;
+  }
+
+  .subcategory-tag .tag-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    margin-right: 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.7rem;
+    color: white;
+  }
+
   .category-search {
     width: 300px;
     flex-shrink: 0;
@@ -211,6 +286,66 @@
       margin-bottom: 10px;
     }
   }
+
+  /* 同级分类样式 */
+  .sibling-categories {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+  }
+
+  .sibling-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-right: 0.75rem;
+  }
+
+  .sibling-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .sibling-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 0.75rem;
+    background-color: rgba(0, 0, 0, 0.035);
+    color: rgba(0, 0, 0, 0.65);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+  }
+
+  .sibling-tag:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.85);
+    text-decoration: none;
+  }
+
+  .sibling-tag.active {
+    background-color: rgba(112, 73, 240, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(112, 73, 240, 0.2);
+    font-weight: 500;
+  }
+
+  .sibling-tag .tag-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-right: 0.35rem;
+    border-radius: 0.2rem;
+    font-size: 0.65rem;
+    color: white;
+  }
 </style>
 {% endblock %} {% block content %} {# 顶部导航栏 #}
 <div class="top-navbar">
@@ -297,8 +432,11 @@
     <!-- 分类信息和搜索区域 -->
     <div class="category-card">
       <div class="category-info">
-        <div class="category-icon">
-          <i class="bi bi-{{ category.icon or 'collection' }}"></i>
+        <div
+          class="category-icon"
+          style="background: {{ category.color or 'var(--primary-gradient)' }}"
+        >
+          <i class="bi bi-{{ category.icon or 'folder' }}"></i>
         </div>
         <div class="category-details">
           <h1 class="category-title">
@@ -308,9 +446,7 @@
               <span class="stat-label">个网站</span>
             </div>
           </h1>
-          {% if category.description %}
-          <div class="category-description">{{ category.description }}</div>
-          {% endif %}
+          <p class="category-description">{{ category.description }}</p>
         </div>
       </div>
       <div class="category-search">

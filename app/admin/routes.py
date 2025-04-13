@@ -48,7 +48,8 @@ def add_category():
             icon=form.icon.data,
             color=form.color.data,
             order=form.order.data,
-            display_limit=form.display_limit.data
+            display_limit=form.display_limit.data,
+            parent_id=form.parent_id.data
         )
         db.session.add(category)
         db.session.commit()
@@ -62,7 +63,23 @@ def add_category():
 def edit_category(id):
     category = Category.query.get_or_404(id)
     form = CategoryForm(obj=category)
+    
+    # 修复初始选择
+    if form.parent_id.data is None:
+        form.parent_id.data = 0
+        
     if form.validate_on_submit():
+        # 检查是否尝试将分类设为自身的子分类或后代的子分类
+        if form.parent_id.data and form.parent_id.data == id:
+            flash('分类不能作为自身的子分类', 'danger')
+            return render_template('admin/category_form.html', title='编辑分类', form=form)
+            
+        # 获取所有后代ID
+        descendants = [c.id for c in category.get_all_descendants()] if hasattr(category, 'get_all_descendants') else []
+        if form.parent_id.data in descendants:
+            flash('分类不能设置为其后代分类的子分类', 'danger')
+            return render_template('admin/category_form.html', title='编辑分类', form=form)
+            
         form.populate_obj(category)
         db.session.commit()
         flash('分类更新成功', 'success')

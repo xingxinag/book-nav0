@@ -35,6 +35,14 @@ render_icon(icon_name='folder', color='#3498db') %}
 />
 <link
   rel="stylesheet"
+  href="{{ url_for('static', filename='css/sidebar_submenu.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/subcategory.css') }}"
+/>
+<link
+  rel="stylesheet"
   href="{{ url_for('static', filename='css/card.css') }}"
 />
 <link
@@ -69,17 +77,21 @@ render_icon(icon_name='folder', color='#3498db') %}
     <div class="sidebar-group">
       <div class="sidebar-group-title">网站分类</div>
       <ul class="sidebar-menu">
-        {% for category in categories %}
+        {% for category in categories %} {% if category.parent_id is none %}
         <li class="sidebar-menu-item">
           <a href="#{{ category.name }}" class="sidebar-menu-link">
             <span class="sidebar-menu-icon">
               {{ render_icon(category.icon or 'folder', category.color or
               '#3498db') }}
             </span>
-            {{ category.name }}
+            {{ category.name }} {% if category.children.count() > 0 %}
+            <span class="category-children-count"
+              >{{ category.children.count() }}</span
+            >
+            {% endif %}
           </a>
         </li>
-        {% endfor %}
+        {% endif %} {% endfor %}
       </ul>
     </div>
 
@@ -190,7 +202,7 @@ render_icon(icon_name='folder', color='#3498db') %}
 
   {# 分类内容区域 #}
   <div id="categoriesContainer">
-    {% for category in categories %}
+    {% for category in categories %} {% if category.parent_id is none %}
     <div id="{{ category.name }}" class="mb-5">
       <h3 class="category-heading">
         <span
@@ -202,7 +214,24 @@ render_icon(icon_name='folder', color='#3498db') %}
         {{ category.name }}
       </h3>
 
-      {% set websites = category.website_list %} {% if websites %}
+      {# 子分类标签导航 #} {% if category.children.count() > 0 %}
+      <div class="subcategory-tags">
+        {% for child in category.children %}
+        <a
+          href="{{ url_for('main.category', id=child.id) }}"
+          class="subcategory-tag"
+        >
+          <span
+            class="tag-icon"
+            style="background-color: {{ child.color or '#6c757d' }}"
+          >
+            <i class="bi bi-{{ child.icon or 'tag' }}"></i>
+          </span>
+          {{ child.name }}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %} {% set websites = category.website_list %} {% if websites %}
       <div
         class="card-container {% if current_user.is_authenticated and current_user.is_admin %}draggable{% endif %}"
         data-category-id="{{ category.id }}"
@@ -257,14 +286,7 @@ render_icon(icon_name='folder', color='#3498db') %}
       </div>
       {% endif %}
     </div>
-    {% else %}
-    <div class="text-center py-5">
-      <div class="display-6 text-muted">
-        <i class="bi bi-emoji-dizzy fs-1"></i>
-        <p>暂无分类，请管理员添加</p>
-      </div>
-    </div>
-    {% endfor %}
+    {% endif %} {% endfor %}
   </div>
 
   {# 快速添加链接对话框 #} {% if current_user.is_authenticated and
@@ -298,9 +320,14 @@ render_icon(icon_name='folder', color='#3498db') %}
             <div class="category-select-container">
               <select id="quickAddCategory" class="form-select" required>
                 <option value="">请选择分类</option>
-                {% for category in categories %}
+                {% for category in categories %} {% if category.parent_id is
+                none %}
                 <option value="{{ category.id }}">{{ category.name }}</option>
-                {% endfor %}
+                {% for child in category.children %}
+                <option value="{{ child.id }}">
+                  &nbsp;&nbsp;└ {{ child.name }}
+                </option>
+                {% endfor %} {% endif %} {% endfor %}
               </select>
             </div>
           </div>
@@ -520,6 +547,7 @@ render_icon(icon_name='folder', color='#3498db') %}
 {% endblock %} {% block scripts %}
 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+<script src="{{ url_for('static', filename='js/sidebar_submenu.js') }}"></script>
 <script src="{{ url_for('static', filename='js/search.js') }}"></script>
 <script src="{{ url_for('static', filename='js/modal.js') }}"></script>
 <script src="{{ url_for('static', filename='js/contextMenu.js') }}"></script>

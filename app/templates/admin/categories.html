@@ -45,6 +45,7 @@
                 <tr>
                   <th>排序</th>
                   <th>名称</th>
+                  <th>父级分类</th>
                   <th>描述</th>
                   <th>网站数</th>
                   <th>首页展示数量</th>
@@ -52,8 +53,9 @@
                 </tr>
               </thead>
               <tbody>
-                {% for category in categories %}
-                <tr>
+                {% for category in categories %} {% if category.parent_id is
+                none %}
+                <tr class="category-row">
                   <td>{{ category.order }}</td>
                   <td>
                     <div class="d-flex align-items-center">
@@ -70,6 +72,7 @@
                       {{ category.name }}
                     </div>
                   </td>
+                  <td>-</td>
                   <td>{{ category.description|truncate(30) }}</td>
                   <td>{{ category.websites.count() }}</td>
                   <td>{{ category.display_limit }}</td>
@@ -89,7 +92,48 @@
                     </a>
                   </td>
                 </tr>
-                {% endfor %}
+                {% for child in category.children %}
+                <tr class="subcategory-row">
+                  <td>{{ child.order }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="ms-3 me-2">
+                        <i class="bi bi-arrow-return-right text-muted"></i>
+                      </div>
+                      <div
+                        class="me-2"
+                        style="width: 30px; height: 30px; text-align: center; line-height: 30px; border-radius: 6px; background-color: {{ child.color or '#3498db' }}; color: white;"
+                      >
+                        {% if child.icon %}
+                        <i class="bi bi-{{ child.icon }}"></i>
+                        {% else %}
+                        <i class="bi bi-folder"></i>
+                        {% endif %}
+                      </div>
+                      {{ child.name }}
+                    </div>
+                  </td>
+                  <td>{{ category.name }}</td>
+                  <td>{{ child.description|truncate(30) }}</td>
+                  <td>{{ child.websites.count() }}</td>
+                  <td>{{ child.display_limit }}</td>
+                  <td>
+                    <a
+                      href="{{ url_for('admin.edit_category', id=child.id) }}"
+                      class="btn btn-sm btn-outline-primary"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <a
+                      href="{{ url_for('admin.delete_category', id=child.id) }}"
+                      class="btn btn-sm btn-outline-danger"
+                      onclick="return confirm('确定要删除此分类吗？')"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %} {% endif %} {% endfor %}
               </tbody>
             </table>
           </div>

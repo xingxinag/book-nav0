@@ -1,0 +1,81 @@
+/* 侧边栏子菜单样式 */
+.category-children-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  font-size: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 1rem;
+  padding: 0 0.4rem;
+}
+
+.sidebar-menu-link:hover .category-children-count {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-menu-item.has-submenu .submenu-toggle {
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-menu-item.has-submenu.active .submenu-toggle {
+  transform: rotate(180deg);
+}
+
+.sidebar-submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding-left: 1rem;
+  list-style: none;
+  margin: 0;
+}
+
+.sidebar-menu-item.has-submenu.active .sidebar-submenu {
+  max-height: 500px; /* 足够大的高度以容纳所有子菜单项 */
+}
+
+.sidebar-submenu-item {
+  margin: 0.25rem 0;
+}
+
+.sidebar-submenu-link {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem 0.5rem 1rem;
+  border-radius: 0.5rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.sidebar-submenu-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.sidebar-submenu-item .sidebar-menu-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+/* 子项标记样式 */
+.sidebar-submenu-item::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.3);
+}
