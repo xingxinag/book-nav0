@@ -145,6 +145,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 
+  // 检查初始状态下是否应该显示清除按钮
+  function checkClearButtonVisibility() {
+    if (searchInput.value.trim()) {
+      clearSearchBtn.style.display = "flex";
+    } else {
+      clearSearchBtn.style.display = "none";
+    }
+  }
+
+  // 页面加载时和焦点改变时检查
+  checkClearButtonVisibility();
+  searchInput.addEventListener("focus", checkClearButtonVisibility);
+
   // 清除搜索按钮
   clearSearchBtn.addEventListener("click", clearSearch);
 
