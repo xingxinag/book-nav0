@@ -13,6 +13,14 @@
 />
 <link
   rel="stylesheet"
+  href="{{ url_for('static', filename='css/navbar.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/sidebar.css') }}"
+/>
+<link
+  rel="stylesheet"
   href="{{ url_for('static', filename='css/contextMenu.css') }}"
 />
 <link
@@ -22,52 +30,7 @@
 <style>
   .page-container {
     padding: 0;
-  }
-
-  .breadcrumb-container {
-    background: var(--primary-gradient);
-    padding: 15px 0 60px;
-    margin-bottom: -40px;
-  }
-
-  .breadcrumb-inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-  }
-
-  .breadcrumb {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-radius: var(--border-radius);
-    padding: 8px 15px;
-    margin-bottom: 0;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .breadcrumb-item {
-    color: rgba(255, 255, 255, 0.9);
-    font-weight: 500;
-    font-size: 0.95rem;
-  }
-
-  .breadcrumb-item a {
-    color: white;
-    font-weight: 500;
-    text-decoration: none;
-    transition: var(--transition-base);
-  }
-
-  .breadcrumb-item a:hover {
-    color: rgba(255, 255, 255, 0.85);
-  }
-
-  .breadcrumb-item.active {
-    color: rgba(255, 255, 255, 0.85);
-  }
-
-  .breadcrumb-item + .breadcrumb-item::before {
-    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0;
   }
 
   .content-container {
@@ -249,27 +212,88 @@
     }
   }
 </style>
-{% endblock %} {% block content %}
-<div class="page-container">
-  <!-- 面包屑导航区域 -->
-  <div class="breadcrumb-container">
-    <div class="breadcrumb-inner">
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <a href="{{ url_for('main.index') }}"
-              ><i class="bi bi-house-door me-1"></i>首页</a
-            >
-          </li>
-          <li class="breadcrumb-item active" aria-current="page">
-            {{ category.name }}
-          </li>
-        </ol>
-      </nav>
-    </div>
+{% endblock %} {% block content %} {# 顶部导航栏 #}
+<div class="top-navbar">
+  <div class="menu-toggle" id="menuToggle">
+    <i class="bi bi-list"></i>
   </div>
+  <a href="{{ url_for('main.index') }}" class="navbar-logo">
+    <i class="bi bi-collection me-2"></i> 炫酷导航
+  </a>
+</div>
 
-  <div class="content-container">
+{# 遮罩层 #}
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+{# 侧边栏 #}
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-content">
+    <div class="sidebar-group">
+      <div class="sidebar-group-title">快速操作</div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('main.index') }}" class="sidebar-menu-link">
+            <span class="sidebar-menu-icon"
+              ><i class="bi bi-house-door"></i
+            ></span>
+            返回首页
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    {% if current_user.is_authenticated %}
+    <div class="sidebar-group">
+      <div class="sidebar-group-title">用户操作</div>
+      <ul class="sidebar-menu">
+        {% if current_user.is_admin %}
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('admin.index') }}" class="sidebar-menu-link">
+            <span class="sidebar-menu-icon"
+              ><i class="bi bi-speedometer2"></i
+            ></span>
+            管理面板
+          </a>
+        </li>
+        {% endif %}
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('auth.logout') }}" class="sidebar-menu-link">
+            <span class="sidebar-menu-icon"
+              ><i class="bi bi-box-arrow-right"></i
+            ></span>
+            退出登录
+          </a>
+        </li>
+      </ul>
+    </div>
+    {% else %}
+    <div class="sidebar-group">
+      <div class="sidebar-group-title">账户</div>
+      <ul class="sidebar-menu">
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('auth.login') }}" class="sidebar-menu-link">
+            <span class="sidebar-menu-icon"
+              ><i class="bi bi-box-arrow-in-right"></i
+            ></span>
+            登录
+          </a>
+        </li>
+        <li class="sidebar-menu-item">
+          <a href="{{ url_for('auth.register') }}" class="sidebar-menu-link">
+            <span class="sidebar-menu-icon"
+              ><i class="bi bi-person-plus"></i
+            ></span>
+            注册
+          </a>
+        </li>
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="page-container">
+  <div class="content-container mt-4">
     <!-- 分类信息和搜索区域 -->
     <div class="category-card">
       <div class="category-info">
@@ -522,6 +546,21 @@
 
     // 暂存原始内容，用于恢复
     let originalContent = null;
+
+    // 侧边栏相关
+    const menuToggle = document.getElementById("menuToggle");
+    const sidebar = document.getElementById("sidebar");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+    // 切换侧边栏显示状态
+    menuToggle.addEventListener("click", function () {
+      document.body.classList.toggle("sidebar-active");
+    });
+
+    // 点击遮罩层关闭侧边栏
+    sidebarOverlay.addEventListener("click", function () {
+      document.body.classList.remove("sidebar-active");
+    });
 
     // 搜索输入事件
     searchInput.addEventListener("input", function () {
