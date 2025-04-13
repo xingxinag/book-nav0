@@ -122,6 +122,20 @@
   font-size: 14px;
 }
 
+/* 搜索结果标题图标 */
+#searchResults .category-icon {
+  background: var(--primary-gradient);
+  box-shadow: 0 4px 10px rgba(112, 73, 240, 0.15);
+}
+
+#searchResults .category-heading {
+  margin-bottom: 1.5rem;
+}
+
+#searchResults .category-heading::after {
+  width: 80px;
+}
+
 /* 响应式调整 */
 @media (max-width: 768px) {
   .main-search-input {
