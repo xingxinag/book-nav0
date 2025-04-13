@@ -11,7 +11,7 @@
   /* 背景颜色 */
   --bg-color: #f8f9fa;
   --sidebar-bg: #2a3042;
-  --navbar-bg: #ffffff;
+  --navbar-bg: #2a3042;
   --content-bg: #ffffff;
 
   /* 文本颜色 */
@@ -19,6 +19,8 @@
   --text-muted: #6c757d;
   --sidebar-text: #a7b1c2;
   --sidebar-active: #ffffff;
+  --navbar-text: #a7b1c2;
+  --navbar-text-hover: #ffffff;
 
   /* 边框颜色 */
   --border-color: #e9ecef;
@@ -89,7 +91,7 @@ body {
   justify-content: space-between;
   padding: 0 var(--spacing-md);
   background-color: var(--navbar-bg);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: var(--box-shadow);
   z-index: 1000;
   transition: var(--transition);
@@ -103,7 +105,7 @@ body {
 .navbar-brand {
   display: flex;
   align-items: center;
-  color: var(--primary-color);
+  color: var(--sidebar-active);
   font-size: 1.25rem;
   font-weight: 600;
   text-decoration: none;
@@ -111,14 +113,14 @@ body {
 }
 
 .navbar-brand:hover {
-  color: var(--primary-dark);
+  color: var(--primary-color);
 }
 
 .menu-toggle {
   display: none;
   background: none;
   border: none;
-  color: var(--text-color);
+  color: var(--sidebar-text);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.25rem 0.5rem;
@@ -135,7 +137,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--text-color);
+  color: var(--navbar-text);
   text-decoration: none;
   padding: 0.5rem;
   border-radius: var(--border-radius);
@@ -143,8 +145,8 @@ body {
 }
 
 .navbar-link:hover {
-  background-color: var(--hover-bg);
-  color: var(--primary-color);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--navbar-text-hover);
 }
 
 .navbar-user {
@@ -157,10 +159,12 @@ body {
   padding: 0.5rem;
   border-radius: var(--border-radius);
   transition: var(--transition);
+  color: var(--navbar-text);
 }
 
 .navbar-user:hover {
-  background-color: var(--hover-bg);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--navbar-text-hover);
 }
 
 .user-avatar {
@@ -184,7 +188,7 @@ body {
   top: 100%;
   right: 0;
   width: 200px;
-  background-color: var(--navbar-bg);
+  background-color: var(--sidebar-bg);
   border-radius: var(--border-radius);
   box-shadow: var(--box-shadow-lg);
   padding: 0.5rem 0;
@@ -192,7 +196,7 @@ body {
   margin: 0;
   z-index: 1001;
   display: none;
-  border: 1px solid var(--border-color);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .dropdown-menu.show {
@@ -204,14 +208,14 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  color: var(--text-color);
+  color: var(--navbar-text);
   text-decoration: none;
   transition: var(--transition);
 }
 
 .dropdown-menu li a:hover {
-  background-color: var(--hover-bg);
-  color: var(--primary-color);
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--navbar-text-hover);
 }
 
 /* ========== 侧边栏样式 ========== */
@@ -229,6 +233,7 @@ body {
   flex-direction: column;
   overflow-y: auto;
   box-shadow: 1px 0 5px rgba(0, 0, 0, 0.1);
+  border-radius: 0 !important;
 }
 
 .sidebar-header {
