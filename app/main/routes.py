@@ -8,6 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import time
+from sqlalchemy import or_
 
 @bp.route('/')
 def index():
@@ -662,4 +663,55 @@ def check_url_exists():
             }
         })
     
-    return jsonify({'exists': False}) 
+    return jsonify({'exists': False})
+
+@bp.route('/api/category/<int:category_id>/search')
+def search_in_category(category_id):
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify({"success": False, "message": "搜索关键词不能为空"})
+    
+    # 获取该分类
+    category = Category.query.get_or_404(category_id)
+    
+    # 搜索该分类下的网站
+    websites = Website.query.filter(
+        Website.category_id == category_id,
+        or_(
+            Website.title.ilike(f'%{query}%'),
+            Website.description.ilike(f'%{query}%'),
+            Website.url.ilike(f'%{query}%')
+        )
+    )
+    
+    # 根据用户权限过滤私有链接
+    if not current_user.is_authenticated:
+        websites = websites.filter_by(is_private=False)
+    elif not current_user.is_admin:
+        websites = websites.filter(
+            (Website.is_private == False) |
+            (Website.created_by_id == current_user.id) |
+            (Website.visible_to.contains(str(current_user.id)))
+        )
+    
+    # 执行查询
+    websites = websites.order_by(Website.sort_order.desc(), Website.views.desc()).all()
+    
+    result = []
+    for site in websites:
+        result.append({
+            'id': site.id,
+            'title': site.title,
+            'url': site.url,
+            'description': site.description,
+            'icon': site.icon,
+            'sort_order': site.sort_order,
+            'is_private': site.is_private
+        })
+    
+    return jsonify({
+        "success": True,
+        "count": len(result),
+        "keyword": query,
+        "websites": result
+    }) 
