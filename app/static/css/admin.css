@@ -257,6 +257,9 @@ body {
 }
 
 .sidebar-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
   background: none;
   border: none;
   color: var(--sidebar-text);
@@ -268,6 +271,7 @@ body {
   justify-content: center;
   border-radius: 50%;
   transition: var(--transition);
+  z-index: 1000;
 }
 
 .sidebar-toggle:hover {
@@ -277,7 +281,7 @@ body {
 
 .sidebar-content {
   flex: 1;
-  padding: var(--spacing-md) 0;
+  padding-top: 0; /* 不再需要为顶部折叠按钮留出空间 */
 }
 
 .sidebar-menu {
@@ -322,19 +326,26 @@ body {
   width: var(--sidebar-collapsed-width);
 }
 
-.sidebar-collapsed .sidebar-logo span,
 .sidebar-collapsed .sidebar-link span {
   display: none;
 }
 
 .sidebar-collapsed .sidebar-link {
   justify-content: center;
-  padding: 0.75rem 0;
+  padding: 0.75rem;
+  text-align: center;
 }
 
 .sidebar-collapsed .sidebar-link i {
   margin-right: 0;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
+}
+
+.sidebar-collapsed .sidebar-item.active .sidebar-link {
+  border-left: none;
+  border-left-width: 0;
+  border-radius: 0;
+  border-right: 3px solid var(--primary-color);
 }
 
 /* 覆盖层（移动端使用） */
@@ -376,6 +387,7 @@ body {
 
   .admin-sidebar {
     transform: translateX(-100%);
+    top: 0; /* 在移动设备上，侧边栏从顶部开始 */
   }
 
   .menu-toggle {
@@ -393,4 +405,74 @@ body {
   .sidebar-mobile-open .sidebar-overlay {
     display: block;
   }
+
+  /* 移动设备上的侧边栏和折叠按钮 */
+  .sidebar-toggle {
+    top: auto;
+    position: relative;
+  }
+
+  .sidebar-content {
+    padding-top: 0;
+  }
+
+  /* 移动设备上折叠状态下的仪表盘 */
+  .sidebar-mobile-open .dashboard-header {
+    margin-top: 60px; /* 为移动设备上的navbar留出空间 */
+  }
+}
+
+/* 新增仪表盘头部区域样式 */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem var(--spacing-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.05);
+  min-height: 52px;
+}
+
+.dashboard-link {
+  display: flex;
+  align-items: center;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  transition: var(--transition);
+  flex: 1;
+}
+
+.dashboard-link.active,
+.dashboard-link:hover {
+  color: var(--sidebar-active);
+}
+
+.dashboard-link i {
+  font-size: 1.25rem;
+  min-width: 25px;
+  margin-right: var(--spacing-md);
+}
+
+/* 折叠状态下仪表盘样式 */
+.sidebar-collapsed .dashboard-header {
+  flex-direction: column;
+  padding: 0.75rem 0;
+  gap: 0.75rem;
+  min-height: 90px;
+}
+
+.sidebar-collapsed .dashboard-link {
+  justify-content: center;
+}
+
+.sidebar-collapsed .dashboard-link span {
+  display: none;
+}
+
+.sidebar-collapsed .dashboard-link i {
+  margin-right: 0;
+}
+
+.sidebar-collapsed .sidebar-toggle {
+  margin-right: 0;
 }
