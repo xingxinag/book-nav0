@@ -70,11 +70,15 @@ def category(id):
         Website.views.desc()
     ).all()
     
+    # 获取所有分类用于修改链接表单
+    all_categories = Category.query.order_by(Category.order.asc()).all()
+    
     # 相关分类信息
     context = {
         'title': category.name,
         'category': category,
         'websites': websites,
+        'all_categories': all_categories,
     }
     
     # 如果是子分类，获取同级分类（兄弟分类）
@@ -217,6 +221,13 @@ def update_website(site_id):
             site.icon = data['icon']
         if 'description' in data:
             site.description = data['description']
+        if 'is_private' in data:
+            site.is_private = bool(data['is_private'])
+        if 'category_id' in data and isinstance(data['category_id'], int):
+            # 验证分类是否存在
+            category = Category.query.get(data['category_id'])
+            if category:
+                site.category_id = data['category_id']
         
         db.session.commit()
         
@@ -228,7 +239,9 @@ def update_website(site_id):
                 "title": site.title,
                 "url": site.url,
                 "icon": site.icon,
-                "description": site.description
+                "description": site.description,
+                "category_id": site.category_id,
+                "is_private": site.is_private
             }
         })
     except Exception as e:

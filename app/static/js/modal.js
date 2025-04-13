@@ -47,6 +47,14 @@ document.addEventListener("DOMContentLoaded", function () {
             } else {
               document.getElementById("editPublic").checked = true;
             }
+
+            // 设置当前分类
+            if (data.website.category && data.website.category.id) {
+              const categorySelect = document.getElementById("editCategory");
+              if (categorySelect) {
+                categorySelect.value = data.website.category.id;
+              }
+            }
           }
         })
         .catch((error) => {
@@ -83,6 +91,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const url = document.getElementById("editUrl").value;
     const icon = document.getElementById("editIcon").value;
     const description = document.getElementById("editDescription").value;
+    const categoryId = document.getElementById("editCategory").value;
+
+    // 验证分类选择
+    if (!categoryId) {
+      alert("请选择分类");
+      return;
+    }
 
     try {
       // 检查URL是否已存在（排除当前编辑的链接）
@@ -116,12 +131,23 @@ document.addEventListener("DOMContentLoaded", function () {
           icon: icon,
           description: description,
           is_private: document.getElementById("editPrivate").checked ? 1 : 0,
+          category_id: parseInt(categoryId),
         }),
       });
 
       const data = await response.json();
       if (data.success) {
-        // 更新卡片显示
+        // 判断分类是否改变，如果改变则刷新页面
+        const originalCategoryId =
+          window.currentCard.closest(".card-container")?.dataset.categoryId;
+        if (originalCategoryId && originalCategoryId !== categoryId) {
+          // 分类已更改，刷新页面
+          alert("链接分类已更改，页面将重新加载");
+          window.location.reload();
+          return;
+        }
+
+        // 分类未改变，更新卡片显示
         if (window.currentCard) {
           const titleEl = window.currentCard.querySelector(".site-title");
           const descEl = window.currentCard.querySelector(".site-description");
