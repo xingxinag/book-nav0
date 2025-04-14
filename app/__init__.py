@@ -22,7 +22,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     csrf.init_app(app)
     
-    from app.models import User, InvitationCode, Category, Website
+    from app.models import User, InvitationCode, Category, Website, SiteSettings
     
     from app.auth import bp as auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -40,6 +40,15 @@ def create_app(config_class=Config):
     @app.context_processor
     def inject_now():
         return {'now': datetime.datetime.now()}
+    
+    @app.context_processor
+    def inject_site_settings():
+        try:
+            settings = SiteSettings.get_settings()
+            return {'settings': settings}
+        except:
+            # 如果表不存在等情况，返回空字典
+            return {'settings': None}
     
     @app.before_first_request
     def create_admin():

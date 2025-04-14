@@ -1,11 +1,13 @@
 from datetime import datetime
 from functools import wraps
-from flask import render_template, redirect, url_for, flash, request, abort, jsonify, session
+import os
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify, session, current_app
 from flask_login import current_user, login_required
+from werkzeug.utils import secure_filename
 from app import db, csrf
 from app.admin import bp
-from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm, UserEditForm
-from app.models import Category, Website, InvitationCode, User
+from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm, UserEditForm, SiteSettingsForm
+from app.models import Category, Website, InvitationCode, User, SiteSettings
 
 def admin_required(f):
     @wraps(f)
@@ -328,4 +330,64 @@ def edit_user(id):
         flash('用户信息更新成功!', 'success')
         return redirect(url_for('admin.users'))
     
-    return render_template('admin/user_edit.html', title='编辑用户', form=form, user=user) 
+    return render_template('admin/user_edit.html', title='编辑用户', form=form, user=user)
+
+# 站点设置管理
+@bp.route('/site-settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def site_settings():
+    settings = SiteSettings.get_settings()
+    form = SiteSettingsForm(obj=settings)
+    
+    if form.validate_on_submit():
+        # 处理Logo上传
+        if form.logo_file.data:
+            logo_filename = save_image(form.logo_file.data, 'logos')
+            if logo_filename:
+                settings.site_logo = url_for('static', filename=f'uploads/logos/{logo_filename}')
+        elif form.site_logo.data:
+            settings.site_logo = form.site_logo.data
+            
+        # 处理Favicon上传
+        if form.favicon_file.data:
+            favicon_filename = save_image(form.favicon_file.data, 'favicons')
+            if favicon_filename:
+                settings.site_favicon = url_for('static', filename=f'uploads/favicons/{favicon_filename}')
+        elif form.site_favicon.data:
+            settings.site_favicon = form.site_favicon.data
+            
+        # 更新其他字段
+        settings.site_name = form.site_name.data
+        settings.site_subtitle = form.site_subtitle.data
+        settings.site_keywords = form.site_keywords.data
+        settings.site_description = form.site_description.data
+        settings.footer_content = form.footer_content.data
+        
+        db.session.commit()
+        flash('站点设置已更新', 'success')
+        return redirect(url_for('admin.site_settings'))
+        
+    return render_template('admin/site_settings.html', title='站点设置', form=form, settings=settings)
+
+def save_image(file_data, subfolder):
+    """保存上传的图片到static/uploads目录"""
+    if not file_data:
+        return None
+        
+    # 确保存储目录存在
+    upload_dir = os.path.join(current_app.root_path, 'static', 'uploads', subfolder)
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # 生成唯一文件名并保存文件
+    filename = secure_filename(file_data.filename)
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    unique_filename = f"{timestamp}_{filename}"
+    file_path = os.path.join(upload_dir, unique_filename)
+    
+    try:
+        file_data.save(file_path)
+        return unique_filename
+    except Exception as e:
+        flash(f'图片上传失败: {str(e)}', 'danger')
+        return None 

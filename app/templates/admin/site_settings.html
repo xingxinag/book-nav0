@@ -1,0 +1,309 @@
+{% extends "admin/base.html" %} {% block content %}
+<div class="container-fluid px-4">
+  <h1 class="mt-4">站点设置</h1>
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item">
+      <a href="{{ url_for('admin.index') }}">首页</a>
+    </li>
+    <li class="breadcrumb-item active">站点设置</li>
+  </ol>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-gear me-1"></i>
+          站点基本设置
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  {{ form.site_name.label(class="form-label") }} {{
+                  form.site_name(class="form-control") }} {% if
+                  form.site_name.errors %} {% for error in form.site_name.errors
+                  %}
+                  <div class="text-danger">{{ error }}</div>
+                  {% endfor %} {% endif %}
+                  <div class="form-text">
+                    网站标题将显示在浏览器标签和导航栏
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  {{ form.site_subtitle.label(class="form-label") }} {{
+                  form.site_subtitle(class="form-control") }}
+                  <div class="form-text">副标题可显示在网站首页或页脚</div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  {{ form.site_keywords.label(class="form-label") }} {{
+                  form.site_keywords(class="form-control") }}
+                  <div class="form-text">
+                    用于SEO，多个关键词之间用英文逗号分隔
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  {{ form.site_description.label(class="form-label") }} {{
+                  form.site_description(class="form-control", rows=3) }}
+                  <div class="form-text">网站描述用于SEO和社交媒体分享</div>
+                </div>
+              </div>
+            </div>
+
+            <hr />
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">网站Logo</label>
+                  <div class="d-flex align-items-center mb-2">
+                    <div class="site-logo-preview me-3">
+                      {% if settings.site_logo %}
+                      <img
+                        src="{{ settings.site_logo }}"
+                        alt="网站Logo"
+                        style="max-height: 50px"
+                      />
+                      {% else %}
+                      <div class="text-center p-3 bg-light rounded">
+                        <i class="bi bi-collection"></i> 默认Logo
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="mb-2">
+                    {{ form.site_logo.label(class="form-label") }} {{
+                    form.site_logo(class="form-control") }}
+                    <div class="form-text">外部图床URL或相对路径</div>
+                  </div>
+                  <div>
+                    {{ form.logo_file.label(class="form-label") }} {{
+                    form.logo_file(class="form-control") }}
+                    <div class="form-text">或直接上传图片（优先使用上传）</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">网站图标</label>
+                  <div class="d-flex align-items-center mb-2">
+                    <div class="favicon-preview me-3">
+                      {% if settings.site_favicon %}
+                      <img
+                        src="{{ settings.site_favicon }}"
+                        alt="网站图标"
+                        style="max-height: 32px"
+                      />
+                      {% else %}
+                      <div
+                        class="text-center p-3 bg-light rounded"
+                        style="width: 32px; height: 32px"
+                      >
+                        <i class="bi bi-globe" style="font-size: 16px"></i>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="mb-2">
+                    {{ form.site_favicon.label(class="form-label") }} {{
+                    form.site_favicon(class="form-control") }}
+                    <div class="form-text">外部图床URL或相对路径</div>
+                  </div>
+                  <div>
+                    {{ form.favicon_file.label(class="form-label") }} {{
+                    form.favicon_file(class="form-control") }}
+                    <div class="form-text">推荐使用.ico或.png格式</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr />
+
+            <div class="mb-3">
+              {{ form.footer_content.label(class="form-label") }} {{
+              form.footer_content(class="form-control", rows=5) }}
+              <div class="form-text">支持HTML，可自定义页脚内容</div>
+            </div>
+
+            <div class="mt-4">{{ form.submit(class="btn btn-primary") }}</div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-eye me-1"></i>
+          预览
+        </div>
+        <div class="card-body">
+          <h5>网站标题预览</h5>
+          <div class="navbar-preview p-3 mb-3 bg-light rounded">
+            <a
+              class="navbar-logo d-flex align-items-center text-decoration-none"
+            >
+              {% if settings.site_logo %}
+              <img
+                src="{{ settings.site_logo }}"
+                alt="网站Logo"
+                style="max-height: 30px; margin-right: 10px"
+              />
+              {% else %}
+              <i class="bi bi-collection me-2"></i>
+              {% endif %}
+              <span class="fw-bold">{{ settings.site_name }}</span>
+            </a>
+          </div>
+
+          <h5>页脚预览</h5>
+          <div
+            class="footer-preview p-3 bg-light rounded"
+            style="font-size: 0.9rem"
+          >
+            {% if settings.footer_content %} {{ settings.footer_content|safe }}
+            {% else %}
+            <p class="mb-0">
+              © {{ now.year }} {{ settings.site_name }} -
+              为小团体打造的专属导航站
+            </p>
+            <p class="mb-0 small text-muted">由Python + Flask强力驱动</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-info-circle me-1"></i>
+          帮助信息
+        </div>
+        <div class="card-body">
+          <h5>关于网站Logo</h5>
+          <p>
+            Logo会显示在导航栏和页脚，建议使用透明背景的PNG图片，尺寸不超过200×60像素。
+          </p>
+
+          <h5>关于网站图标</h5>
+          <p>
+            图标(Favicon)会显示在浏览器标签页，推荐使用16×16或32×32像素的.ico格式文件。
+          </p>
+
+          <h5>关于自定义页脚</h5>
+          <p>
+            页脚支持HTML代码，可以添加版权信息、备案号、友情链接等。如果留空，将使用默认页脚。
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  // 实时预览Logo和网站标题
+  document.addEventListener("DOMContentLoaded", function () {
+    const siteNameInput = document.getElementById("site_name");
+    const logoUrlInput = document.getElementById("site_logo");
+    const logoFileInput = document.getElementById("logo_file");
+    const faviconUrlInput = document.getElementById("site_favicon");
+    const faviconFileInput = document.getElementById("favicon_file");
+
+    // 更新网站标题预览
+    function updateNavbarPreview() {
+      const logoPreview = document.querySelector(
+        ".navbar-preview .navbar-logo"
+      );
+      const nameSpan = logoPreview.querySelector("span");
+
+      // 更新标题文字
+      if (siteNameInput.value) {
+        nameSpan.textContent = siteNameInput.value;
+      } else {
+        nameSpan.textContent = "炫酷导航";
+      }
+    }
+
+    // 监听标题变化
+    if (siteNameInput) {
+      siteNameInput.addEventListener("input", updateNavbarPreview);
+    }
+
+    // 图片预览功能
+    function handleFilePreview(fileInput, urlInput, previewContainer) {
+      if (!fileInput) return;
+
+      fileInput.addEventListener("change", function () {
+        if (this.files && this.files[0]) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            let previewImg = previewContainer.querySelector("img");
+            if (!previewImg) {
+              previewContainer.innerHTML = "";
+              previewImg = document.createElement("img");
+              previewImg.style.maxHeight = previewContainer.classList.contains(
+                "favicon-preview"
+              )
+                ? "32px"
+                : "50px";
+              previewContainer.appendChild(previewImg);
+            }
+            previewImg.src = e.target.result;
+          };
+          reader.readAsDataURL(this.files[0]);
+        }
+      });
+    }
+
+    // URL输入预览
+    function handleUrlPreview(urlInput, previewContainer) {
+      if (!urlInput) return;
+
+      urlInput.addEventListener("input", function () {
+        if (this.value) {
+          let previewImg = previewContainer.querySelector("img");
+          if (!previewImg) {
+            previewContainer.innerHTML = "";
+            previewImg = document.createElement("img");
+            previewImg.style.maxHeight = previewContainer.classList.contains(
+              "favicon-preview"
+            )
+              ? "32px"
+              : "50px";
+            previewContainer.appendChild(previewImg);
+          }
+          previewImg.src = this.value;
+        }
+      });
+    }
+
+    // 初始化预览功能
+    handleFilePreview(
+      logoFileInput,
+      logoUrlInput,
+      document.querySelector(".site-logo-preview")
+    );
+    handleFilePreview(
+      faviconFileInput,
+      faviconUrlInput,
+      document.querySelector(".favicon-preview")
+    );
+    handleUrlPreview(
+      logoUrlInput,
+      document.querySelector(".site-logo-preview")
+    );
+    handleUrlPreview(
+      faviconUrlInput,
+      document.querySelector(".favicon-preview")
+    );
+  });
+</script>
+{% endblock %}

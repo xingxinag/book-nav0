@@ -4,7 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <title>{% if title %}{{ title }} - {% endif %}炫酷导航</title>
+
+    {% if settings and settings.site_keywords %}
+    <meta name="keywords" content="{{ settings.site_keywords }}" />
+    {% endif %} {% if settings and settings.site_description %}
+    <meta name="description" content="{{ settings.site_description }}" />
+    {% endif %}
+
+    <title>
+      {% if title %}{{ title }} - {% endif %}{% if settings %}{{
+      settings.site_name }}{% else %}炫酷导航{% endif %}
+    </title>
     <!-- 引入字体图标库 -->
     <link
       rel="stylesheet"
@@ -41,10 +51,14 @@
       href="{{ url_for('static', filename='css/footer.css') }}"
     />
     <!-- Favicon -->
+    {% if settings and settings.site_favicon %}
+    <link rel="shortcut icon" href="{{ settings.site_favicon }}" />
+    {% else %}
     <link
       rel="shortcut icon"
       href="{{ url_for('static', filename='images/favicon.ico') }}"
     />
+    {% endif %}
     <style>
       /* 修复CSS检查器错误 */
       /* 清除所有无关样式错误 */

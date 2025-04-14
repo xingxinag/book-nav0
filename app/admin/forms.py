@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, TextAreaField, BooleanField, SubmitField, SelectField, HiddenField, IntegerField, PasswordField
 from wtforms.validators import DataRequired, Length, URL, Optional, ValidationError, Email, EqualTo
 from app.models import Category, User
@@ -65,4 +66,22 @@ class UserEditForm(FlaskForm):
         if email.data != self.original_email:
             user = User.query.filter_by(email=email.data).first()
             if user is not None:
-                raise ValidationError('该邮箱已被注册，请使用其他邮箱。') 
+                raise ValidationError('该邮箱已被注册，请使用其他邮箱。')
+
+class SiteSettingsForm(FlaskForm):
+    site_name = StringField('网站标题', validators=[DataRequired(), Length(max=128)])
+    site_logo = StringField('网站Logo URL', validators=[Optional(), Length(max=256)])
+    logo_file = FileField('上传Logo', validators=[
+        Optional(),
+        FileAllowed(['jpg', 'png', 'gif', 'svg'], '只允许上传图片文件')
+    ])
+    site_favicon = StringField('网站图标 URL', validators=[Optional(), Length(max=256)])
+    favicon_file = FileField('上传图标', validators=[
+        Optional(),
+        FileAllowed(['ico', 'png', 'jpg'], '只允许上传图标文件')
+    ])
+    site_subtitle = StringField('网站副标题', validators=[Optional(), Length(max=256)])
+    site_keywords = StringField('网站关键词', validators=[Optional(), Length(max=512)])
+    site_description = TextAreaField('网站描述', validators=[Optional(), Length(max=1024)])
+    footer_content = TextAreaField('自定义页脚', validators=[Optional()])
+    submit = SubmitField('保存设置') 

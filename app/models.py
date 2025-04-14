@@ -162,3 +162,29 @@ class Website(db.Model):
             return user.id in visible_user_ids
             
         return False 
+
+
+class SiteSettings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    site_name = db.Column(db.String(128), default="炫酷导航")
+    site_logo = db.Column(db.String(256), nullable=True)  # 存储logo图片URL
+    site_favicon = db.Column(db.String(256), nullable=True)  # 存储网站图标URL
+    site_subtitle = db.Column(db.String(256), nullable=True)
+    site_keywords = db.Column(db.String(512), nullable=True)
+    site_description = db.Column(db.String(1024), nullable=True)
+    footer_content = db.Column(db.Text, nullable=True)  # 自定义页脚内容
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # 单例模式：确保只有一条记录
+    @classmethod
+    def get_settings(cls):
+        """获取站点设置（单例模式）"""
+        settings = cls.query.first()
+        if not settings:
+            settings = cls()
+            db.session.add(settings)
+            db.session.commit()
+        return settings
+    
+    def __repr__(self):
+        return f'<SiteSettings {self.site_name}>' 
