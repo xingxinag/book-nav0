@@ -43,6 +43,7 @@ def register():
             
             invitation_code.used_by_id = user.id
             invitation_code.used_at = datetime.utcnow()
+            invitation_code.is_active = False
             
             db.session.add(user)
             db.session.commit()
