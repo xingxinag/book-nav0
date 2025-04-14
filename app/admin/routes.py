@@ -13,6 +13,8 @@ import time
 import json
 import threading
 from queue import Queue
+from urllib.parse import urlparse
+import requests
 
 def admin_required(f):
     @wraps(f)
@@ -1490,12 +1492,32 @@ def process_missing_icons(app):
                     
                     # 根据结果更新网站图标
                     if result["success"] and result.get("icon_url"):
+                        # 使用API返回的图标URL
                         website.icon = result["icon_url"]
                         icon_fetch_status['success'] += 1
                     elif "fallback_url" in result and result["fallback_url"]:
-                        website.icon = result["fallback_url"]
-                        icon_fetch_status['failed'] += 1
+                        # 验证备用图标URL是否可访问
+                        fallback_url = result["fallback_url"]
+                        try:
+                            # 使用HEAD请求快速验证URL可访问性
+                            head_response = requests.head(
+                                fallback_url, 
+                                timeout=5, 
+                                headers={'User-Agent': 'Mozilla/5.0'}
+                            )
+                            if head_response.status_code < 400:  # 2xx或3xx状态码表示可访问
+                                # 备用URL可访问，设置图标并算作成功
+                                website.icon = fallback_url
+                                icon_fetch_status['success'] += 1
+                            else:
+                                # 备用URL返回错误状态码，算作失败
+                                icon_fetch_status['failed'] += 1
+                        except Exception as url_err:
+                            # 请求过程中出错，算作失败
+                            current_app.logger.warning(f"验证备用图标URL失败: {fallback_url} - {str(url_err)}")
+                            icon_fetch_status['failed'] += 1
                     else:
+                        # 完全无法获取图标才算失败
                         icon_fetch_status['failed'] += 1
                     
                     # 更新处理数量
@@ -1509,7 +1531,36 @@ def process_missing_icons(app):
                     time.sleep(1)
                     
                 except Exception as e:
-                    icon_fetch_status['failed'] += 1
+                    # 处理异常，尝试使用备用图标
+                    try:
+                        from urllib.parse import urlparse
+                        parsed_url = urlparse(website.url)
+                        domain = parsed_url.netloc
+                        fallback_url = f"https://favicon.cccyun.cc/{domain}"
+                        
+                        # 验证备用图标URL是否可访问
+                        try:
+                            # 使用HEAD请求快速验证URL可访问性
+                            head_response = requests.head(
+                                fallback_url, 
+                                timeout=5, 
+                                headers={'User-Agent': 'Mozilla/5.0'}
+                            )
+                            if head_response.status_code < 400:  # 2xx或3xx状态码表示可访问
+                                # 备用URL可访问，设置图标并算作成功
+                                website.icon = fallback_url
+                                icon_fetch_status['success'] += 1
+                            else:
+                                # 备用URL返回错误状态码，算作失败
+                                icon_fetch_status['failed'] += 1
+                        except Exception as url_err:
+                            # 请求过程中出错，算作失败
+                            current_app.logger.warning(f"验证备用图标URL失败: {fallback_url} - {str(url_err)}")
+                            icon_fetch_status['failed'] += 1
+                    except:
+                        # 完全无法设置图标才算失败
+                        icon_fetch_status['failed'] += 1
+                    
                     icon_fetch_status['processed'] += 1
                     current_app.logger.error(f"抓取图标出错 ({website.url}): {str(e)}")
             
