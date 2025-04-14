@@ -57,26 +57,8 @@ render_icon(icon_name='folder', color='#3498db') %}
   rel="stylesheet"
   href="{{ url_for('static', filename='css/contextMenu.css') }}"
 />
-{% endblock %} {% block content %} {# 顶部导航栏 #}
-<div class="top-navbar">
-  <div class="menu-toggle" id="menuToggle">
-    <i class="bi bi-list"></i>
-  </div>
-  <a href="{{ url_for('main.index') }}" class="navbar-logo">
-    {% if settings and settings.site_logo %}
-    <img
-      src="{{ settings.site_logo }}"
-      alt="{{ settings.site_name }}"
-      style="max-height: 30px; margin-right: 8px"
-    />
-    {% else %}
-    <i class="bi bi-collection me-2"></i>
-    {% endif %} {% if settings %}{{ settings.site_name }}{% else %}炫酷导航{%
-    endif %}
-  </a>
-</div>
-
-{# 遮罩层 #}
+{% endblock %} {% block content %} {# 顶部导航栏 #} {% include
+'common/navbar.html' %} {# 遮罩层 #}
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 {# 侧边栏 #}

@@ -46,9 +46,20 @@ def create_app(config_class=Config):
         try:
             settings = SiteSettings.get_settings()
             return {'settings': settings}
-        except:
-            # 如果表不存在等情况，返回空字典
-            return {'settings': None}
+        except Exception as e:
+            # 记录错误，但返回一个空的设置对象，避免模板渲染失败
+            print(f"无法获取站点设置: {str(e)}")
+            # 创建一个临时设置对象，包含基本默认值
+            default_settings = type('DefaultSettings', (), {
+                'site_name': '炫酷导航',
+                'site_logo': None,
+                'site_favicon': None,
+                'site_subtitle': '',
+                'site_keywords': '',
+                'site_description': '',
+                'footer_content': None
+            })
+            return {'settings': default_settings}
     
     @app.before_first_request
     def create_admin():

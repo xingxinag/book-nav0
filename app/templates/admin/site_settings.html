@@ -172,10 +172,7 @@
           >
             {% if settings.footer_content %} {{ settings.footer_content|safe }}
             {% else %}
-            <p class="mb-0">
-              © {{ now.year }} {{ settings.site_name }} -
-              为小团体打造的专属导航站
-            </p>
+            <p class="mb-0">© {{ now.year }} {{ settings.site_name }}</p>
             <p class="mb-0 small text-muted">由Python + Flask强力驱动</p>
             {% endif %}
           </div>

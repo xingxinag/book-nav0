@@ -1,4 +1,13 @@
-{% extends "base.html" %} {% block head %}
+{% extends "base.html" %} {% block head %} {# 调试信息 #}
+<!-- 
+DEBUG - Settings信息: 
+{% if settings %}
+  站点名称: {{ settings.site_name }}
+  站点Logo: {{ settings.site_logo }}
+{% else %}
+  Settings变量不可用
+{% endif %}
+-->
 <link
   rel="stylesheet"
   href="{{ url_for('static', filename='css/variables.css') }}"
@@ -347,17 +356,8 @@
     color: white;
   }
 </style>
-{% endblock %} {% block content %} {# 顶部导航栏 #}
-<div class="top-navbar">
-  <div class="menu-toggle" id="menuToggle">
-    <i class="bi bi-list"></i>
-  </div>
-  <a href="{{ url_for('main.index') }}" class="navbar-logo">
-    <i class="bi bi-collection me-2"></i> 炫酷导航
-  </a>
-</div>
-
-{# 遮罩层 #}
+{% endblock %} {% block content %} {# 顶部导航栏 #} {% include
+'common/navbar.html' %} {# 遮罩层 #}
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 {# 侧边栏 #}

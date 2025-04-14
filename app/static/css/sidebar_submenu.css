@@ -7,14 +7,17 @@
   min-width: 1.25rem;
   height: 1.25rem;
   font-size: 0.75rem;
-  background-color: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(112, 73, 240, 0.8);
+  color: #ffffff;
   border-radius: 1rem;
   padding: 0 0.4rem;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-menu-link:hover .category-children-count {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(120, 82, 245, 0.9);
+  transform: scale(1.05);
 }
 
 .sidebar-menu-item.has-submenu .submenu-toggle {
@@ -51,11 +54,14 @@
   color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   transition: background-color 0.2s;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .sidebar-submenu-link:hover {
   background-color: rgba(255, 255, 255, 0.1);
   color: #fff;
+  font-weight: 600;
 }
 
 .sidebar-submenu-item .sidebar-menu-icon {

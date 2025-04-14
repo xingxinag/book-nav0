@@ -1,0 +1,17 @@
+{# 顶部导航栏模板 #}
+<div class="top-navbar">
+  <div class="menu-toggle" id="menuToggle">
+    <i class="bi bi-list"></i>
+  </div>
+  <a href="{{ url_for('main.index') }}" class="navbar-logo">
+    {% if settings and settings.site_logo %}
+    <img
+      src="{{ settings.site_logo }}"
+      alt="{{ settings.site_name }}"
+      style="max-height: 30px; margin-right: 8px"
+    />
+    {% else %}
+    <i class="bi bi-collection me-2"></i>
+    {% endif %} {{ settings.site_name if settings else '炫酷导航' }}
+  </a>
+</div>
