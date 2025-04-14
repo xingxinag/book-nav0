@@ -105,7 +105,7 @@ def delete_category(id):
 @admin_required
 def websites():
     page = request.args.get('page', 1, type=int)
-    per_page = 10  # 每页显示的数量
+    per_page = request.args.get('per_page', 10, type=int)  # 从URL参数中获取每页显示数量
     category_id = request.args.get('category_id', type=int)
     
     # 构建查询
