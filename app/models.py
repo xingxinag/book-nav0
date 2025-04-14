@@ -189,3 +189,22 @@ class SiteSettings(db.Model):
     
     def __repr__(self):
         return f'<SiteSettings {self.site_name}>' 
+
+
+class OperationLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    operation_type = db.Column(db.String(50))  # ADD, MODIFY, DELETE
+    website_id = db.Column(db.Integer, nullable=True)  # 可以为空，表示记录已被删除的网站
+    website_title = db.Column(db.String(128), nullable=True)
+    website_url = db.Column(db.String(256), nullable=True)
+    website_icon = db.Column(db.String(256), nullable=True)
+    category_id = db.Column(db.Integer, nullable=True)
+    category_name = db.Column(db.String(64), nullable=True)
+    details = db.Column(db.Text, nullable=True)  # 存储更多操作细节，JSON格式
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    user = db.relationship('User', backref='operations')
+    
+    def __repr__(self):
+        return f'<OperationLog {self.operation_type} {self.website_title}>'

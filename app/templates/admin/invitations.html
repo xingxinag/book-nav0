@@ -240,10 +240,10 @@
       {{ form.hidden_tag() }}
       <div class="form-group">
         {{ form.count.label(class="form-label fw-medium") }} {{
-        form.count(class="form-control", type="number", min=1, max=10) }}
-        <div class="form-text">最多一次可生成10个邀请码</div>
+        form.count(class="form-control", min=1, max=50) }}
+        <div class="form-text">最多一次可生成50个邀请码</div>
       </div>
-      {{ form.submit(class="btn btn-generate") }}
+      <div class="ms-3">{{ form.submit_btn(class="btn btn-primary") }}</div>
     </form>
   </div>
 </div>

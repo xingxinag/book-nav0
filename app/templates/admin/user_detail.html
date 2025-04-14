@@ -1,4 +1,113 @@
-{% extends "admin/base.html" %} {% block admin_content %}
+{% extends "admin/base.html" %}
+
+{% block admin_head %}
+{{ super() }}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-tables.css') }}">
+<style>
+  /* 网站信息样式 */
+  .website-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .website-title {
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  
+  .website-url {
+    font-size: 0.8rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+  }
+  
+  .website-icon {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #f8f9fa;
+    overflow: hidden;
+  }
+  
+  /* 工具栏样式 */
+  .toolbar {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* 批量操作按钮样式 */
+  .batch-actions {
+    display: none;
+    text-align: right;
+  }
+  
+  .batch-actions.show {
+    display: block;
+  }
+  
+  /* 默认网站图标样式 */
+  .default-site-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    border-radius: 4px;
+    color: white;
+    text-transform: uppercase;
+    font-weight: bold;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+  }
+  
+  /* 标签页样式优化 */
+  .nav-tabs .nav-link {
+    padding: 0.75rem 1.25rem;
+    border-radius: 0;
+    font-weight: 500;
+  }
+  
+  .nav-tabs .nav-link.active {
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    color: #3498db;
+  }
+  
+  .nav-tabs .nav-link:not(.active) {
+    color: #6c757d;
+  }
+  
+  .nav-tabs .nav-link:hover:not(.active) {
+    border-color: transparent;
+    background-color: rgba(0, 0, 0, 0.03);
+  }
+  
+  /* 暗黑模式适配 */
+  .dark-mode .nav-tabs .nav-link.active {
+    background-color: #2a2a3c;
+    border-color: #3f3f5f #3f3f5f #2a2a3c;
+    color: #3498db;
+  }
+  
+  .dark-mode .nav-tabs .nav-link:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+</style>
+{% endblock %}
+
+{% block admin_content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2><i class="bi bi-person"></i> 用户详情</h2>
   <div>
@@ -86,76 +195,775 @@
   </div>
 </div>
 
-<div class="card">
+<!-- 操作记录区域 -->
+<div class="card mb-4">
   <div class="card-header">
-    <h5 class="mb-0">
-      <i class="bi bi-globe"></i> 用户添加的网站 ({{ websites|length }})
-    </h5>
+    <h5 class="mb-0"><i class="bi bi-clock-history"></i> 操作记录</h5>
   </div>
-  <div class="card-body">
-    {% if websites %}
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th style="width: 60px">#</th>
-            <th>网站名称</th>
-            <th>分类</th>
-            <th>添加时间</th>
-            <th>状态</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for website in websites %}
-          <tr>
-            <td>{{ website.id }}</td>
-            <td>
-              <div class="d-flex align-items-center">
-                <div class="site-icon me-2" style="width: 32px; height: 32px">
-                  {% if website.icon %}
-                  <img
-                    src="{{ website.icon }}"
-                    alt="{{ website.title }}"
-                    style="width: 100%; height: 100%; object-fit: contain"
-                  />
-                  {% else %}
-                  <i
-                    class="bi bi-globe text-primary"
-                    style="font-size: 24px"
-                  ></i>
-                  {% endif %}
-                </div>
-                <a href="{{ website.url }}" target="_blank"
-                  >{{ website.title }}</a
-                >
+  <div class="card-body p-0">
+    <!-- 标签页切换 -->
+    <ul class="nav nav-tabs" id="recordsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active d-flex align-items-center" id="added-tab" data-bs-toggle="tab" data-bs-target="#added-tab-pane" type="button" role="tab" aria-controls="added-tab-pane" aria-selected="true">
+          <i class="bi bi-plus-circle me-1"></i> 添加的链接 <span class="badge bg-primary ms-2">{{ added_records|length if added_records else 0 }}</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link d-flex align-items-center" id="modified-tab" data-bs-toggle="tab" data-bs-target="#modified-tab-pane" type="button" role="tab" aria-controls="modified-tab-pane" aria-selected="false">
+          <i class="bi bi-pencil-square me-1"></i> 修改的链接 <span class="badge bg-primary ms-2">{{ modified_records|length if modified_records else 0 }}</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link d-flex align-items-center" id="deleted-tab" data-bs-toggle="tab" data-bs-target="#deleted-tab-pane" type="button" role="tab" aria-controls="deleted-tab-pane" aria-selected="false">
+          <i class="bi bi-trash me-1"></i> 删除的链接 <span class="badge bg-primary ms-2">{{ deleted_records|length if deleted_records else 0 }}</span>
+        </button>
+      </li>
+    </ul>
+    
+    <!-- 标签页内容 -->
+    <div class="tab-content" id="recordsTabsContent">
+      <!-- 添加记录标签页 -->
+      <div class="tab-pane fade show active" id="added-tab-pane" role="tabpanel" aria-labelledby="added-tab" tabindex="0">
+        <!-- 工具栏 -->
+        <div class="toolbar">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <div class="batch-actions" id="batchActionsAdded">
+                <button type="button" class="btn btn-danger btn-sm" onclick="batchDeleteRecords('added')">
+                  <i class="bi bi-trash"></i> 删除选中
+                </button>
               </div>
-            </td>
-            <td>
-              {% if website.category %}
-              <span class="badge bg-primary">{{ website.category.name }}</span>
+            </div>
+            <div class="col-md-4 text-end">
+              <select class="form-select form-select-sm" style="width: auto; display: inline-block;" 
+                      onchange="changeRecordPageSize(this, 'added')">
+                <option value="10" {% if request.args.get('added_per_page')|int == 10 or not request.args.get('added_per_page') %}selected{% endif %}>10条/页</option>
+                <option value="20" {% if request.args.get('added_per_page')|int == 20 %}selected{% endif %}>20条/页</option>
+                <option value="50" {% if request.args.get('added_per_page')|int == 50 %}selected{% endif %}>50条/页</option>
+                <option value="100" {% if request.args.get('added_per_page')|int == 100 %}selected{% endif %}>100条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        {% if added_records %}
+        <div class="admin-table-container">
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">
+                    <input type="checkbox" class="form-check-input" id="selectAllAdded">
+                  </th>
+                  <th>网站名称</th>
+                  <th>分类</th>
+                  <th>添加时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for record in added_records %}
+                <tr>
+                  <td>
+                    <input type="checkbox" class="form-check-input record-checkbox added-checkbox" value="{{ record.id }}">
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="website-icon">
+                        {% if record.website_icon %}
+                        <img
+                          src="{{ record.website_icon }}"
+                          alt="{{ record.website_title }}"
+                          style="width: 100%; height: 100%; object-fit: contain"
+                        />
+                        {% else %}
+                        <i class="bi bi-globe text-primary" style="font-size: 24px"></i>
+                        {% endif %}
+                      </div>
+                      <div class="website-info">
+                        <div class="website-title">{{ record.website_title }}</div>
+                        <div class="website-url">{{ record.website_url }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    {% if record.category_name %}
+                    <span class="badge bg-primary">{{ record.category_name }}</span>
+                    {% else %}
+                    <span class="badge bg-secondary">未分类</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      {% if record.website_id %}
+                      <a href="{{ url_for('main.site', id=record.website_id) }}" target="_blank" class="btn btn-action" style="background-color: #edf2f7; color: #4a5568;" title="查看链接">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      {% endif %}
+                      <button class="btn btn-action btn-delete" onclick="deleteRecord({{ record.id }}, '添加记录')" title="删除记录">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 分页 -->
+        {% if added_pagination and added_pagination.pages > 1 %}
+        <div class="pagination-container d-flex justify-content-center align-items-center mt-3 mb-3">
+          <nav>
+            <ul class="pagination">
+              <li class="page-item {% if not added_pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, added_page=added_pagination.prev_num, added_per_page=request.args.get('added_per_page', 10)) }}">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+
+              {% for page in added_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page %}
+                  <li class="page-item {% if page == added_pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, added_page=page, added_per_page=request.args.get('added_per_page', 10)) }}">
+                      {{ page }}
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">...</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              <li class="page-item {% if not added_pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, added_page=added_pagination.next_num, added_per_page=request.args.get('added_per_page', 10)) }}">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="admin-table-empty">
+          <i class="bi bi-emoji-neutral"></i>
+          <p>该用户尚未有任何添加记录</p>
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- 修改记录标签页 -->
+      <div class="tab-pane fade" id="modified-tab-pane" role="tabpanel" aria-labelledby="modified-tab" tabindex="0">
+        <!-- 工具栏 -->
+        <div class="toolbar">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <div class="batch-actions" id="batchActionsModified">
+                <button type="button" class="btn btn-danger btn-sm" onclick="batchDeleteRecords('modified')">
+                  <i class="bi bi-trash"></i> 删除选中
+                </button>
+              </div>
+            </div>
+            <div class="col-md-4 text-end">
+              <select class="form-select form-select-sm" style="width: auto; display: inline-block;" 
+                      onchange="changeRecordPageSize(this, 'modified')">
+                <option value="10" {% if request.args.get('modified_per_page')|int == 10 or not request.args.get('modified_per_page') %}selected{% endif %}>10条/页</option>
+                <option value="20" {% if request.args.get('modified_per_page')|int == 20 %}selected{% endif %}>20条/页</option>
+                <option value="50" {% if request.args.get('modified_per_page')|int == 50 %}selected{% endif %}>50条/页</option>
+                <option value="100" {% if request.args.get('modified_per_page')|int == 100 %}selected{% endif %}>100条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        {% if modified_records %}
+        <div class="admin-table-container">
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">
+                    <input type="checkbox" class="form-check-input" id="selectAllModified">
+                  </th>
+                  <th>网站名称</th>
+                  <th>分类</th>
+                  <th>修改时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for record in modified_records %}
+                <tr>
+                  <td>
+                    <input type="checkbox" class="form-check-input record-checkbox modified-checkbox" value="{{ record.id }}">
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="website-icon">
+                        {% if record.website_icon %}
+                        <img
+                          src="{{ record.website_icon }}"
+                          alt="{{ record.website_title }}"
+                          style="width: 100%; height: 100%; object-fit: contain"
+                        />
+                        {% else %}
+                        <i class="bi bi-globe text-primary" style="font-size: 24px"></i>
+                        {% endif %}
+                      </div>
+                      <div class="website-info">
+                        <div class="website-title">{{ record.website_title }}</div>
+                        <div class="website-url">{{ record.website_url }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    {% if record.category_name %}
+                    <span class="badge bg-primary">{{ record.category_name }}</span>
+                    {% else %}
+                    <span class="badge bg-secondary">未分类</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn btn-action btn-edit" data-bs-toggle="modal" data-bs-target="#modifyDetailModal{{ record.id }}" title="查看详情">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="btn btn-action btn-delete" onclick="deleteRecord({{ record.id }}, '修改记录')" title="删除记录">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 分页 -->
+        {% if modified_pagination and modified_pagination.pages > 1 %}
+        <div class="pagination-container d-flex justify-content-center align-items-center mt-3 mb-3">
+          <nav>
+            <ul class="pagination">
+              <li class="page-item {% if not modified_pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, modified_page=modified_pagination.prev_num, modified_per_page=request.args.get('modified_per_page', 10)) }}">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+
+              {% for page in modified_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page %}
+                  <li class="page-item {% if page == modified_pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, modified_page=page, modified_per_page=request.args.get('modified_per_page', 10)) }}">
+                      {{ page }}
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">...</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              <li class="page-item {% if not modified_pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, modified_page=modified_pagination.next_num, modified_per_page=request.args.get('modified_per_page', 10)) }}">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="admin-table-empty">
+          <i class="bi bi-emoji-neutral"></i>
+          <p>该用户尚未有任何修改记录</p>
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- 删除记录标签页 -->
+      <div class="tab-pane fade" id="deleted-tab-pane" role="tabpanel" aria-labelledby="deleted-tab" tabindex="0">
+        <!-- 工具栏 -->
+        <div class="toolbar">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <div class="batch-actions" id="batchActionsDeleted">
+                <button type="button" class="btn btn-danger btn-sm" onclick="batchDeleteRecords('deleted')">
+                  <i class="bi bi-trash"></i> 删除选中
+                </button>
+              </div>
+            </div>
+            <div class="col-md-4 text-end">
+              <select class="form-select form-select-sm" style="width: auto; display: inline-block;" 
+                      onchange="changeRecordPageSize(this, 'deleted')">
+                <option value="10" {% if request.args.get('deleted_per_page')|int == 10 or not request.args.get('deleted_per_page') %}selected{% endif %}>10条/页</option>
+                <option value="20" {% if request.args.get('deleted_per_page')|int == 20 %}selected{% endif %}>20条/页</option>
+                <option value="50" {% if request.args.get('deleted_per_page')|int == 50 %}selected{% endif %}>50条/页</option>
+                <option value="100" {% if request.args.get('deleted_per_page')|int == 100 %}selected{% endif %}>100条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        {% if deleted_records %}
+        <div class="admin-table-container">
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">
+                    <input type="checkbox" class="form-check-input" id="selectAllDeleted">
+                  </th>
+                  <th>网站名称</th>
+                  <th>原始分类</th>
+                  <th>删除时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for record in deleted_records %}
+                <tr>
+                  <td>
+                    <input type="checkbox" class="form-check-input record-checkbox deleted-checkbox" value="{{ record.id }}">
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="website-icon">
+                        {% if record.website_icon %}
+                        <img
+                          src="{{ record.website_icon }}"
+                          alt="{{ record.website_title }}"
+                          style="width: 100%; height: 100%; object-fit: contain"
+                        />
+                        {% else %}
+                        <i class="bi bi-globe text-primary" style="font-size: 24px"></i>
+                        {% endif %}
+                      </div>
+                      <div class="website-info">
+                        <div class="website-title">{{ record.website_title }}</div>
+                        <div class="website-url">{{ record.website_url }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    {% if record.category_name %}
+                    <span class="badge bg-primary">{{ record.category_name }}</span>
+                    {% else %}
+                    <span class="badge bg-secondary">未分类</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      <button class="btn btn-action btn-edit" data-bs-toggle="modal" data-bs-target="#deleteDetailModal{{ record.id }}" title="查看详情">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button class="btn btn-action btn-delete" onclick="deleteRecord({{ record.id }}, '删除记录')" title="删除记录">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- 分页 -->
+        {% if deleted_pagination and deleted_pagination.pages > 1 %}
+        <div class="pagination-container d-flex justify-content-center align-items-center mt-3 mb-3">
+          <nav>
+            <ul class="pagination">
+              <li class="page-item {% if not deleted_pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, deleted_page=deleted_pagination.prev_num, deleted_per_page=request.args.get('deleted_per_page', 10)) }}">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+
+              {% for page in deleted_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page %}
+                  <li class="page-item {% if page == deleted_pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, deleted_page=page, deleted_per_page=request.args.get('deleted_per_page', 10)) }}">
+                      {{ page }}
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">...</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              <li class="page-item {% if not deleted_pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, deleted_page=deleted_pagination.next_num, deleted_per_page=request.args.get('deleted_per_page', 10)) }}">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="admin-table-empty">
+          <i class="bi bi-emoji-neutral"></i>
+          <p>该用户尚未有任何删除记录</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 修改记录详情模态框 -->
+{% for record in modified_records %}
+<div class="modal fade" id="modifyDetailModal{{ record.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">修改详情</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% set details = record.details|from_json %}
+        <div class="mb-3">
+          <strong>修改时间:</strong> {{ record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+        </div>
+        
+        {% if details.title %}
+        <div class="mb-3">
+          <strong>标题修改:</strong>
+          <div class="d-flex mt-1">
+            <div class="text-decoration-line-through text-muted me-3">{{ details.title.old }}</div>
+            <div class="text-success">{{ details.title.new }}</div>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if details.url %}
+        <div class="mb-3">
+          <strong>URL修改:</strong>
+          <div class="d-flex mt-1">
+            <div class="text-decoration-line-through text-muted me-3">{{ details.url.old }}</div>
+            <div class="text-success">{{ details.url.new }}</div>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if details.description %}
+        <div class="mb-3">
+          <strong>描述修改:</strong>
+          <div class="mt-1">
+            <div class="text-decoration-line-through text-muted">{{ details.description.old }}</div>
+            <div class="text-success mt-1">{{ details.description.new }}</div>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if details.category %}
+        <div class="mb-3">
+          <strong>分类修改:</strong>
+          <div class="d-flex mt-1">
+            <div class="text-decoration-line-through text-muted me-3">
+              {% if details.category.old %}
+              <span class="badge bg-secondary">{{ details.category.old }}</span>
               {% else %}
               <span class="badge bg-secondary">未分类</span>
               {% endif %}
-            </td>
-            <td>{{ website.created_at.strftime('%Y-%m-%d') }}</td>
-            <td>
-              {% if website.is_private %}
+            </div>
+            <div class="text-success">
+              {% if details.category.new %}
+              <span class="badge bg-primary">{{ details.category.new }}</span>
+              {% else %}
+              <span class="badge bg-secondary">未分类</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if details.is_private is defined %}
+        <div class="mb-3">
+          <strong>私有状态修改:</strong>
+          <div class="d-flex mt-1">
+            <div class="text-decoration-line-through text-muted me-3">
+              {% if details.is_private.old %}
               <span class="badge bg-warning text-dark">私有</span>
               {% else %}
               <span class="badge bg-success">公开</span>
               {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            </div>
+            <div class="text-success">
+              {% if details.is_private.new %}
+              <span class="badge bg-warning text-dark">私有</span>
+              {% else %}
+              <span class="badge bg-success">公开</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if details.is_featured is defined %}
+        <div class="mb-3">
+          <strong>推荐状态修改:</strong>
+          <div class="d-flex mt-1">
+            <div class="text-decoration-line-through text-muted me-3">
+              {% if details.is_featured.old %}
+              <span class="badge bg-info">推荐</span>
+              {% else %}
+              <span class="badge bg-secondary">普通</span>
+              {% endif %}
+            </div>
+            <div class="text-success">
+              {% if details.is_featured.new %}
+              <span class="badge bg-info">推荐</span>
+              {% else %}
+              <span class="badge bg-secondary">普通</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+      </div>
     </div>
-    {% else %}
-    <div class="text-center py-4">
-      <i class="bi bi-emoji-neutral fs-1 text-muted"></i>
-      <p class="mt-3 text-muted">该用户尚未添加任何网站</p>
-    </div>
-    {% endif %}
   </div>
 </div>
+{% endfor %}
+
+<!-- 删除记录详情模态框 -->
+{% for record in deleted_records %}
+<div class="modal fade" id="deleteDetailModal{{ record.id }}" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">删除详情</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        {% set details = record.details|from_json %}
+        <div class="mb-3">
+          <strong>删除时间:</strong> {{ record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+        </div>
+        <div class="mb-3">
+          <strong>网站URL:</strong> 
+          <a href="{{ record.website_url }}" target="_blank" class="text-decoration-none">
+            {{ record.website_url }}
+          </a>
+        </div>
+        <div class="mb-3">
+          <strong>网站描述:</strong> 
+          <p class="mb-0 mt-1 text-muted">{{ details.description or '无描述' }}</p>
+        </div>
+        <div class="mb-3">
+          <strong>分类:</strong> 
+          {% if record.category_name %}
+          <span class="badge bg-primary">{{ record.category_name }}</span>
+          {% else %}
+          <span class="badge bg-secondary">未分类</span>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <strong>状态:</strong>
+          {% if details.is_private %}
+          <span class="badge bg-warning text-dark">私有</span>
+          {% else %}
+          <span class="badge bg-success">公开</span>
+          {% endif %}
+          {% if details.is_featured %}
+          <span class="badge bg-info ms-1">推荐</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block admin_scripts %}
+{{ super() }}
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    // 全选/取消全选 - 添加记录
+    const selectAllAdded = document.getElementById('selectAllAdded');
+    const addedCheckboxes = document.querySelectorAll('.added-checkbox');
+    const batchActionsAdded = document.getElementById('batchActionsAdded');
+    
+    if (selectAllAdded) {
+      selectAllAdded.addEventListener('change', function() {
+        addedCheckboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+        });
+        updateBatchActions('added');
+      });
+      
+      addedCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          updateBatchActions('added');
+        });
+      });
+    }
+    
+    // 全选/取消全选 - 修改记录
+    const selectAllModified = document.getElementById('selectAllModified');
+    const modifiedCheckboxes = document.querySelectorAll('.modified-checkbox');
+    const batchActionsModified = document.getElementById('batchActionsModified');
+    
+    if (selectAllModified) {
+      selectAllModified.addEventListener('change', function() {
+        modifiedCheckboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+        });
+        updateBatchActions('modified');
+      });
+      
+      modifiedCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          updateBatchActions('modified');
+        });
+      });
+    }
+    
+    // 全选/取消全选 - 删除记录
+    const selectAllDeleted = document.getElementById('selectAllDeleted');
+    const deletedCheckboxes = document.querySelectorAll('.deleted-checkbox');
+    const batchActionsDeleted = document.getElementById('batchActionsDeleted');
+    
+    if (selectAllDeleted) {
+      selectAllDeleted.addEventListener('change', function() {
+        deletedCheckboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+        });
+        updateBatchActions('deleted');
+      });
+      
+      deletedCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          updateBatchActions('deleted');
+        });
+      });
+    }
+    
+    // 更新批量操作按钮显示状态
+    function updateBatchActions(type) {
+      const batchActions = document.getElementById(`batchActions${type.charAt(0).toUpperCase() + type.slice(1)}`);
+      if (!batchActions) return;
+      
+      const checkedCount = document.querySelectorAll(`.${type}-checkbox:checked`).length;
+      if (checkedCount > 0) {
+        batchActions.classList.add('show');
+      } else {
+        batchActions.classList.remove('show');
+      }
+    }
+    
+    // 处理网站图标加载错误
+    const siteIcons = document.querySelectorAll(".website-icon img");
+    siteIcons.forEach((img) => {
+      img.onerror = function () {
+        // 获取网站名称的第一个字母
+        const siteName = this.alt;
+        const firstLetter = siteName ? siteName.charAt(0).toUpperCase() : "S";
+
+        // 创建默认图标
+        const defaultIcon = document.createElement("div");
+        defaultIcon.className = "default-site-icon";
+        defaultIcon.textContent = firstLetter;
+
+        // 替换图像
+        this.parentNode.replaceChild(defaultIcon, this);
+      };
+
+      // 检查图片是否已经加载
+      if (img.complete && (img.naturalWidth < 8 || img.naturalHeight < 8)) {
+        img.onerror();
+      }
+    });
+  });
+  
+  // 删除单条记录
+  function deleteRecord(id, type) {
+    if (!confirm(`确定要删除这条${type}吗？`)) return;
+    
+    fetch('/admin/api/operation-log/delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ id: id })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || '删除失败');
+      }
+    })
+    .catch(error => {
+      console.error('删除出错:', error);
+      alert('操作失败，请重试');
+    });
+  }
+  
+  // 批量删除记录
+  function batchDeleteRecords(type) {
+    const selectedIds = getSelectedIds(type);
+    if (!selectedIds.length) return;
+    
+    if (!confirm(`确定要删除选中的 ${selectedIds.length} 条${type === 'added' ? '添加' : type === 'modified' ? '修改' : '删除'}记录吗？`)) return;
+
+    fetch('/admin/api/operation-log/batch-delete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ ids: selectedIds })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || '删除失败');
+      }
+    })
+    .catch(error => {
+      console.error('批量删除出错:', error);
+      alert('操作失败，请重试');
+    });
+  }
+  
+  // 获取选中的记录ID
+  function getSelectedIds(type) {
+    return Array.from(document.querySelectorAll(`.${type}-checkbox:checked`))
+      .map(checkbox => parseInt(checkbox.value));
+  }
+  
+  // 处理每页显示条数变更
+  function changeRecordPageSize(select, type) {
+    const perPage = select.value;
+    const url = new URL(window.location.href);
+    url.searchParams.set(`${type}_per_page`, perPage);
+    url.searchParams.set(`${type}_page`, '1');  // 切换每页显示条数时重置到第1页
+    window.location.href = url.toString();
+  }
+</script>
 {% endblock %}

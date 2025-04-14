@@ -2,7 +2,8 @@ from flask import render_template, redirect, url_for, flash, request, jsonify, a
 from flask_login import current_user, login_required
 from app import db, csrf
 from app.main import bp
-from app.models import Category, Website
+from app.models import Category, Website, OperationLog
+from app.main.forms import SearchForm, WebsiteForm
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
@@ -767,4 +768,165 @@ def search_in_category(category_id):
         "count": len(result),
         "keyword": query,
         "websites": result
-    }) 
+    })
+
+@bp.route('/add', methods=['GET', 'POST'])
+@login_required
+def add():
+    form = WebsiteForm()
+    # 设置当前用户可见的分类
+    form.category_id.choices = [(c.id, c.name) for c in Category.query.order_by(Category.order.asc()).all()]
+    form.category_id.choices.insert(0, (0, '-- 请选择分类 --'))
+    
+    if form.validate_on_submit():
+        # 创建新网站记录
+        website = Website(
+            title=form.title.data,
+            url=form.url.data,
+            description=form.description.data,
+            icon=form.icon.data,
+            category_id=form.category_id.data if form.category_id.data != 0 else None,
+            is_featured=False,  # 用户添加的不能直接设为推荐
+            is_private=form.is_private.data,
+            created_by_id=current_user.id
+        )
+        
+        db.session.add(website)
+        db.session.commit()
+        
+        # 记录添加操作
+        category_name = Category.query.get(form.category_id.data).name if form.category_id.data and form.category_id.data != 0 else None
+        operation_log = OperationLog(
+            user_id=current_user.id,
+            operation_type='ADD',
+            website_id=website.id,
+            website_title=website.title,
+            website_url=website.url,
+            website_icon=website.icon,
+            category_id=website.category_id,
+            category_name=category_name,
+            details='{}'
+        )
+        db.session.add(operation_log)
+        db.session.commit()
+        
+        flash('链接添加成功！', 'success')
+        return redirect(url_for('main.add'))
+        
+    return render_template('add.html', title='添加链接', form=form)
+
+@bp.route('/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit(id):
+    website = Website.query.get_or_404(id)
+    
+    # 检查权限：只有创建者和管理员可以编辑
+    if website.created_by_id != current_user.id and not current_user.is_admin:
+        flash('没有权限编辑此链接', 'danger')
+        return redirect(url_for('main.index'))
+    
+    form = WebsiteForm(obj=website)
+    # 设置当前用户可见的分类
+    form.category_id.choices = [(c.id, c.name) for c in Category.query.order_by(Category.order.asc()).all()]
+    form.category_id.choices.insert(0, (0, '-- 请选择分类 --'))
+    
+    if form.validate_on_submit():
+        # 记录修改前的状态
+        old_title = website.title
+        old_url = website.url
+        old_description = website.description
+        old_category_id = website.category_id
+        old_category_name = website.category.name if website.category else None
+        old_is_private = website.is_private
+        
+        # 更新网站信息
+        website.title = form.title.data
+        website.url = form.url.data
+        website.description = form.description.data
+        website.icon = form.icon.data
+        website.category_id = form.category_id.data if form.category_id.data != 0 else None
+        website.is_private = form.is_private.data
+        
+        db.session.commit()
+        
+        # 确定哪些字段发生了变化
+        changes = {}
+        if old_title != website.title:
+            changes['title'] = {'old': old_title, 'new': website.title}
+        if old_url != website.url:
+            changes['url'] = {'old': old_url, 'new': website.url}
+        if old_description != website.description:
+            changes['description'] = {'old': old_description, 'new': website.description}
+            
+        if old_category_id != website.category_id:
+            new_category_name = website.category.name if website.category else None
+            changes['category'] = {
+                'old': old_category_name, 
+                'new': new_category_name
+            }
+            
+        if old_is_private != website.is_private:
+            changes['is_private'] = {'old': old_is_private, 'new': website.is_private}
+        
+        # 如果有变化，才记录修改操作
+        if changes:
+            import json
+            operation_log = OperationLog(
+                user_id=current_user.id,
+                operation_type='MODIFY',
+                website_id=website.id,
+                website_title=website.title,
+                website_url=website.url,
+                website_icon=website.icon,
+                category_id=website.category_id,
+                category_name=website.category.name if website.category else None,
+                details=json.dumps(changes)
+            )
+            db.session.add(operation_log)
+            db.session.commit()
+        
+        flash('链接更新成功！', 'success')
+        return redirect(url_for('main.site', id=website.id))
+        
+    # 如果是GET请求，预填充表单数据
+    if website.category_id is None:
+        form.category_id.data = 0
+    
+    return render_template('edit.html', title='编辑链接', form=form, website=website)
+
+@bp.route('/delete/<int:id>')
+@login_required
+def delete(id):
+    website = Website.query.get_or_404(id)
+    
+    # 检查权限：只有创建者和管理员可以删除
+    if website.created_by_id != current_user.id and not current_user.is_admin:
+        flash('没有权限删除此链接', 'danger')
+        return redirect(url_for('main.index'))
+    
+    # 记录删除操作
+    import json
+    details = {
+        'description': website.description,
+        'is_private': website.is_private,
+        'is_featured': website.is_featured
+    }
+    
+    operation_log = OperationLog(
+        user_id=current_user.id,
+        operation_type='DELETE',
+        website_id=None,  # 删除后ID不存在
+        website_title=website.title,
+        website_url=website.url,
+        website_icon=website.icon,
+        category_id=website.category_id,
+        category_name=website.category.name if website.category else None,
+        details=json.dumps(details)
+    )
+    
+    db.session.add(operation_log)
+    db.session.delete(website)
+    db.session.commit()
+    
+    flash('链接删除成功！', 'success')
+    return redirect(url_for('main.index')) 

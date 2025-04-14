@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from app import db, csrf
 from app.admin import bp
 from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm, UserEditForm, SiteSettingsForm
-from app.models import Category, Website, InvitationCode, User, SiteSettings
+from app.models import Category, Website, InvitationCode, User, SiteSettings, OperationLog
 
 def admin_required(f):
     @wraps(f)
@@ -223,6 +223,29 @@ def add_website():
         )
         db.session.add(website)
         db.session.commit()
+        
+        try:
+            # 记录添加操作
+            category = Category.query.get(form.category_id.data) if form.category_id.data else None
+            category_name = category.name if category else None
+            
+            operation_log = OperationLog(
+                user_id=current_user.id,
+                operation_type='ADD',
+                website_id=website.id,
+                website_title=website.title,
+                website_url=website.url,
+                website_icon=website.icon,
+                category_id=website.category_id,
+                category_name=category_name,
+                details='{}'
+            )
+            db.session.add(operation_log)
+            db.session.commit()
+        except Exception as e:
+            # 记录日志失败不影响主功能
+            current_app.logger.error(f"记录添加操作日志失败: {str(e)}")
+        
         flash('网站添加成功', 'success')
         return redirect(url_for('admin.websites'))
     return render_template('admin/website_form.html', title='添加网站', form=form)
@@ -234,10 +257,67 @@ def edit_website(id):
     website = Website.query.get_or_404(id)
     form = WebsiteForm(obj=website)
     if form.validate_on_submit():
-        form.populate_obj(website)
-        # 处理私有/公开选项
-        website.is_private = form.is_private.data
-        db.session.commit()
+        try:
+            # 记录修改前的状态
+            old_title = website.title
+            old_url = website.url
+            old_description = website.description
+            old_category_id = website.category_id
+            old_category = Category.query.get(old_category_id) if old_category_id else None
+            old_category_name = old_category.name if old_category else None
+            old_is_featured = website.is_featured
+            old_is_private = website.is_private
+            
+            # 更新网站信息
+            form.populate_obj(website)
+            # 处理私有/公开选项
+            website.is_private = form.is_private.data
+            db.session.commit()
+            
+            # 确定哪些字段发生了变化
+            changes = {}
+            if old_title != website.title:
+                changes['title'] = {'old': old_title, 'new': website.title}
+            if old_url != website.url:
+                changes['url'] = {'old': old_url, 'new': website.url}
+            if old_description != website.description:
+                changes['description'] = {'old': old_description, 'new': website.description}
+                
+            if old_category_id != website.category_id:
+                new_category = Category.query.get(website.category_id) if website.category_id else None
+                new_category_name = new_category.name if new_category else None
+                changes['category'] = {
+                    'old': old_category_name, 
+                    'new': new_category_name
+                }
+                
+            if old_is_featured != website.is_featured:
+                changes['is_featured'] = {'old': old_is_featured, 'new': website.is_featured}
+            if old_is_private != website.is_private:
+                changes['is_private'] = {'old': old_is_private, 'new': website.is_private}
+            
+            # 如果有变化，才记录修改操作
+            if changes:
+                import json
+                operation_log = OperationLog(
+                    user_id=current_user.id,
+                    operation_type='MODIFY',
+                    website_id=website.id,
+                    website_title=website.title,
+                    website_url=website.url,
+                    website_icon=website.icon,
+                    category_id=website.category_id,
+                    category_name=new_category_name if 'category' in changes else (old_category_name or None),
+                    details=json.dumps(changes)
+                )
+                db.session.add(operation_log)
+                db.session.commit()
+        except Exception as e:
+            # 记录日志失败不影响主功能
+            current_app.logger.error(f"记录修改操作日志失败: {str(e)}")
+            # 确保网站信息已保存
+            db.session.commit()
+        
         flash('网站更新成功', 'success')
         return redirect(url_for('admin.websites'))
     return render_template('admin/website_form.html', title='编辑网站', form=form)
@@ -247,8 +327,31 @@ def edit_website(id):
 @admin_required
 def delete_website(id):
     website = Website.query.get_or_404(id)
+    
+    # 记录删除操作
+    import json
+    details = {
+        'description': website.description,
+        'is_private': website.is_private,
+        'is_featured': website.is_featured
+    }
+    
+    operation_log = OperationLog(
+        user_id=current_user.id,
+        operation_type='DELETE',
+        website_id=None,  # 删除后ID不存在
+        website_title=website.title,
+        website_url=website.url,
+        website_icon=website.icon,
+        category_id=website.category_id,
+        category_name=website.category.name if website.category else None,
+        details=json.dumps(details)
+    )
+    
+    db.session.add(operation_log)
     db.session.delete(website)
     db.session.commit()
+    
     flash('网站删除成功', 'success')
     return redirect(url_for('admin.websites'))
 
@@ -304,13 +407,75 @@ def users():
     users = User.query.all()
     return render_template('admin/users.html', title='用户管理', users=users)
 
+
 @bp.route('/user/detail/<int:id>')
 @login_required
 @superadmin_required
 def user_detail(id):
     user = User.query.get_or_404(id)
     websites = Website.query.filter_by(created_by_id=user.id).all()
-    return render_template('admin/user_detail.html', title='用户详情', user=user, websites=websites)
+    
+    page_size = {
+        'added': request.args.get('added_per_page', 10, type=int),
+        'modified': request.args.get('modified_per_page', 10, type=int),
+        'deleted': request.args.get('deleted_per_page', 10, type=int)
+    }
+    page = {
+        'added': request.args.get('added_page', 1, type=int),
+        'modified': request.args.get('modified_page', 1, type=int),
+        'deleted': request.args.get('deleted_page', 1, type=int)
+    }
+    
+    # 查询用户的操作记录
+    added_records_query = OperationLog.query.filter_by(
+        user_id=user.id, 
+        operation_type='ADD'
+    ).order_by(OperationLog.created_at.desc())
+    
+    modified_records_query = OperationLog.query.filter_by(
+        user_id=user.id, 
+        operation_type='MODIFY'
+    ).order_by(OperationLog.created_at.desc())
+    
+    deleted_records_query = OperationLog.query.filter_by(
+        user_id=user.id, 
+        operation_type='DELETE'
+    ).order_by(OperationLog.created_at.desc())
+    
+    # 使用分页
+    added_pagination = added_records_query.paginate(
+        page=page['added'], 
+        per_page=page_size['added'],
+        error_out=False
+    )
+    modified_pagination = modified_records_query.paginate(
+        page=page['modified'], 
+        per_page=page_size['modified'],
+        error_out=False
+    )
+    deleted_pagination = deleted_records_query.paginate(
+        page=page['deleted'], 
+        per_page=page_size['deleted'],
+        error_out=False
+    )
+    
+    added_records = added_pagination.items
+    modified_records = modified_pagination.items
+    deleted_records = deleted_pagination.items
+    
+    return render_template(
+        'admin/user_detail.html', 
+        title='用户详情', 
+        user=user, 
+        websites=websites,
+        added_records=added_records,
+        modified_records=modified_records,
+        deleted_records=deleted_records,
+        added_pagination=added_pagination,
+        modified_pagination=modified_pagination,
+        deleted_pagination=deleted_pagination
+    )
+
 
 @bp.route('/user/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -421,3 +586,42 @@ def save_image(file_data, subfolder):
     except Exception as e:
         flash(f'图片上传失败: {str(e)}', 'danger')
         return None 
+
+
+# 处理操作日志相关API
+@bp.route('/api/operation-log/delete', methods=['POST'])
+@login_required
+@admin_required
+def delete_operation_log():
+    data = request.json
+    log_id = data.get('id')
+    
+    if not log_id:
+        return jsonify({'success': False, 'message': '未提供日志ID'})
+    
+    log = OperationLog.query.get(log_id)
+    if not log:
+        return jsonify({'success': False, 'message': '日志不存在'})
+    
+    db.session.delete(log)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': '日志删除成功'})
+
+@bp.route('/api/operation-log/batch-delete', methods=['POST'])
+@login_required
+@admin_required
+def batch_delete_operation_logs():
+    data = request.json
+    log_ids = data.get('ids', [])
+    
+    if not log_ids:
+        return jsonify({'success': False, 'message': '未提供日志ID'})
+    
+    logs = OperationLog.query.filter(OperationLog.id.in_(log_ids)).all()
+    for log in logs:
+        db.session.delete(log)
+    
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': f'已删除 {len(logs)} 条日志'})

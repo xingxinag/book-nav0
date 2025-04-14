@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from config import Config
 import datetime
+import json
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -78,6 +79,18 @@ def create_app(config_class=Config):
             # 确保现有管理员也是超级管理员
             admin.is_superadmin = True
             db.session.commit()
+    
+    # 注册模板过滤器
+    @app.template_filter('from_json')
+    def from_json(value):
+        try:
+            return json.loads(value) if value else {}
+        except:
+            return {}
+    
+    @app.template_filter('boolstr')
+    def boolstr(value):
+        return '是' if value else '否'
     
     return app
 

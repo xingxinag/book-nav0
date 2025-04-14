@@ -103,16 +103,11 @@
         method="get"
       >
         <div class="input-group">
-          <input
-            type="search"
-            name="q"
-            class="form-control form-control-lg"
-            value="{{ query }}"
-            placeholder="搜索网站..."
-          />
-          <button class="btn btn-light btn-lg" type="submit">
-            <i class="bi bi-search"></i>
-          </button>
+          {{ form.query(class="form-control",
+          placeholder="搜索网站名称或描述...") }}
+          <div class="input-group-append">
+            {{ form.submit_btn(class="btn btn-primary") }}
+          </div>
         </div>
       </form>
     </div>
