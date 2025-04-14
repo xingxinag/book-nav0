@@ -7,83 +7,100 @@
     </a>
   </div>
 
-  <div class="row">
-    <div class="col-lg-6">
-      <!-- 数据导出卡片 -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <i class="bi bi-box-arrow-up"></i> 数据导出
-        </div>
-        <div class="card-body">
-          <p class="mb-3">
-            导出数据库可以备份所有网站链接和分类数据，导出的数据库兼容OneNav格式。
-          </p>
-
-          <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i>
-            导出的数据库可以在其他OneNav系统或本系统中导入使用。
-          </div>
-
-          <a href="{{ url_for('admin.export_data') }}" class="btn btn-primary">
-            <i class="bi bi-download"></i> 导出数据库
-          </a>
-        </div>
-      </div>
+  <!-- 数据导入导出容器 -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <i class="bi bi-arrow-down-up"></i> 数据导入导出
     </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-lg-6">
+          <!-- 数据导出 -->
+          <div class="card bg-light h-100">
+            <div class="card-body">
+              <h5 class="card-title">
+                <i class="bi bi-box-arrow-up"></i> 数据导出
+              </h5>
+              <p class="card-text">
+                导出数据库可以备份所有网站链接和分类数据，导出的数据库兼容OneNav格式。
+              </p>
 
-    <div class="col-lg-6">
-      <!-- 数据导入卡片 -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <i class="bi bi-box-arrow-in-down"></i> 数据导入
-        </div>
-        <div class="card-body">
-          <p class="mb-3">
-            您可以导入本系统或OneNav格式的数据库。系统会自动检测数据库格式并进行转换。
-          </p>
-
-          <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle"></i>
-            <strong>注意：</strong>
-            使用替换模式会先备份当前数据库，然后清空现有数据后导入新数据。合并模式会保留现有数据并添加新数据（避免URL重复）。
-          </div>
-
-          <form
-            method="post"
-            action="{{ url_for('admin.import_data') }}"
-            enctype="multipart/form-data"
-            id="import-form"
-          >
-            {{ import_form.hidden_tag() }}
-
-            <div class="mb-3">
-              <label for="db_file" class="form-label">数据库文件</label>
-              <input
-                type="file"
-                class="form-control"
-                id="db_file"
-                name="db_file"
-                required
-                accept=".db,.db3,.sqlite,.sqlite3"
-              />
-              <div class="form-text">支持.db、.db3、.sqlite、.sqlite3格式</div>
-            </div>
-
-            <div class="mb-3">
-              <label for="import_type" class="form-label">导入类型</label>
-              <select class="form-select" name="import_type" id="import_type">
-                <option value="merge">合并 - 保留现有数据</option>
-                <option value="replace">替换 - 清空现有数据</option>
-              </select>
-              <div class="form-text">
-                替换模式会先备份数据库，然后清空所有现有数据后再导入
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                导出的数据库可以在其他OneNav系统或本系统中导入使用。
               </div>
-            </div>
 
-            <button type="submit" class="btn btn-success">
-              <i class="bi bi-upload"></i> 开始导入
-            </button>
-          </form>
+              <a
+                href="{{ url_for('admin.export_data') }}"
+                class="btn btn-primary"
+              >
+                <i class="bi bi-download"></i> 导出数据库
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <!-- 数据导入 -->
+          <div class="card bg-light h-100">
+            <div class="card-body">
+              <h5 class="card-title">
+                <i class="bi bi-box-arrow-in-down"></i> 数据导入
+              </h5>
+              <p class="card-text">
+                您可以导入本系统或OneNav格式的数据库。系统会自动检测数据库格式并进行转换。
+              </p>
+
+              <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>注意：</strong>
+                使用替换模式会先备份当前数据库，然后清空现有数据后导入新数据。合并模式会保留现有数据并添加新数据（避免URL重复）。
+              </div>
+
+              <form
+                method="post"
+                action="{{ url_for('admin.import_data') }}"
+                enctype="multipart/form-data"
+                id="import-form"
+              >
+                {{ import_form.hidden_tag() }}
+
+                <div class="mb-3">
+                  <label for="db_file" class="form-label">数据库文件</label>
+                  <input
+                    type="file"
+                    class="form-control"
+                    id="db_file"
+                    name="db_file"
+                    required
+                    accept=".db,.db3,.sqlite,.sqlite3"
+                  />
+                  <div class="form-text">
+                    支持.db、.db3、.sqlite、.sqlite3格式
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label for="import_type" class="form-label">导入类型</label>
+                  <select
+                    class="form-select"
+                    name="import_type"
+                    id="import_type"
+                  >
+                    <option value="merge">合并 - 保留现有数据</option>
+                    <option value="replace">替换 - 清空现有数据</option>
+                  </select>
+                  <div class="form-text">
+                    替换模式会先备份数据库，然后清空所有现有数据后再导入
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                  <i class="bi bi-upload"></i> 开始导入
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
       </div>
     </div>
