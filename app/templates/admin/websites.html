@@ -2,6 +2,7 @@
 
 {% block admin_head %}
 <meta name="csrf-token" content="{{ csrf_token() }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin-tables.css') }}">
 <style>
   /* 默认网站图标样式 */
   .default-site-icon {
@@ -22,8 +23,9 @@
   .toolbar {
     background: #f8f9fa;
     padding: 1rem;
-    border-radius: 0.25rem;
+    border-radius: 8px;
     margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
   
   /* 分页样式 */
@@ -34,10 +36,66 @@
   /* 批量操作按钮样式 */
   .batch-actions {
     display: none;
+    text-align: right;
   }
   
   .batch-actions.show {
     display: block;
+  }
+  
+  /* 网站信息样式 */
+  .website-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .website-title {
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  
+  .website-url {
+    font-size: 0.8rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+  }
+  
+  .website-icon {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    margin-right: 12px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* 网站状态标签 */
+  .status-badge {
+    padding: 0.4em 0.6em;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin: 1px 2px;
+    display: inline-block;
+  }
+  
+  .status-public {
+    background-color: #e3fcef;
+    color: #0c884a;
+  }
+  
+  .status-private {
+    background-color: #ffe9e9;
+    color: #e53935;
+  }
+  
+  .status-featured {
+    background-color: #fff8e1;
+    color: #f57c00;
   }
 </style>
 {% endblock %}
@@ -77,13 +135,13 @@
 </div>
 
 <div class="card">
-  <div class="card-body">
+  <div class="card-body admin-table-container">
     {% if websites %}
     <div class="table-responsive">
-      <table class="table table-hover">
+      <table class="admin-table">
         <thead>
           <tr>
-            <th>
+            <th style="width: 40px;">
               <input type="checkbox" class="form-check-input" id="selectAll">
             </th>
             <th>网站</th>
@@ -105,17 +163,16 @@
                 <img
                   src="{{ website.icon }}"
                   alt="{{ website.title }}"
-                  class="me-2"
-                  style="width: 24px; height: 24px; object-fit: contain"
+                  class="website-icon"
                 />
                 {% else %}
-                <i class="bi bi-globe me-2 text-primary"></i>
+                <div class="website-icon">
+                  <i class="bi bi-globe text-primary"></i>
+                </div>
                 {% endif %}
-                <div>
-                  <div>{{ website.title }}</div>
-                  <div class="text-muted small">
-                    {{ website.url|truncate(40) }}
-                  </div>
+                <div class="website-info">
+                  <div class="website-title">{{ website.title }}</div>
+                  <div class="website-url">{{ website.url }}</div>
                 </div>
               </div>
             </td>
@@ -133,38 +190,46 @@
               <span class="badge bg-secondary">未分类</span>
               {% endif %}
             </td>
-            <td>{{ website.views }}</td>
+            <td class="text-center">{{ website.views }}</td>
             <td>
-              {% if website.is_featured %}
-              <span class="badge bg-warning">推荐</span>
-              {% endif %}
-              {% if website.is_private %}
-              <span class="badge bg-danger badge-private">私有</span>
-              {% else %}
-              <span class="badge bg-success badge-public">公开</span>
-              {% endif %}
+              <div>
+                {% if website.is_featured %}
+                <span class="status-badge status-featured">推荐</span>
+                {% endif %}
+                {% if website.is_private %}
+                <span class="status-badge status-private badge-private">私有</span>
+                {% else %}
+                <span class="status-badge status-public badge-public">公开</span>
+                {% endif %}
+              </div>
             </td>
             <td>
-              <a
-                href="{{ url_for('main.site', id=website.id) }}"
-                class="btn btn-sm btn-outline-secondary"
-                target="_blank"
-              >
-                <i class="bi bi-box-arrow-up-right"></i>
-              </a>
-              <a
-                href="{{ url_for('admin.edit_website', id=website.id) }}"
-                class="btn btn-sm btn-outline-primary"
-              >
-                <i class="bi bi-pencil"></i>
-              </a>
-              <a
-                href="{{ url_for('admin.delete_website', id=website.id) }}"
-                class="btn btn-sm btn-outline-danger"
-                onclick="return confirm('确定要删除此网站吗？')"
-              >
-                <i class="bi bi-trash"></i>
-              </a>
+              <div class="action-buttons">
+                <a
+                  href="{{ url_for('main.site', id=website.id) }}"
+                  class="btn btn-action"
+                  style="background-color: #edf2f7; color: #4a5568;"
+                  title="访问网站"
+                  target="_blank"
+                >
+                  <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                <a
+                  href="{{ url_for('admin.edit_website', id=website.id) }}"
+                  class="btn btn-action btn-edit"
+                  title="编辑网站"
+                >
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a
+                  href="{{ url_for('admin.delete_website', id=website.id) }}"
+                  class="btn btn-action btn-delete"
+                  title="删除网站"
+                  onclick="return confirm('确定要删除此网站吗？')"
+                >
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
             </td>
           </tr>
           {% endfor %}
@@ -204,12 +269,12 @@
     {% endif %}
 
     {% else %}
-    <div class="text-center py-5">
-      <i class="bi bi-emoji-frown fs-1 text-muted"></i>
-      <p class="mt-3 text-muted">暂无网站数据</p>
+    <div class="admin-table-empty">
+      <i class="bi bi-emoji-frown"></i>
+      <p>暂无网站数据</p>
       <a
         href="{{ url_for('admin.add_website') }}"
-        class="btn btn-primary mt-2"
+        class="btn btn-primary"
       >
         <i class="bi bi-plus-circle"></i> 添加第一个网站
       </a>
