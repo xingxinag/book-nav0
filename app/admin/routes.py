@@ -660,10 +660,24 @@ def export_data():
     try:
         # 复制当前数据库
         db_path = current_app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+        current_app.logger.info(f"准备从 {db_path} 导出数据到 {temp_db_path}")
+        
+        # 数据库路径可能是相对路径，需要转换为绝对路径
+        if not os.path.isabs(db_path):
+            db_path = os.path.join(current_app.root_path, db_path)
+            current_app.logger.info(f"转换为绝对路径: {db_path}")
+        
+        # 检查源文件是否存在
+        if not os.path.exists(db_path):
+            raise FileNotFoundError(f"找不到数据库文件: {db_path}")
+        
+        # 复制数据库文件
         shutil.copy2(db_path, temp_db_path)
+        current_app.logger.info(f"数据库文件已复制")
         
         # 将导出转换为OneNav格式
-        convert_to_onenav_format(temp_db_path)
+        if not convert_to_onenav_format(temp_db_path):
+            raise Exception("转换为OneNav格式失败")
         
         # 读取临时文件的内容
         with open(temp_db_path, 'rb') as f:
@@ -673,6 +687,7 @@ def export_data():
         os.unlink(temp_db_path)
         
         # 将数据返回为可下载的文件
+        current_app.logger.info(f"数据导出成功，大小：{len(db_data)}字节")
         return send_file(
             io.BytesIO(db_data),
             as_attachment=True,
@@ -680,6 +695,13 @@ def export_data():
             mimetype='application/octet-stream'
         )
     except Exception as e:
+        current_app.logger.error(f"导出数据失败: {str(e)}")
+        # 确保临时文件被删除
+        if os.path.exists(temp_db_path):
+            try:
+                os.unlink(temp_db_path)
+            except:
+                pass
         flash(f'导出数据失败: {str(e)}', 'danger')
         return redirect(url_for('admin.data_management'))
 
@@ -942,7 +964,7 @@ def is_onenav_db(file_path):
         return False
 
 def convert_to_onenav_format(db_path):
-    """将系统数据库转换为OneNav格式（到处时使用）"""
+    """将系统数据库转换为OneNav格式（导出时使用）"""
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
@@ -993,7 +1015,19 @@ def convert_to_onenav_format(db_path):
             cat_id, name, desc, icon, order, parent_id, created_at = cat
             # 转换时间戳
             try:
-                add_time = int(created_at.timestamp()) if created_at else int(datetime.now().timestamp())
+                # 处理created_at为None或字符串的情况
+                if created_at is None:
+                    add_time = int(datetime.now().timestamp())
+                elif isinstance(created_at, str):
+                    # 尝试解析字符串格式的时间
+                    try:
+                        dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
+                        add_time = int(dt.timestamp())
+                    except:
+                        add_time = int(datetime.now().timestamp())
+                else:
+                    # 尝试作为datetime对象处理
+                    add_time = int(created_at.timestamp())
             except:
                 add_time = int(datetime.now().timestamp())
                 
@@ -1002,10 +1036,15 @@ def convert_to_onenav_format(db_path):
             property = 0  # 默认公开
             fid = parent_id or 0  # 父分类ID
             
+            # 确保值的类型正确
+            name = str(name) if name else ''
+            desc = str(desc) if desc else ''
+            icon = str(icon) if icon else ''
+            
             cursor.execute('''
             INSERT INTO on_categorys (id, name, add_time, up_time, weight, property, description, font_icon, fid)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (cat_id, name, str(add_time), str(up_time), weight, property, desc or '', icon or '', fid))
+            ''', (cat_id, name, str(add_time), str(up_time), weight, property, desc, icon, fid))
         
         # 转换链接数据
         cursor.execute('''
@@ -1019,7 +1058,19 @@ def convert_to_onenav_format(db_path):
             site_id, category_id, title, url, desc, icon, created_at, sort_order, is_private, views = site
             # 转换时间戳
             try:
-                add_time = int(created_at.timestamp()) if created_at else int(datetime.now().timestamp())
+                # 处理created_at为None或字符串的情况
+                if created_at is None:
+                    add_time = int(datetime.now().timestamp())
+                elif isinstance(created_at, str):
+                    # 尝试解析字符串格式的时间
+                    try:
+                        dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
+                        add_time = int(dt.timestamp())
+                    except:
+                        add_time = int(datetime.now().timestamp())
+                else:
+                    # 尝试作为datetime对象处理
+                    add_time = int(created_at.timestamp())
             except:
                 add_time = int(datetime.now().timestamp())
                 
@@ -1028,16 +1079,81 @@ def convert_to_onenav_format(db_path):
             property = 1 if is_private else 0
             fid = category_id or 0
             
+            # 确保值的类型正确
+            title = str(title) if title else ''
+            url = str(url) if url else ''
+            desc = str(desc) if desc else ''
+            icon = str(icon) if icon else ''
+            views = int(views) if views else 0
+            
             cursor.execute('''
             INSERT INTO on_links (id, fid, title, url, description, add_time, up_time, weight, property, click, 
                                 topping, font_icon, check_status, last_checked_time)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (site_id, fid, title, url, desc or '', str(add_time), str(up_time), weight, property, 
-                views or 0, 0, icon or '', 1, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+            ''', (site_id, fid, title, url, desc, str(add_time), str(up_time), weight, property, 
+                views, 0, icon, 1, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         
         conn.commit()
         conn.close()
+        current_app.logger.info(f"成功将数据转换为OneNav格式，导出{len(categories)}个分类和{len(websites)}个链接")
         return True
     except Exception as e:
         current_app.logger.error(f"转换数据库格式失败: {str(e)}")
         return False
+
+# 添加清空链接数据的路由
+@bp.route('/clear-websites', methods=['POST'])
+@login_required
+@superadmin_required
+def clear_websites():
+    """清空所有网站链接数据"""
+    try:
+        # 获取当前链接数量
+        website_count = Website.query.count()
+        
+        # 删除所有链接数据
+        Website.query.delete()
+        
+        # 提交更改
+        db.session.commit()
+        
+        # 记录日志
+        current_app.logger.info(f"已清空所有网站链接数据，共删除{website_count}条记录")
+        
+        return jsonify({'success': True, 'message': f'已成功删除{website_count}条链接数据'})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"清空链接数据失败: {str(e)}")
+        return jsonify({'success': False, 'message': f'操作失败: {str(e)}'})
+
+# 添加清空所有数据的路由
+@bp.route('/clear-all-data', methods=['POST'])
+@login_required
+@superadmin_required
+def clear_all_data():
+    """清空所有网站和分类数据"""
+    try:
+        # 获取当前数据量
+        website_count = Website.query.count()
+        category_count = Category.query.count()
+        
+        # 先删除所有链接数据（因为有外键约束）
+        Website.query.delete()
+        
+        # 再删除所有分类数据
+        Category.query.delete()
+        
+        # 提交更改
+        db.session.commit()
+        
+        # 记录日志
+        current_app.logger.info(f"已清空所有数据，共删除{website_count}条链接和{category_count}个分类")
+        
+        return jsonify({
+            'success': True, 
+            'message': f'已成功删除{website_count}条链接和{category_count}个分类'
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"清空所有数据失败: {str(e)}")
+        return jsonify({'success': False, 'message': f'操作失败: {str(e)}'})
