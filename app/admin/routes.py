@@ -17,6 +17,14 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def superadmin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or not current_user.is_superadmin:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
 @bp.route('/')
 @login_required
 @admin_required
@@ -291,14 +299,14 @@ def delete_invitation(id):
 # 用户管理
 @bp.route('/users')
 @login_required
-@admin_required
+@superadmin_required
 def users():
     users = User.query.all()
     return render_template('admin/users.html', title='用户管理', users=users)
 
-@bp.route('/user/<int:id>')
+@bp.route('/user/detail/<int:id>')
 @login_required
-@admin_required
+@superadmin_required
 def user_detail(id):
     user = User.query.get_or_404(id)
     websites = Website.query.filter_by(created_by_id=user.id).all()
@@ -306,13 +314,9 @@ def user_detail(id):
 
 @bp.route('/user/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@superadmin_required
 def edit_user(id):
     user = User.query.get_or_404(id)
-    # 只有超级管理员或本人可以编辑用户信息
-    if not current_user.is_admin and current_user.id != user.id:
-        abort(403)
-    
     form = UserEditForm(user.username, user.email, obj=user)
     if form.validate_on_submit():
         user.username = form.username.data
@@ -322,9 +326,11 @@ def edit_user(id):
         if form.password.data:
             user.set_password(form.password.data)
         
-        # 只有管理员可以更改权限
-        if current_user.is_admin:
-            user.is_admin = form.is_admin.data
+        # 只有超级管理员可以更改管理员权限，普通管理员不能改
+        user.is_admin = form.is_admin.data
+        # 超级管理员权限只有当前用户是超级管理员时才能赋予他人
+        if current_user.is_superadmin and form.is_superadmin.data:
+            user.is_superadmin = True
         
         db.session.commit()
         flash('用户信息更新成功!', 'success')
@@ -332,10 +338,34 @@ def edit_user(id):
     
     return render_template('admin/user_edit.html', title='编辑用户', form=form, user=user)
 
+# 添加删除用户功能
+@bp.route('/user/delete/<int:id>')
+@login_required
+@superadmin_required
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    
+    # 不能删除自己
+    if user.id == current_user.id:
+        flash('不能删除当前登录的用户', 'danger')
+        return redirect(url_for('admin.users'))
+    
+    # 删除前检查关联的网站，可以选择转移或删除
+    websites_count = Website.query.filter_by(created_by_id=user.id).count()
+    if websites_count > 0:
+        flash(f'该用户已创建了 {websites_count} 个网站，请先处理这些内容', 'warning')
+        return redirect(url_for('admin.user_detail', id=user.id))
+    
+    username = user.username
+    db.session.delete(user)
+    db.session.commit()
+    flash(f'用户 {username} 已被删除', 'success')
+    return redirect(url_for('admin.users'))
+
 # 站点设置管理
 @bp.route('/site-settings', methods=['GET', 'POST'])
 @login_required
-@admin_required
+@superadmin_required
 def site_settings():
     settings = SiteSettings.get_settings()
     form = SiteSettingsForm(obj=settings)

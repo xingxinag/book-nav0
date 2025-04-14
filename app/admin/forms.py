@@ -49,6 +49,7 @@ class UserEditForm(FlaskForm):
     password = PasswordField('新密码', validators=[Optional(), Length(min=6)])
     password2 = PasswordField('确认密码', validators=[Optional(), EqualTo('password')])
     is_admin = BooleanField('管理员权限')
+    is_superadmin = BooleanField('超级管理员权限')
     submit = SubmitField('保存更改')
     
     def __init__(self, original_username, original_email, *args, **kwargs):

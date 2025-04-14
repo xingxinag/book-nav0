@@ -68,10 +68,15 @@ def create_app(config_class=Config):
             admin = User(
                 username=app.config['ADMIN_USERNAME'],
                 email=app.config['ADMIN_EMAIL'],
-                is_admin=True
+                is_admin=True,
+                is_superadmin=True  # 设置初始管理员为超级管理员
             )
             admin.set_password(app.config['ADMIN_PASSWORD'])
             db.session.add(admin)
+            db.session.commit()
+        elif admin.is_admin and not admin.is_superadmin:
+            # 确保现有管理员也是超级管理员
+            admin.is_superadmin = True
             db.session.commit()
     
     return app
