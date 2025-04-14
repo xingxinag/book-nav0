@@ -30,6 +30,11 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/tooltip.css') }}"
     />
+    <!-- 回到顶部CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/back-to-top.css') }}"
+    />
     <!-- Favicon -->
     <link
       rel="shortcut icon"
@@ -129,6 +134,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- 回到顶部JS -->
+    <script src="{{ url_for('static', filename='js/back-to-top.js') }}"></script>
     <!-- 页面底部通用JS -->
     <script>
       // 处理图标加载错误，所有页面都会执行这段代码
