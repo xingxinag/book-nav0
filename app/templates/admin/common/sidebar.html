@@ -72,6 +72,15 @@
           <span>数据管理</span>
         </a>
       </li>
+
+      <li
+        class="sidebar-item {% if 'admin.backup_list' in request.endpoint %}active{% endif %}"
+      >
+        <a href="{{ url_for('admin.backup_list') }}" class="sidebar-link">
+          <i class="bi bi-database-fill"></i>
+          <span>备份管理</span>
+        </a>
+      </li>
       {% endif %}
     </ul>
   </div>
