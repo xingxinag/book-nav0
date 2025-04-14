@@ -1,13 +1,201 @@
-{% extends "admin/base.html" %} {% block admin_content %}
+{% extends "admin/base.html" %} {% block admin_head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin-tables.css') }}"
+/>
+<style>
+  /* 用户头像样式 */
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    text-align: center;
+    font-weight: 600;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  .admin-avatar {
+    background: linear-gradient(135deg, #6a11cb 0%, #845ec2 100%);
+  }
+
+  .normal-avatar {
+    background: linear-gradient(135deg, #3498db 0%, #5ebbff 100%);
+  }
+
+  .user-avatar:hover {
+    transform: scale(1.05);
+  }
+
+  /* 角色徽章样式 */
+  .badge-role {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+
+  .badge-admin {
+    background-color: #f8f0fc;
+    color: #9c36b5;
+    border: 1px solid #f3d9fa;
+  }
+
+  .badge-user {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+  }
+
+  /* 状态徽章样式 */
+  .badge-status {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  .badge-current {
+    background-color: #e6f7ee;
+    color: #2b8a3e;
+    border: 1px solid #c3e6cb;
+  }
+
+  .badge-online {
+    background-color: #f1f3f5;
+    color: #495057;
+    border: 1px solid #e9ecef;
+  }
+
+  /* 操作按钮样式 */
+  .btn-view {
+    background-color: #ebf8ff;
+    color: #3182ce;
+  }
+
+  .btn-view:hover {
+    background-color: #bee3f8;
+    color: #2c5282;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 5px rgba(49, 130, 206, 0.15);
+  }
+
+  /* 过滤工具栏 */
+  .filter-toolbar {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .filter-toolbar .form-select {
+    max-width: 200px;
+    border-radius: 6px;
+  }
+
+  .filter-toolbar .input-group {
+    max-width: 300px;
+  }
+
+  .filter-toolbar .btn-filter {
+    background-color: #4299e1;
+    color: white;
+    border: none;
+  }
+
+  .filter-toolbar .btn-reset {
+    background-color: #cbd5e0;
+    color: #4a5568;
+    border: none;
+  }
+
+  /* 暗黑模式适配 */
+  .dark-mode .filter-toolbar {
+    background-color: #2a3042;
+  }
+
+  .dark-mode .badge-admin {
+    background-color: #44337a;
+    color: #d6bcfa;
+    border-color: #6b46c1;
+  }
+
+  .dark-mode .badge-user {
+    background-color: #2c5282;
+    color: #90cdf4;
+    border-color: #2b6cb0;
+  }
+
+  .dark-mode .badge-current {
+    background-color: #276749;
+    color: #9ae6b4;
+    border-color: #2f855a;
+  }
+
+  .dark-mode .badge-online {
+    background-color: #2d3748;
+    color: #cbd5e0;
+    border-color: #4a5568;
+  }
+
+  .dark-mode .btn-view {
+    background-color: #2c5282;
+    color: #90cdf4;
+  }
+
+  .dark-mode .btn-view:hover {
+    background-color: #2b6cb0;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+  }
+</style>
+{% endblock %} {% block admin_content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2><i class="bi bi-people"></i> 用户管理</h2>
 </div>
 
+<!-- 过滤工具栏 -->
+<div class="filter-toolbar">
+  <div class="form-group">
+    <select class="form-select" id="roleFilter">
+      <option value="all">所有角色</option>
+      <option value="admin">管理员</option>
+      <option value="user">普通用户</option>
+    </select>
+  </div>
+
+  <div class="input-group">
+    <input
+      type="text"
+      class="form-control"
+      placeholder="搜索用户名或邮箱"
+      id="searchUser"
+    />
+    <button class="btn btn-filter" type="button" id="btnSearch">
+      <i class="bi bi-search"></i>
+    </button>
+  </div>
+
+  <button class="btn btn-reset" type="button" id="btnReset">
+    <i class="bi bi-arrow-counterclockwise me-1"></i> 重置
+  </button>
+</div>
+
 <div class="card">
-  <div class="card-body">
+  <div class="card-body admin-table-container">
     {% if users %}
     <div class="table-responsive">
-      <table class="table table-hover">
+      <table class="admin-table">
         <thead>
           <tr>
             <th>#</th>
@@ -16,51 +204,63 @@
             <th>角色</th>
             <th>注册时间</th>
             <th>状态</th>
-            <th>操作</th>
+            <th class="text-center">操作</th>
           </tr>
         </thead>
         <tbody>
           {% for user in users %}
-          <tr>
+          <tr
+            class="user-row"
+            data-role="{% if user.is_admin %}admin{% else %}user{% endif %}"
+          >
             <td>{{ user.id }}</td>
             <td>
               <div class="d-flex align-items-center">
                 <div
-                  class="me-2"
-                  style="width: 32px; height: 32px; border-radius: 50%; background-color: {% if user.is_admin %}#6a11cb{% else %}#3498db{% endif %}; color: white; text-align: center; line-height: 32px; font-weight: bold;"
+                  class="user-avatar {% if user.is_admin %}admin-avatar{% else %}normal-avatar{% endif %}"
                 >
                   {{ user.username[0] | upper }}
                 </div>
-                {{ user.username }}
+                <span class="fw-medium">{{ user.username }}</span>
               </div>
             </td>
             <td>{{ user.email }}</td>
             <td>
               {% if user.is_admin %}
-              <span class="badge bg-danger">管理员</span>
+              <span class="badge badge-role badge-admin">
+                <i class="bi bi-shield-fill me-1"></i>管理员
+              </span>
               {% else %}
-              <span class="badge bg-info">普通用户</span>
+              <span class="badge badge-role badge-user">
+                <i class="bi bi-person-fill me-1"></i>普通用户
+              </span>
               {% endif %}
             </td>
             <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
             <td>
               {% if user == current_user %}
-              <span class="badge bg-success">当前用户</span>
+              <span class="badge badge-status badge-current">
+                <i class="bi bi-check-circle-fill me-1"></i>当前用户
+              </span>
               {% else %}
-              <span class="badge bg-light text-dark">在线</span>
+              <span class="badge badge-status badge-online">
+                <i class="bi bi-circle-fill me-1 text-success"></i>在线
+              </span>
               {% endif %}
             </td>
             <td>
-              <div class="btn-group">
+              <div class="action-buttons d-flex justify-content-center gap-2">
                 <a
                   href="{{ url_for('admin.user_detail', id=user.id) }}"
-                  class="btn btn-sm btn-info"
+                  class="btn btn-action btn-view"
+                  title="查看用户详情"
                 >
                   <i class="bi bi-eye"></i>
                 </a>
                 <a
                   href="{{ url_for('admin.edit_user', id=user.id) }}"
-                  class="btn btn-sm btn-primary"
+                  class="btn btn-action btn-edit"
+                  title="编辑用户信息"
                 >
                   <i class="bi bi-pencil"></i>
                 </a>
@@ -72,11 +272,64 @@
       </table>
     </div>
     {% else %}
-    <div class="text-center py-5">
-      <i class="bi bi-emoji-frown fs-1 text-muted"></i>
-      <p class="mt-3 text-muted">暂无用户数据</p>
+    <div class="admin-table-empty">
+      <i class="bi bi-people"></i>
+      <p>暂无用户数据</p>
     </div>
     {% endif %}
   </div>
 </div>
+{% endblock %} {% block admin_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 角色过滤功能
+    const roleFilter = document.getElementById("roleFilter");
+    const searchInput = document.getElementById("searchUser");
+    const resetBtn = document.getElementById("btnReset");
+    const searchBtn = document.getElementById("btnSearch");
+    const userRows = document.querySelectorAll(".user-row");
+
+    // 过滤函数
+    function filterUsers() {
+      const role = roleFilter.value;
+      const searchText = searchInput.value.toLowerCase();
+
+      userRows.forEach((row) => {
+        const roleMatch = role === "all" || row.dataset.role === role;
+        const userName = row
+          .querySelector("td:nth-child(2)")
+          .textContent.toLowerCase();
+        const userEmail = row
+          .querySelector("td:nth-child(3)")
+          .textContent.toLowerCase();
+        const textMatch =
+          userName.includes(searchText) || userEmail.includes(searchText);
+
+        if (roleMatch && textMatch) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    }
+
+    // 注册事件监听器
+    roleFilter.addEventListener("change", filterUsers);
+    searchBtn.addEventListener("click", filterUsers);
+    searchInput.addEventListener("keyup", function (e) {
+      if (e.key === "Enter") {
+        filterUsers();
+      }
+    });
+
+    // 重置过滤器
+    resetBtn.addEventListener("click", function () {
+      roleFilter.value = "all";
+      searchInput.value = "";
+      userRows.forEach((row) => {
+        row.style.display = "";
+      });
+    });
+  });
+</script>
 {% endblock %}
