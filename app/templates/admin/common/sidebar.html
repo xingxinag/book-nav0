@@ -63,6 +63,15 @@
           <span>用户管理</span>
         </a>
       </li>
+
+      <li
+        class="sidebar-item {% if 'admin.data_management' in request.endpoint %}active{% endif %}"
+      >
+        <a href="{{ url_for('admin.data_management') }}" class="sidebar-link">
+          <i class="bi bi-database"></i>
+          <span>数据管理</span>
+        </a>
+      </li>
       {% endif %}
     </ul>
   </div>

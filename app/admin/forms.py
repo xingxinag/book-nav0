@@ -78,4 +78,16 @@ class SiteSettingsForm(FlaskForm):
     site_keywords = StringField('站点关键词', validators=[Optional(), Length(max=512)])
     site_description = TextAreaField('站点描述', validators=[Optional(), Length(max=1024)])
     footer_content = TextAreaField('页脚内容', validators=[Optional()])
-    submit_btn = SubmitField('保存设置') 
+    submit_btn = SubmitField('保存设置')
+
+class DataImportForm(FlaskForm):
+    """数据导入表单"""
+    db_file = FileField('数据库文件', validators=[
+        DataRequired(),
+        FileAllowed(['db', 'db3', 'sqlite', 'sqlite3'], '只允许上传SQLite数据库文件')
+    ])
+    import_type = SelectField('导入类型', choices=[
+        ('merge', '合并 - 保留现有数据'),
+        ('replace', '替换 - 清空现有数据')
+    ])
+    submit_btn = SubmitField('开始导入') 

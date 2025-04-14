@@ -1,12 +1,12 @@
 from datetime import datetime
 from functools import wraps
 import os
-from flask import render_template, redirect, url_for, flash, request, abort, jsonify, session, current_app
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify, session, current_app, send_file
 from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 from app import db, csrf
 from app.admin import bp
-from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm, UserEditForm, SiteSettingsForm
+from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm, UserEditForm, SiteSettingsForm, DataImportForm
 from app.models import Category, Website, InvitationCode, User, SiteSettings, OperationLog
 
 def admin_required(f):
@@ -625,3 +625,419 @@ def batch_delete_operation_logs():
     db.session.commit()
     
     return jsonify({'success': True, 'message': f'已删除 {len(logs)} 条日志'})
+
+# 数据库导入导出
+import io
+import shutil
+import sqlite3
+import tempfile
+from datetime import datetime
+from werkzeug.utils import secure_filename
+from app.admin.forms import DataImportForm
+
+@bp.route('/data-management')
+@login_required
+@superadmin_required
+def data_management():
+    """数据管理页面"""
+    import_form = DataImportForm()
+    return render_template('admin/data_management.html', title='数据管理', import_form=import_form)
+
+@bp.route('/export-data')
+@login_required
+@superadmin_required
+def export_data():
+    """导出数据库"""
+    # 确定时间戳
+    timestamp = datetime.now().strftime('%Y%m%d%H%M')
+    filename = f"booknav_export_{timestamp}.db3"
+    
+    # 创建临时文件
+    temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db3')
+    temp_db_path = temp_db.name
+    temp_db.close()
+    
+    try:
+        # 复制当前数据库
+        db_path = current_app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+        shutil.copy2(db_path, temp_db_path)
+        
+        # 将导出转换为OneNav格式
+        convert_to_onenav_format(temp_db_path)
+        
+        # 读取临时文件的内容
+        with open(temp_db_path, 'rb') as f:
+            db_data = f.read()
+            
+        # 删除临时文件
+        os.unlink(temp_db_path)
+        
+        # 将数据返回为可下载的文件
+        return send_file(
+            io.BytesIO(db_data),
+            as_attachment=True,
+            download_name=filename,
+            mimetype='application/octet-stream'
+        )
+    except Exception as e:
+        flash(f'导出数据失败: {str(e)}', 'danger')
+        return redirect(url_for('admin.data_management'))
+
+@bp.route('/import-data', methods=['POST'])
+@login_required
+@superadmin_required
+def import_data():
+    """导入数据库"""
+    try:
+        # 获取上传的文件
+        if 'db_file' not in request.files:
+            flash('没有选择文件', 'danger')
+            return redirect(url_for('admin.data_management'))
+            
+        uploaded_file = request.files['db_file']
+        if uploaded_file.filename == '':
+            flash('未选择文件', 'danger')
+            return redirect(url_for('admin.data_management'))
+        
+        # 检查文件扩展名
+        allowed_extensions = ['.db', '.db3', '.sqlite', '.sqlite3']
+        file_ext = os.path.splitext(uploaded_file.filename)[1].lower()
+        if file_ext not in allowed_extensions:
+            flash(f'不支持的文件类型: {file_ext}，仅支持 {", ".join(allowed_extensions)}', 'danger')
+            return redirect(url_for('admin.data_management'))
+        
+        # 保存上传的文件
+        filename = secure_filename(uploaded_file.filename)
+        temp_path = os.path.join(tempfile.gettempdir(), filename)
+        uploaded_file.save(temp_path)
+        
+        # 获取导入类型
+        import_mode = request.form.get('import_type', 'merge')
+        
+        # 验证数据库格式
+        if not is_valid_sqlite_db(temp_path):
+            flash('上传的文件不是有效的SQLite数据库或格式不兼容', 'danger')
+            os.unlink(temp_path)
+            return redirect(url_for('admin.data_management'))
+            
+        # 检查是否为OneNav格式
+        is_onenav = is_onenav_db(temp_path)
+        
+        if not is_onenav:
+            flash('上传的数据库不是OneNav格式', 'danger')
+            os.unlink(temp_path)
+            return redirect(url_for('admin.data_management'))
+            
+        # 使用migrate_onenav.py中的代码处理导入
+        # 获取管理员用户
+        admin_id = current_user.id
+        
+        # 使用修改后的导入函数
+        try:
+            results = import_onenav_direct(temp_path, import_mode, admin_id)
+            flash(f'导入成功! {results["cats_count"]}个分类, {results["links_count"]}个链接', 'success')
+        except Exception as e:
+            flash(f'导入过程中发生错误: {str(e)}', 'danger')
+            current_app.logger.error(f"导入错误: {str(e)}")
+        
+        # 删除临时文件
+        os.unlink(temp_path)
+        return redirect(url_for('admin.data_management'))
+    except Exception as e:
+        flash(f'导入数据失败: {str(e)}', 'danger')
+        current_app.logger.error(f"数据导入错误: {str(e)}")
+        return redirect(url_for('admin.data_management'))
+
+def import_onenav_direct(db_path, import_mode, admin_id):
+    """直接导入OneNav数据库，集成自migrate_onenav.py"""
+    results = {"cats_count": 0, "links_count": 0}
+    
+    # 源数据库连接
+    source_conn = sqlite3.connect(db_path)
+    source_conn.row_factory = sqlite3.Row
+    
+    # 如果是替换模式，清空现有数据
+    if import_mode == "replace":
+        current_app.logger.info("执行替换模式，清空现有数据...")
+        Website.query.delete()
+        Category.query.delete()
+        db.session.commit()
+    
+    # 首先迁移分类
+    category_mapping = {}  # 存储旧ID到新ID的映射
+    cursor = source_conn.cursor()
+    
+    # 获取所有分类
+    cursor.execute("SELECT * FROM on_categorys ORDER BY weight DESC")
+    categories = cursor.fetchall()
+    
+    # 获取现有分类（合并模式使用）
+    existing_categories = {}
+    if import_mode == "merge":
+        existing_categories = {c.name.lower(): c for c in Category.query.all()}
+    
+    # 先处理一级分类
+    for category in categories:
+        if category['fid'] == 0:  # 一级分类
+            # 检查合并模式下是否已存在同名分类
+            cat_name = category['name'].lower()
+            if import_mode == "merge" and cat_name in existing_categories:
+                # 使用现有分类ID
+                category_mapping[category['id']] = existing_categories[cat_name].id
+            else:
+                # 创建新分类
+                new_category = Category(
+                    name=category['name'],
+                    description=category['description'] or '',
+                    icon=map_icon(category['font_icon']),
+                    order=category['weight']
+                )
+                db.session.add(new_category)
+                db.session.flush()  # 获取新ID
+                
+                # 保存ID映射关系
+                category_mapping[category['id']] = new_category.id
+                if import_mode == "merge":
+                    existing_categories[cat_name] = new_category
+    
+    # 再处理二级分类
+    for category in categories:
+        if category['fid'] != 0:  # 二级分类
+            # 检查父分类是否已迁移
+            if category['fid'] in category_mapping:
+                # 检查合并模式下是否已存在同名分类
+                cat_name = category['name'].lower()
+                if import_mode == "merge" and cat_name in existing_categories:
+                    # 使用现有分类ID
+                    category_mapping[category['id']] = existing_categories[cat_name].id
+                else:
+                    # 创建新分类
+                    new_category = Category(
+                        name=category['name'],
+                        description=category['description'] or '',
+                        icon=map_icon(category['font_icon']),
+                        order=category['weight'],
+                        parent_id=category_mapping[category['fid']]
+                    )
+                    db.session.add(new_category)
+                    db.session.flush()
+                    
+                    # 保存ID映射关系
+                    category_mapping[category['id']] = new_category.id
+                    if import_mode == "merge":
+                        existing_categories[cat_name] = new_category
+    
+    db.session.commit()
+    results["cats_count"] = len(category_mapping)
+    
+    # 获取现有URL，避免重复导入
+    existing_urls = {}
+    if import_mode == "merge":
+        existing_urls = {w.url.lower(): True for w in Website.query.all()}
+    
+    # 迁移链接
+    cursor.execute("SELECT * FROM on_links ORDER BY fid, weight DESC")
+    links = cursor.fetchall()
+    
+    migrated_count = 0
+    skipped_count = 0
+    
+    for link in links:
+        # 检查分类是否已迁移
+        if link['fid'] in category_mapping:
+            # 检查URL是否重复（合并模式）
+            url_lower = link['url'].lower()
+            if import_mode == "merge" and url_lower in existing_urls:
+                skipped_count += 1
+                continue
+                
+            # 转换时间戳为datetime
+            try:
+                add_time = datetime.fromtimestamp(int(link['add_time']))
+            except:
+                add_time = datetime.now()
+            
+            try:
+                new_website = Website(
+                    title=link['title'],
+                    url=link['url'],
+                    description=link['description'] or '',
+                    icon=link['font_icon'] or '',
+                    category_id=category_mapping[link['fid']],
+                    created_by_id=admin_id,
+                    created_at=add_time,
+                    sort_order=link['weight'] or 0,
+                    is_private=(link['property'] == 1),  # 假设property=1表示私有
+                    views=link['click'] or 0
+                )
+                db.session.add(new_website)
+                migrated_count += 1
+                if import_mode == "merge":
+                    existing_urls[url_lower] = True
+                
+                # 每100条提交一次，避免内存问题
+                if migrated_count % 100 == 0:
+                    db.session.commit()
+            except Exception as e:
+                skipped_count += 1
+                current_app.logger.error(f"链接导入错误 {link['title']}: {str(e)}")
+        else:
+            skipped_count += 1
+    
+    # 保存所有更改
+    db.session.commit()
+    results["links_count"] = migrated_count
+    
+    # 关闭连接
+    source_conn.close()
+    return results
+
+def map_icon(font_icon):
+    """将Font Awesome图标格式转换为Bootstrap图标"""
+    # OneNav可能使用Font Awesome图标，例如"fa fa-book"
+    # 如果是URL格式，则直接返回
+    if font_icon and (font_icon.startswith('http://') or font_icon.startswith('https://')):
+        return font_icon
+    
+    # 如果是Font Awesome图标，转换为Bootstrap图标
+    fa_to_bs = {
+        'fa-book': 'bi-book',
+        'fa-android': 'bi-android',
+        'fa-angellist': 'bi-list-stars',
+        'fa-area-chart': 'bi-graph-up',
+        'fa-video-camera': 'bi-camera-video',
+        # 可以根据需要添加更多映射
+    }
+    
+    if font_icon:
+        for fa, bs in fa_to_bs.items():
+            if fa in font_icon:
+                return bs
+    
+    # 默认图标
+    return 'bi-link'
+
+def is_valid_sqlite_db(file_path):
+    """检查文件是否为有效的SQLite数据库"""
+    try:
+        conn = sqlite3.connect(file_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        cursor.fetchall()
+        conn.close()
+        return True
+    except sqlite3.Error:
+        return False
+
+def is_onenav_db(file_path):
+    """检查是否为OneNav格式的数据库"""
+    try:
+        conn = sqlite3.connect(file_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='on_categorys' OR name='on_links'")
+        result = cursor.fetchall()
+        conn.close()
+        return len(result) >= 2  # 至少包含分类和链接表
+    except sqlite3.Error:
+        return False
+
+def convert_to_onenav_format(db_path):
+    """将系统数据库转换为OneNav格式（到处时使用）"""
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # 创建OneNav表结构
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS on_categorys (
+            id INTEGER PRIMARY KEY,
+            name TEXT(32),
+            add_time TEXT(10),
+            up_time TEXT(10),
+            weight integer(3),
+            property integer(1),
+            description TEXT(128),
+            font_icon TEXT(32),
+            fid INTEGER
+        )
+        ''')
+        
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS on_links (
+            id INTEGER PRIMARY KEY,
+            fid INTEGER(5),
+            title TEXT(64),
+            url TEXT(256),
+            description TEXT(256),
+            add_time TEXT(10),
+            up_time TEXT(10),
+            weight integer(3),
+            property integer(1),
+            click INTEGER,
+            topping INTEGER,
+            url_standby TEXT(256),
+            font_icon TEXT(512),
+            check_status INTEGER,
+            last_checked_time TEXT
+        )
+        ''')
+        
+        # 转换分类数据
+        cursor.execute('''
+        SELECT c.id, c.name, c.description, c.icon, c.order, c.parent_id, c.created_at
+        FROM category c
+        ''')
+        categories = cursor.fetchall()
+        
+        for cat in categories:
+            cat_id, name, desc, icon, order, parent_id, created_at = cat
+            # 转换时间戳
+            try:
+                add_time = int(created_at.timestamp()) if created_at else int(datetime.now().timestamp())
+            except:
+                add_time = int(datetime.now().timestamp())
+                
+            up_time = add_time
+            weight = order or 0
+            property = 0  # 默认公开
+            fid = parent_id or 0  # 父分类ID
+            
+            cursor.execute('''
+            INSERT INTO on_categorys (id, name, add_time, up_time, weight, property, description, font_icon, fid)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (cat_id, name, str(add_time), str(up_time), weight, property, desc or '', icon or '', fid))
+        
+        # 转换链接数据
+        cursor.execute('''
+        SELECT w.id, w.category_id, w.title, w.url, w.description, w.icon, w.created_at, 
+               w.sort_order, w.is_private, w.views
+        FROM website w
+        ''')
+        websites = cursor.fetchall()
+        
+        for site in websites:
+            site_id, category_id, title, url, desc, icon, created_at, sort_order, is_private, views = site
+            # 转换时间戳
+            try:
+                add_time = int(created_at.timestamp()) if created_at else int(datetime.now().timestamp())
+            except:
+                add_time = int(datetime.now().timestamp())
+                
+            up_time = add_time
+            weight = sort_order or 0
+            property = 1 if is_private else 0
+            fid = category_id or 0
+            
+            cursor.execute('''
+            INSERT INTO on_links (id, fid, title, url, description, add_time, up_time, weight, property, click, 
+                                topping, font_icon, check_status, last_checked_time)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (site_id, fid, title, url, desc or '', str(add_time), str(up_time), weight, property, 
+                views or 0, 0, icon or '', 1, datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        current_app.logger.error(f"转换数据库格式失败: {str(e)}")
+        return False

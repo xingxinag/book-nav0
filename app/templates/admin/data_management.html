@@ -1,0 +1,171 @@
+{% extends "admin/base.html" %} {% block admin_content %}
+<div class="container-fluid px-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mt-4">数据管理</h1>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6">
+      <!-- 数据导出卡片 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-box-arrow-up"></i> 数据导出
+        </div>
+        <div class="card-body">
+          <p class="mb-3">
+            导出数据库可以备份所有网站链接和分类数据，导出的数据库兼容OneNav格式。
+          </p>
+
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            导出的数据库可以在其他OneNav系统或本系统中导入使用。
+          </div>
+
+          <a href="{{ url_for('admin.export_data') }}" class="btn btn-primary">
+            <i class="bi bi-download"></i> 导出数据库
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <!-- 数据导入卡片 -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-box-arrow-in-down"></i> 数据导入
+        </div>
+        <div class="card-body">
+          <p class="mb-3">
+            您可以导入本系统或OneNav格式的数据库。系统会自动检测数据库格式并进行转换。
+          </p>
+
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i>
+            <strong>注意：</strong>
+            使用替换模式会先备份当前数据库，然后清空现有数据后导入新数据。合并模式会保留现有数据并添加新数据（避免URL重复）。
+          </div>
+
+          <form
+            method="post"
+            action="{{ url_for('admin.import_data') }}"
+            enctype="multipart/form-data"
+            id="import-form"
+          >
+            {{ import_form.hidden_tag() }}
+
+            <div class="mb-3">
+              <label for="db_file" class="form-label">数据库文件</label>
+              <input
+                type="file"
+                class="form-control"
+                id="db_file"
+                name="db_file"
+                required
+                accept=".db,.db3,.sqlite,.sqlite3"
+              />
+              <div class="form-text">支持.db、.db3、.sqlite、.sqlite3格式</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="import_type" class="form-label">导入类型</label>
+              <select class="form-select" name="import_type" id="import_type">
+                <option value="merge">合并 - 保留现有数据</option>
+                <option value="replace">替换 - 清空现有数据</option>
+              </select>
+              <div class="form-text">
+                替换模式会先备份数据库，然后清空所有现有数据后再导入
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-upload"></i> 开始导入
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据格式说明 -->
+  <div class="card mb-4">
+    <div class="card-header"><i class="bi bi-info-circle"></i> 兼容性说明</div>
+    <div class="card-body">
+      <h5>支持导入的数据库格式</h5>
+      <ul>
+        <li><strong>本系统格式</strong> - 直接导入本系统导出的数据库文件</li>
+        <li>
+          <strong>OneNav格式</strong> - 支持导入OneNav导航系统的数据库文件
+        </li>
+      </ul>
+
+      <h5>OneNav兼容说明</h5>
+      <p>系统会自动识别OneNav数据库格式并转换以下数据：</p>
+      <ul>
+        <li>分类（包括层级结构）</li>
+        <li>链接数据（URL、标题、描述、图标等）</li>
+        <li>排序权重</li>
+        <li>私有状态</li>
+        <li>点击量统计</li>
+      </ul>
+
+      <div class="alert alert-info">
+        <i class="bi bi-lightbulb"></i>
+        <strong>提示：</strong>
+        导出的数据库同样可以导入到OneNav系统中，实现双向兼容。
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block admin_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 文件上传验证
+    const importForm = document.getElementById("import-form");
+    const fileInput = document.getElementById("db_file");
+
+    importForm.addEventListener("submit", function (e) {
+      if (!fileInput.files || fileInput.files.length === 0) {
+        e.preventDefault();
+        alert("请选择要上传的数据库文件");
+        return false;
+      }
+
+      const fileName = fileInput.files[0].name;
+      const fileExt = fileName
+        .substring(fileName.lastIndexOf("."))
+        .toLowerCase();
+      const validExtensions = [".db", ".db3", ".sqlite", ".sqlite3"];
+
+      if (!validExtensions.includes(fileExt)) {
+        e.preventDefault();
+        alert("请选择有效的SQLite数据库文件 (.db, .db3, .sqlite, .sqlite3)");
+        return false;
+      }
+
+      // 验证通过，显示加载状态
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.innerHTML =
+        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 导入中...';
+      submitBtn.disabled = true;
+
+      return true;
+    });
+
+    // 文件选择预览
+    fileInput.addEventListener("change", function () {
+      if (this.files.length > 0) {
+        const fileName = this.files[0].name;
+        const fileExt = fileName
+          .substring(fileName.lastIndexOf("."))
+          .toLowerCase();
+        const validExtensions = [".db", ".db3", ".sqlite", ".sqlite3"];
+
+        if (!validExtensions.includes(fileExt)) {
+          alert("请选择有效的SQLite数据库文件 (.db, .db3, .sqlite, .sqlite3)");
+          this.value = ""; // 清空选择
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}
