@@ -3,7 +3,55 @@
   rel="stylesheet"
   href="{{ url_for('static', filename='css/admin.css') }}"
 />
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+/>
+<style>
+  /* 自定义样式覆盖父模板的flash消息 */
+  .flash-messages {
+    display: none !important; /* 隐藏父模板的flash消息 */
+  }
+
+  /* 自定义通知样式 */
+  #custom-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 1rem;
+    display: none;
+    border-left: 4px solid #4299e1;
+  }
+
+  #custom-notification.success {
+    border-left-color: #48bb78;
+  }
+
+  #custom-notification.danger {
+    border-left-color: #f56565;
+  }
+
+  #custom-notification.warning {
+    border-left-color: #ed8936;
+  }
+
+  #custom-notification-content {
+    font-size: 0.95rem;
+    color: #4a5568;
+  }
+</style>
 {% block admin_head %}{% endblock %} {% endblock %} {% block content %}
+<!-- 覆盖base.html中的flash消息 -->
+{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
+%}
+<!-- 故意留空，防止父模板中的flash消息显示 -->
+{% endif %} {% endwith %}
+
 <div class="admin-wrapper">
   <!-- 导航栏 -->
   <nav class="admin-navbar">
@@ -45,31 +93,59 @@
   <!-- 包含侧边栏 -->
   {% include 'admin/common/sidebar.html' %}
 
+  <!-- 自定义通知元素 -->
+  <div id="custom-notification" class="animate__animated animate__fadeIn">
+    <div id="custom-notification-content"></div>
+  </div>
+
   <!-- 主内容区域 -->
   <main class="admin-main">
-    <div class="admin-container">
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-      <div
-        class="alert alert-{{ category }} alert-dismissible fade show mb-4"
-        role="alert"
-      >
-        {{ message }}
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-          aria-label="Close"
-        ></button>
-      </div>
-      {% endfor %} {% endif %} {% endwith %} {% block admin_content %}{%
-      endblock %}
-    </div>
+    <div class="admin-container">{% block admin_content %}{% endblock %}</div>
   </main>
 </div>
 {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    // 自定义通知系统
+    function showNotification(message, type = "success", duration = 3000) {
+      const notification = document.getElementById("custom-notification");
+      const content = document.getElementById("custom-notification-content");
+
+      // 重置之前的样式
+      notification.className = "animate__animated animate__fadeIn";
+      notification.classList.add(type);
+
+      // 设置消息内容
+      content.textContent = message;
+
+      // 显示通知
+      notification.style.display = "block";
+
+      // 设置自动消失
+      setTimeout(() => {
+        notification.classList.remove("animate__fadeIn");
+        notification.classList.add("animate__fadeOut");
+
+        setTimeout(() => {
+          notification.style.display = "none";
+          notification.classList.remove("animate__fadeOut");
+          notification.classList.remove(type);
+        }, 500);
+      }, duration);
+    }
+
+    // 检查URL参数是否包含flash消息
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("flash_message") && urlParams.has("flash_category")) {
+      const message = urlParams.get("flash_message");
+      const category = urlParams.get("flash_category");
+      showNotification(message, category);
+
+      // 修改URL，移除参数但不刷新页面
+      const newUrl = window.location.pathname + window.location.hash;
+      history.replaceState(null, "", newUrl);
+    }
+
     // 侧边栏切换功能
     const sidebarToggle = document.getElementById("sidebarToggle");
     const adminWrapper = document.querySelector(".admin-wrapper");

@@ -1,6 +1,6 @@
 from datetime import datetime
 from functools import wraps
-from flask import render_template, redirect, url_for, flash, request, abort, jsonify
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify, session
 from flask_login import current_user, login_required
 from app import db, csrf
 from app.admin import bp
@@ -267,7 +267,8 @@ def generate_invitation():
             )
             db.session.add(code)
         db.session.commit()
-        flash(f'成功生成{count}个邀请码', 'success')
+        # 使用URL参数传递消息而不是flash
+        return redirect(url_for('admin.invitations', flash_message=f'成功生成{count}个邀请码', flash_category='success'))
     return redirect(url_for('admin.invitations'))
 
 @bp.route('/invitation/delete/<int:id>')
@@ -276,11 +277,13 @@ def generate_invitation():
 def delete_invitation(id):
     invitation = InvitationCode.query.get_or_404(id)
     if invitation.used_by_id is not None:
-        flash('该邀请码已被使用，无法删除', 'danger')
+        # 使用URL参数传递错误消息
+        return redirect(url_for('admin.invitations', flash_message='该邀请码已被使用，无法删除', flash_category='danger'))
     else:
         db.session.delete(invitation)
         db.session.commit()
-        flash('邀请码删除成功', 'success')
+        # 使用URL参数传递成功消息
+        return redirect(url_for('admin.invitations', flash_message='邀请码删除成功', flash_category='success'))
     return redirect(url_for('admin.invitations'))
 
 # 用户管理
