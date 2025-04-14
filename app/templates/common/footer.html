@@ -1,0 +1,11 @@
+<!-- 页脚模板 -->
+<footer
+  class="footer mt-5 py-4 {% if is_admin|default(false) %}admin-footer{% endif %}"
+>
+  <div class="container text-center">
+    <p class="mb-0">
+      © {{ year|default(2025) }} 炫酷导航 - 为小团体打造的专属导航站
+    </p>
+    <p class="mb-0 small text-muted">由Python + Flask强力驱动</p>
+  </div>
+</footer>

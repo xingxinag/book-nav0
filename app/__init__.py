@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from config import Config
+import datetime
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -34,6 +35,11 @@ def create_app(config_class=Config):
     
     from app.api import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
+    
+    # 添加全局上下文处理器
+    @app.context_processor
+    def inject_now():
+        return {'now': datetime.datetime.now()}
     
     @app.before_first_request
     def create_admin():

@@ -1,0 +1,68 @@
+/* 页脚基本样式 */
+.footer {
+  background-color: var(--footer-bg, #f8f9fa);
+  color: var(--footer-text, #6c757d);
+  padding: 1.5rem 0;
+  margin-top: 2rem;
+  width: 100%;
+  border-top: 1px solid var(--border-color, #e9ecef);
+  font-size: 0.9rem;
+}
+
+/* 简单的粘性页脚 - 应用于整个HTML布局 */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1 0 auto; /* 让主内容区域自动伸展 */
+}
+
+.footer {
+  flex-shrink: 0; /* 防止页脚被压缩 */
+}
+
+/* 响应式样式 */
+@media (max-width: 768px) {
+  .footer {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* 暗黑模式适配 */
+.dark-mode .footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    to right,
+    rgba(30, 30, 45, 0.8),
+    rgba(35, 35, 50, 0.8)
+  );
+  color: #e2e8f0;
+}
+
+.dark-mode .footer .text-muted {
+  color: #a0aec0 !important;
+}
+
+/* 管理后台页脚样式 */
+.admin-footer {
+  margin-top: 0 !important;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  background: white;
+  border-top: 1px solid rgba(112, 73, 240, 0.1);
+  box-shadow: none;
+}
+
+.admin-footer .text-muted {
+  opacity: 0.7;
+}

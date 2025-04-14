@@ -1,7 +1,7 @@
 /* 通用样式 */
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f8f9fa;
+  background-color: #ede7f6;
   color: #333;
 }
 
@@ -60,11 +60,6 @@ body {
 .navbar-brand {
   font-weight: 700;
   letter-spacing: 0.5px;
-}
-
-/* 页脚样式 */
-.footer {
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* 网站卡片 */

@@ -103,7 +103,9 @@
     <div class="admin-container">{% block admin_content %}{% endblock %}</div>
   </main>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %} {% block footer %} {# 引入模块化页脚 - 管理后台版本 #} {% with
+year = now.year, is_admin=true %} {% include 'common/footer.html' %} {% endwith
+%} {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     // 自定义通知系统
