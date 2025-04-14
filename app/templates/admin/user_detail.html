@@ -108,15 +108,15 @@
 {% endblock %}
 
 {% block admin_content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2><i class="bi bi-person"></i> 用户详情</h2>
-  <div>
-    <a
-      href="{{ url_for('admin.edit_user', id=user.id) }}"
-      class="btn btn-primary"
-    >
-      <i class="bi bi-pencil"></i> 编辑用户
-    </a>
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-person"></i> 用户详情</h2>
+        <div>
+          <a
+            href="{{ url_for('admin.edit_user', id=user.id) }}"
+            class="btn btn-primary"
+          >
+            <i class="bi bi-pencil"></i> 编辑用户
+          </a>
     {% if current_user.is_superadmin and current_user.id != user.id %}
     <a
       href="{{ url_for('admin.delete_user', id=user.id) }}"
@@ -126,78 +126,78 @@
       <i class="bi bi-trash"></i> 删除用户
     </a>
     {% endif %}
-    <a
-      href="{{ url_for('admin.users') }}"
-      class="btn btn-outline-secondary ms-2"
-    >
-      <i class="bi bi-arrow-left"></i> 返回
-    </a>
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-md-6">
-    <div class="card mb-4">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0"><i class="bi bi-person-badge"></i> 基本信息</h5>
-      </div>
-      <div class="card-body">
-        <div class="d-flex align-items-center mb-4">
-          <div
-            class="user-avatar me-3"
-            style="width: 70px; height: 70px; border-radius: 50%; background-color: {% if user.is_admin %}#6a11cb{% else %}#3498db{% endif %}; color: white; text-align: center; line-height: 70px; font-size: 28px; font-weight: bold;"
-          >
-            {{ user.username[0] | upper }}
-          </div>
-          <div>
-            <h4 class="mb-0">{{ user.username }}</h4>
-            <span
-              class="badge {% if user.is_admin %}bg-danger{% else %}bg-info{% endif %}"
-            >
-              {% if user.is_admin %}管理员{% else %}普通用户{% endif %}
-            </span>
-          </div>
-        </div>
-        <table class="table">
-          <tr>
-            <th style="width: 120px">用户ID:</th>
-            <td>{{ user.id }}</td>
-          </tr>
-          <tr>
-            <th>邮箱:</th>
-            <td>{{ user.email }}</td>
-          </tr>
-          <tr>
-            <th>注册时间:</th>
-            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-6">
-    <div class="card mb-4">
-      <div class="card-header bg-secondary text-white">
-        <h5 class="mb-0"><i class="bi bi-key"></i> 账户安全</h5>
-      </div>
-      <div class="card-body">
-        <div class="py-4 text-center">
           <a
-            href="{{ url_for('admin.edit_user', id=user.id) }}"
-            class="btn btn-lg btn-outline-primary"
+            href="{{ url_for('admin.users') }}"
+            class="btn btn-outline-secondary ms-2"
           >
-            <i class="bi bi-shield-lock"></i> 修改密码
+            <i class="bi bi-arrow-left"></i> 返回
           </a>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0"><i class="bi bi-person-badge"></i> 基本信息</h5>
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-4">
+                <div
+                  class="user-avatar me-3"
+                  style="width: 70px; height: 70px; border-radius: 50%; background-color: {% if user.is_admin %}#6a11cb{% else %}#3498db{% endif %}; color: white; text-align: center; line-height: 70px; font-size: 28px; font-weight: bold;"
+                >
+                  {{ user.username[0] | upper }}
+                </div>
+                <div>
+                  <h4 class="mb-0">{{ user.username }}</h4>
+                  <span
+                    class="badge {% if user.is_admin %}bg-danger{% else %}bg-info{% endif %}"
+                  >
+                    {% if user.is_admin %}管理员{% else %}普通用户{% endif %}
+                  </span>
+                </div>
+              </div>
+              <table class="table">
+                <tr>
+                  <th style="width: 120px">用户ID:</th>
+                  <td>{{ user.id }}</td>
+                </tr>
+                <tr>
+                  <th>邮箱:</th>
+                  <td>{{ user.email }}</td>
+                </tr>
+                <tr>
+                  <th>注册时间:</th>
+                  <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+              <h5 class="mb-0"><i class="bi bi-key"></i> 账户安全</h5>
+            </div>
+            <div class="card-body">
+              <div class="py-4 text-center">
+                <a
+                  href="{{ url_for('admin.edit_user', id=user.id) }}"
+                  class="btn btn-lg btn-outline-primary"
+                >
+                  <i class="bi bi-shield-lock"></i> 修改密码
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
 <!-- 操作记录区域 -->
 <div class="card mb-4">
-  <div class="card-header">
+        <div class="card-header">
     <h5 class="mb-0"><i class="bi bi-clock-history"></i> 操作记录</h5>
   </div>
   <div class="card-body p-0">
@@ -773,7 +773,7 @@
           {% else %}
           <span class="badge bg-secondary">未分类</span>
           {% endif %}
-        </div>
+          </div>
         <div class="mb-3">
           <strong>状态:</strong>
           {% if details.is_private %}
