@@ -486,6 +486,15 @@ def api_update_website(id):
     if not url or not url.startswith(('http://', 'https://')):
         return jsonify({'success': False, 'message': 'URL格式不正确'}), 400
     
+    # 记录修改前的状态
+    old_title = website.title
+    old_url = website.url
+    old_description = website.description
+    old_category_id = website.category_id
+    old_category_name = website.category.name if website.category else None
+    old_is_private = website.is_private
+    old_is_featured = website.is_featured
+    
     # 更新网站URL
     website.url = url
     
@@ -508,6 +517,45 @@ def api_update_website(id):
     
     # 保存更改
     db.session.commit()
+    
+    # 确定哪些字段发生了变化
+    changes = {}
+    if old_title != website.title:
+        changes['title'] = {'old': old_title, 'new': website.title}
+    if old_url != website.url:
+        changes['url'] = {'old': old_url, 'new': website.url}
+    if old_description != website.description:
+        changes['description'] = {'old': old_description, 'new': website.description}
+        
+    if old_category_id != website.category_id:
+        new_category_name = website.category.name if website.category else None
+        changes['category'] = {
+            'old': old_category_name, 
+            'new': new_category_name
+        }
+        
+    if old_is_private != website.is_private:
+        changes['is_private'] = {'old': old_is_private, 'new': website.is_private}
+        
+    if old_is_featured != website.is_featured:
+        changes['is_featured'] = {'old': old_is_featured, 'new': website.is_featured}
+    
+    # 如果有变化，才记录修改操作
+    if changes:
+        import json
+        operation_log = OperationLog(
+            user_id=current_user.id,
+            operation_type='MODIFY',
+            website_id=website.id,
+            website_title=website.title,
+            website_url=website.url,
+            website_icon=website.icon,
+            category_id=website.category_id,
+            category_name=website.category.name if website.category else None,
+            details=json.dumps(changes)
+        )
+        db.session.add(operation_log)
+        db.session.commit()
     
     return jsonify({
         'success': True, 
@@ -537,6 +585,28 @@ def api_delete_website(id):
         
         # 临时保存网站标题用于返回消息
         website_title = website.title
+        
+        # 记录删除操作
+        import json
+        details = {
+            'description': website.description,
+            'is_private': website.is_private,
+            'is_featured': website.is_featured
+        }
+        
+        operation_log = OperationLog(
+            user_id=current_user.id,
+            operation_type='DELETE',
+            website_id=None,  # 删除后ID不存在
+            website_title=website.title,
+            website_url=website.url,
+            website_icon=website.icon,
+            category_id=website.category_id,
+            category_name=website.category.name if website.category else None,
+            details=json.dumps(details)
+        )
+        
+        db.session.add(operation_log)
         
         # 删除网站
         db.session.delete(website)
@@ -571,6 +641,11 @@ def api_modify_link():
     try:
         website = Website.query.get_or_404(website_id)
         
+        # 记录修改前的状态
+        old_title = website.title
+        old_url = website.url
+        old_description = website.description
+        
         # 更新URL
         website.url = data['url']
         
@@ -583,6 +658,32 @@ def api_modify_link():
             website.icon = data['icon']
         
         db.session.commit()
+        
+        # 确定哪些字段发生了变化
+        changes = {}
+        if old_title != website.title:
+            changes['title'] = {'old': old_title, 'new': website.title}
+        if old_url != website.url:
+            changes['url'] = {'old': old_url, 'new': website.url}
+        if old_description != website.description:
+            changes['description'] = {'old': old_description, 'new': website.description}
+        
+        # 如果有变化，才记录修改操作
+        if changes:
+            import json
+            operation_log = OperationLog(
+                user_id=current_user.id,
+                operation_type='MODIFY',
+                website_id=website.id,
+                website_title=website.title,
+                website_url=website.url,
+                website_icon=website.icon,
+                category_id=website.category_id,
+                category_name=website.category.name if website.category else None,
+                details=json.dumps(changes)
+            )
+            db.session.add(operation_log)
+            db.session.commit()
         
         return jsonify({'success': True, 'message': '链接已更新'})
     except Exception as e:
@@ -665,6 +766,22 @@ def quick_add_website():
         )
         
         db.session.add(website)
+        db.session.commit()
+        
+        # 记录添加操作
+        category_name = Category.query.get(data['category_id']).name if data['category_id'] else None
+        operation_log = OperationLog(
+            user_id=current_user.id,
+            operation_type='ADD',
+            website_id=website.id,
+            website_title=website.title,
+            website_url=website.url,
+            website_icon=website.icon,
+            category_id=website.category_id,
+            category_name=category_name,
+            details='{}'
+        )
+        db.session.add(operation_log)
         db.session.commit()
         
         return jsonify({
