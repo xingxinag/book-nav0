@@ -211,6 +211,43 @@
           childList: true,
           subtree: true,
         });
+
+        // 添加管理员模式检查日志
+        if (document.body.classList.contains("user-admin")) {
+          console.log("管理员模式已激活");
+
+          // 定义一个全局函数用于调试
+          window.checkCategorySorting = function () {
+            console.log("检查分类排序初始化：");
+            console.log(
+              "- 是否管理员模式:",
+              document.body.classList.contains("user-admin")
+            );
+            console.log(
+              "- 侧边栏状态:",
+              document.querySelector(".sidebar") ? "已加载" : "未加载"
+            );
+            const sidebarMenu = document.querySelector(
+              ".sidebar-content .sidebar-group:first-child .sidebar-menu"
+            );
+            console.log("- 侧边栏菜单:", sidebarMenu ? "已找到" : "未找到");
+            if (sidebarMenu) {
+              const items = sidebarMenu.querySelectorAll(".sidebar-menu-item");
+              console.log("- 菜单项数量:", items.length);
+              const dataItems = sidebarMenu.querySelectorAll(
+                ".sidebar-menu-item[data-id]"
+              );
+              console.log("- 有data-id的项:", dataItems.length);
+            }
+          };
+
+          // 3秒后自动检查
+          setTimeout(function () {
+            if (window.checkCategorySorting) {
+              window.checkCategorySorting();
+            }
+          }, 3000);
+        }
       });
     </script>
     {% block scripts %}{% endblock %}

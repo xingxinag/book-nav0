@@ -591,6 +591,7 @@ render_icon(icon_name='folder', color='#3498db') %}
 <script src="{{ url_for('static', filename='js/contextMenu.js') }}"></script>
 {% if current_user.is_authenticated and current_user.is_admin %}
 <script src="{{ url_for('static', filename='js/dragSort.js') }}"></script>
+<script src="{{ url_for('static', filename='js/categorySorting.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quickAdd.js') }}"></script>
 {% endif %}
 

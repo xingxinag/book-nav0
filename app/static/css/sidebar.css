@@ -1,3 +1,8 @@
+/* 添加必要的变量 */
+:root {
+  --primary-color-rgb: 112, 73, 240; /* 主色调的RGB值 */
+}
+
 .sidebar {
   position: fixed;
   top: var(--navbar-height);
@@ -219,4 +224,78 @@ body.sidebar-active .sidebar {
   font-size: var(--font-size-sm);
   width: 20px;
   text-align: center;
+}
+
+/* 分类拖拽排序相关样式 */
+.sidebar-menu-item .drag-handle {
+  display: none;
+  cursor: grab;
+  opacity: 0.6;
+  margin-right: 5px;
+  flex-shrink: 0;
+  color: var(--primary-color);
+}
+
+.user-admin .sidebar-menu-item .drag-handle {
+  display: inline-block;
+}
+
+.sidebar-menu-item.dragging {
+  opacity: 0.8;
+  background: var(--bg-hover);
+  position: relative;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
+  border-radius: 4px;
+}
+
+.sidebar-menu-item.drag-over {
+  border-top: 2px solid var(--primary-color);
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  margin-top: -2px; /* 补偿边框高度，避免元素跳动 */
+}
+
+/* 拖拽时的视觉反馈 */
+.sidebar-menu .sidebar-menu-item {
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.sidebar-menu .sidebar-menu-item.dragging {
+  box-shadow: var(--shadow-md);
+  cursor: grabbing;
+}
+
+.sidebar-menu .sidebar-menu-item.during-drag:not(.dragging) {
+  transform: translateY(0);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-menu .sidebar-menu-item.during-drag.drag-over {
+  position: relative;
+}
+
+/* 确保拖拽项的链接正确显示 */
+.sidebar-menu-item .sidebar-menu-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* 为管理员模式添加指示器 */
+.user-admin .sidebar-menu-item .sidebar-menu-link::after {
+  content: "";
+  display: block;
+  flex-grow: 1;
+  text-align: right;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.user-admin .sidebar-menu-item:hover .sidebar-menu-link::after {
+  content: "↕️";
+  opacity: 0.5;
+  font-size: 0.75rem;
+  margin-left: 5px;
 }
