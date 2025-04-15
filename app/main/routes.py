@@ -142,9 +142,9 @@ def search():
                          websites=websites, 
                          query=query)
 
-@bp.route('/about')
-def about():
-    return render_template('about.html', title='关于我们')
+# @bp.route('/about')
+# def about():
+#     return render_template('about.html', title='关于我们')
 
 @bp.route('/api/search')
 def api_search():

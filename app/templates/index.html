@@ -85,58 +85,6 @@ render_icon(icon_name='folder', color='#3498db') %}
         {% endif %} {% endfor %}
       </ul>
     </div>
-
-    {# 更多菜单 #}
-    <div class="sidebar-group">
-      <div class="sidebar-group-title">更多</div>
-      <ul class="sidebar-menu">
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('main.about') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              >{{ render_icon('info-circle') }}</span
-            >
-            关于本站
-          </a>
-        </li>
-
-        {% if current_user.is_authenticated %}
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('auth.logout') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              >{{ render_icon('box-arrow-right') }}</span
-            >
-            退出登录
-          </a>
-        </li>
-        {% if current_user.is_admin %}
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('admin.index') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              >{{ render_icon('speedometer2') }}</span
-            >
-            管理面板
-          </a>
-        </li>
-        {% endif %} {% else %}
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('auth.login') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              >{{ render_icon('box-arrow-in-right') }}</span
-            >
-            登录
-          </a>
-        </li>
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('auth.register') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              >{{ render_icon('person-plus') }}</span
-            >
-            注册
-          </a>
-        </li>
-        {% endif %}
-      </ul>
-    </div>
   </div>
 </div>
 
