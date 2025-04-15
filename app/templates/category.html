@@ -663,32 +663,49 @@ DEBUG - Settings信息:
           </div>
 
           <div class="col-md-12">
-            <label class="form-label">访问权限</label>
-            <div class="d-flex gap-3">
-              <div class="form-check">
-                <input
-                  class="form-check-input"
-                  type="radio"
-                  name="editPrivacy"
-                  id="editPublic"
-                  value="0"
-                  checked
-                />
-                <label class="form-check-label" for="editPublic">
-                  <i class="bi bi-globe"></i> 公开
-                </label>
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">访问权限</label>
+                <div class="d-flex gap-3">
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="editPrivacy"
+                      id="editPublic"
+                      value="0"
+                      checked
+                    />
+                    <label class="form-check-label" for="editPublic">
+                      <i class="bi bi-globe"></i> 公开
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      name="editPrivacy"
+                      id="editPrivate"
+                      value="1"
+                    />
+                    <label class="form-check-label" for="editPrivate">
+                      <i class="bi bi-lock"></i> 私有
+                    </label>
+                  </div>
+                </div>
               </div>
-              <div class="form-check">
+              <div class="col-md-6">
+                <label class="form-label">排序权重</label>
                 <input
-                  class="form-check-input"
-                  type="radio"
-                  name="editPrivacy"
-                  id="editPrivate"
-                  value="1"
+                  type="number"
+                  id="editWeight"
+                  class="form-control form-control-sm"
+                  min="0"
+                  max="9999"
+                  value="0"
+                  placeholder="值越大排序越靠前"
+                  title="值越大排序越靠前，默认为0"
                 />
-                <label class="form-check-label" for="editPrivate">
-                  <i class="bi bi-lock"></i> 私有
-                </label>
               </div>
             </div>
           </div>

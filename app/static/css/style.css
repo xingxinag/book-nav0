@@ -412,3 +412,10 @@ textarea.modal-input {
   white-space: pre-wrap;
   overflow-y: auto;
 }
+
+/* 排序权重输入框样式 */
+.form-control-sm {
+  height: 32px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+}
