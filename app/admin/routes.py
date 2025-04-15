@@ -962,26 +962,21 @@ def import_onenav_direct(db_path, import_type, admin_id):
     return results
 
 def map_icon(font_icon):
-    """将Font Awesome图标格式转换为Bootstrap图标"""
-    # OneNav可能使用Font Awesome图标，例如"fa fa-book"
-    # 如果是URL格式，则直接返回
+    """处理OneNav的图标格式"""
+    # 如果是URL格式，直接返回
     if font_icon and (font_icon.startswith('http://') or font_icon.startswith('https://')):
         return font_icon
     
-    # 如果是Font Awesome图标，转换为Bootstrap图标
-    fa_to_bs = {
-        'fa-book': 'bi-book',
-        'fa-android': 'bi-android',
-        'fa-angellist': 'bi-list-stars',
-        'fa-area-chart': 'bi-graph-up',
-        'fa-video-camera': 'bi-camera-video',
-        # 可以根据需要添加更多映射
-    }
+    # 如果是Font Awesome图标格式，保留原格式
+    if font_icon and ('fa-' in font_icon):
+        # 确保格式正确，添加fa前缀如果没有的话
+        if not font_icon.startswith('fa ') and not font_icon.startswith('fas '):
+            return 'fa ' + font_icon.strip()
+        return font_icon
     
+    # 如果不是Font Awesome格式但有值，转为Bootstrap格式
     if font_icon:
-        for fa, bs in fa_to_bs.items():
-            if fa in font_icon:
-                return bs
+        return 'bi-' + font_icon.strip()
     
     # 默认图标
     return 'bi-link'

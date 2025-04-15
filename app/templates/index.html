@@ -1,5 +1,17 @@
 {% extends "base.html" %} {# 定义图标渲染宏 #} {% macro
-render_icon(icon_name='folder', color='#3498db') %}
+render_icon(icon_name='folder', color='#3498db') %} {% if
+icon_name.startswith('fa ') or icon_name.startswith('fas ') %}
+<i
+  class="{{ icon_name }}"
+  {%
+  if
+  color
+  %}style="color: {{ color }}"
+  {%
+  endif
+  %}
+></i>
+{% else %}
 <i
   class="bi bi-{{ icon_name }}"
   {%
@@ -10,7 +22,8 @@ render_icon(icon_name='folder', color='#3498db') %}
   endif
   %}
 ></i>
-{% endmacro %} {% block page_type %}index{% endblock %} {% block head %}
+{% endif %} {% endmacro %} {% block page_type %}index{% endblock %} {% block
+head %}
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link

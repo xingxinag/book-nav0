@@ -1,5 +1,28 @@
-{% extends "base.html" %} {% block page_type %}category{% endblock %} {% block
-head %} {# 调试信息 #}
+{# 定义图标渲染宏 #} {% macro render_icon(icon_name='folder', color='#3498db')
+%} {% if icon_name.startswith('fa ') or icon_name.startswith('fas ') %}
+<i
+  class="{{ icon_name }}"
+  {%
+  if
+  color
+  %}style="color: {{ color }}"
+  {%
+  endif
+  %}
+></i>
+{% else %}
+<i
+  class="bi bi-{{ icon_name }}"
+  {%
+  if
+  color
+  %}style="color: {{ color }}"
+  {%
+  endif
+  %}
+></i>
+{% endif %} {% endmacro %} {% extends "base.html" %} {% block page_type
+%}category{% endblock %} {% block head %} {# 调试信息 #}
 <!-- 
 DEBUG - Settings信息: 
 {% if settings %}
@@ -367,7 +390,7 @@ DEBUG - Settings信息:
           class="category-icon"
           style="background: {{ category.color or 'var(--primary-gradient)' }}"
         >
-          <i class="bi bi-{{ category.icon or 'folder' }}"></i>
+          {{ render_icon(category.icon or 'folder', '#ffffff') }}
         </div>
         <div class="category-details">
           <h1 class="category-title">
