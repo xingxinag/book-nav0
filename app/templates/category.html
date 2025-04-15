@@ -1,4 +1,5 @@
-{% extends "base.html" %} {% block head %} {# 调试信息 #}
+{% extends "base.html" %} {% block page_type %}category{% endblock %} {% block
+head %} {# 调试信息 #}
 <!-- 
 DEBUG - Settings信息: 
 {% if settings %}
@@ -26,10 +27,6 @@ DEBUG - Settings信息:
 />
 <link
   rel="stylesheet"
-  href="{{ url_for('static', filename='css/sidebar.css') }}"
-/>
-<link
-  rel="stylesheet"
   href="{{ url_for('static', filename='css/contextMenu.css') }}"
 />
 <link
@@ -40,6 +37,8 @@ DEBUG - Settings信息:
   .page-container {
     padding: 0;
     margin-top: 0;
+    margin-left: 0; /* 移除左侧边距 */
+    width: 100%; /* 确保占据整个宽度 */
   }
 
   .content-container {
@@ -357,75 +356,7 @@ DEBUG - Settings信息:
   }
 </style>
 {% endblock %} {% block content %} {# 顶部导航栏 #} {% include
-'common/navbar.html' %} {# 遮罩层 #}
-<div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-{# 侧边栏 #}
-<div class="sidebar" id="sidebar">
-  <div class="sidebar-content">
-    <div class="sidebar-group">
-      <div class="sidebar-group-title">快速操作</div>
-      <ul class="sidebar-menu">
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('main.index') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              ><i class="bi bi-house-door"></i
-            ></span>
-            返回首页
-          </a>
-        </li>
-      </ul>
-    </div>
-
-    {% if current_user.is_authenticated %}
-    <div class="sidebar-group">
-      <div class="sidebar-group-title">用户操作</div>
-      <ul class="sidebar-menu">
-        {% if current_user.is_admin %}
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('admin.index') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              ><i class="bi bi-speedometer2"></i
-            ></span>
-            管理面板
-          </a>
-        </li>
-        {% endif %}
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('auth.logout') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              ><i class="bi bi-box-arrow-right"></i
-            ></span>
-            退出登录
-          </a>
-        </li>
-      </ul>
-    </div>
-    {% else %}
-    <div class="sidebar-group">
-      <div class="sidebar-group-title">账户</div>
-      <ul class="sidebar-menu">
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('auth.login') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              ><i class="bi bi-box-arrow-in-right"></i
-            ></span>
-            登录
-          </a>
-        </li>
-        <li class="sidebar-menu-item">
-          <a href="{{ url_for('auth.register') }}" class="sidebar-menu-link">
-            <span class="sidebar-menu-icon"
-              ><i class="bi bi-person-plus"></i
-            ></span>
-            注册
-          </a>
-        </li>
-      </ul>
-    </div>
-    {% endif %}
-  </div>
-</div>
+'common/navbar.html' %}
 
 <div class="page-container">
   <div class="content-container mt-4">
@@ -747,21 +678,6 @@ DEBUG - Settings信息:
 
     // 暂存原始内容，用于恢复
     let originalContent = null;
-
-    // 侧边栏相关
-    const menuToggle = document.getElementById("menuToggle");
-    const sidebar = document.getElementById("sidebar");
-    const sidebarOverlay = document.getElementById("sidebarOverlay");
-
-    // 切换侧边栏显示状态
-    menuToggle.addEventListener("click", function () {
-      document.body.classList.toggle("sidebar-active");
-    });
-
-    // 点击遮罩层关闭侧边栏
-    sidebarOverlay.addEventListener("click", function () {
-      document.body.classList.remove("sidebar-active");
-    });
 
     // 搜索输入事件
     searchInput.addEventListener("input", function () {

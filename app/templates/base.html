@@ -1,9 +1,45 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-page-type="{% block page_type %}default{% endblock %}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
+
+    <!-- 预设侧边栏状态，避免刷新抖动 -->
+    <script>
+      (function () {
+        var pageType =
+          document.documentElement.getAttribute("data-page-type") || "default";
+        var storageKey =
+          "sidebarActive" + (pageType !== "default" ? "-" + pageType : "");
+        var savedState = localStorage.getItem(storageKey);
+
+        // 分类页面默认关闭侧边栏，除非明确保存了开启状态
+        if (pageType === "category") {
+          if (savedState === "true") {
+            document.documentElement.classList.add("sidebar-active-preload");
+          }
+        } else {
+          // 其他页面使用原来的逻辑
+          if (
+            savedState === "true" ||
+            (savedState === null && window.innerWidth >= 768)
+          ) {
+            document.documentElement.classList.add("sidebar-active-preload");
+          }
+        }
+      })();
+    </script>
+    <style>
+      .sidebar-active-preload .sidebar {
+        left: 0 !important;
+        transition: none !important;
+      }
+      .sidebar-active-preload .main-content {
+        padding-left: calc(var(--sidebar-width) + var(--spacing-lg)) !important;
+        transition: none !important;
+      }
+    </style>
 
     {% if settings and settings.site_keywords %}
     <meta name="keywords" content="{{ settings.site_keywords }}" />
