@@ -66,7 +66,6 @@ render_icon(icon_name='folder', color='#3498db') %}
   <div class="sidebar-content">
     {# 分类菜单 #}
     <div class="sidebar-group">
-      <div class="sidebar-group-title">网站分类</div>
       <ul class="sidebar-menu">
         {% for category in categories %} {% if category.parent_id is none %}
         <li class="sidebar-menu-item">
