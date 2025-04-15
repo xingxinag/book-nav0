@@ -242,6 +242,9 @@ document.addEventListener("DOMContentLoaded", function () {
       // 修改data-sort属性
       card.dataset.sort = newSortOrder;
 
+      // 同时更新DOM元素，方便右键菜单修改时显示正确的权重值
+      card.setAttribute("data-sort-order", newSortOrder);
+
       items.push({
         id: websiteId,
         sort_order: newSortOrder,

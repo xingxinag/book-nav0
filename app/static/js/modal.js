@@ -19,11 +19,19 @@ document.addEventListener("DOMContentLoaded", function () {
         .textContent.trim();
       const cardIcon = window.currentCard.querySelector(".site-icon img");
 
+      // 获取排序权重值 - 从data-sort-order属性获取
+      const sortOrder = window.currentCard.getAttribute("data-sort-order");
+
       // 填充表单
       document.getElementById("editLinkId").value = cardId;
       document.getElementById("editTitle").value = cardTitle;
       document.getElementById("editUrl").value = ""; // 获取URL需要额外请求
       document.getElementById("editDescription").value = cardDesc;
+
+      // 如果能从DOM中获取权重值，则直接设置
+      if (sortOrder) {
+        document.getElementById("editWeight").value = sortOrder;
+      }
 
       if (cardIcon) {
         document.getElementById("editIcon").value = cardIcon.src;
@@ -51,6 +59,12 @@ document.addEventListener("DOMContentLoaded", function () {
               document.getElementById("editPrivate").checked = true;
             } else {
               document.getElementById("editPublic").checked = true;
+            }
+
+            // 只有在DOM中没有获取到权重值时，才从服务器数据中设置
+            if (!sortOrder && data.website.sort_order !== undefined) {
+              document.getElementById("editWeight").value =
+                data.website.sort_order;
             }
 
             // 设置当前分类
@@ -113,6 +127,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const icon = document.getElementById("editIcon").value;
     const description = document.getElementById("editDescription").value;
     const categoryId = document.getElementById("editCategory").value;
+    const sortOrder =
+      parseInt(document.getElementById("editWeight").value) || 0;
 
     // 验证分类选择
     if (!categoryId) {
@@ -153,6 +169,7 @@ document.addEventListener("DOMContentLoaded", function () {
           description: description,
           is_private: document.getElementById("editPrivate").checked ? 1 : 0,
           category_id: parseInt(categoryId),
+          sort_order: sortOrder,
         }),
       });
 

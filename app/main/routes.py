@@ -480,7 +480,7 @@ def api_update_website(id):
     
     # 获取请求数据
     data = request.get_json()
-    if not data:
+    if not data or 'url' not in data or not data['url']:
         return jsonify({'success': False, 'message': '无效的请求数据'}), 400
     
     # 验证URL格式
@@ -496,6 +496,7 @@ def api_update_website(id):
     old_category_name = website.category.name if website.category else None
     old_is_private = website.is_private
     old_is_featured = website.is_featured
+    old_sort_order = website.sort_order
     
     # 更新网站URL
     website.url = url
@@ -516,6 +517,8 @@ def api_update_website(id):
             website.category_id = data['category_id']
     if 'is_private' in data:
         website.is_private = bool(data['is_private'])
+    if 'sort_order' in data:
+        website.sort_order = int(data['sort_order'])
     
     # 保存更改
     db.session.commit()
@@ -528,6 +531,8 @@ def api_update_website(id):
         changes['url'] = {'old': old_url, 'new': website.url}
     if old_description != website.description:
         changes['description'] = {'old': old_description, 'new': website.description}
+    if old_sort_order != website.sort_order:
+        changes['sort_order'] = {'old': old_sort_order, 'new': website.sort_order}
         
     if old_category_id != website.category_id:
         new_category_name = website.category.name if website.category else None
@@ -569,7 +574,8 @@ def api_update_website(id):
             'description': website.description,
             'icon': website.icon,
             'is_featured': website.is_featured,
-            'category_id': website.category_id
+            'category_id': website.category_id,
+            'sort_order': website.sort_order
         }
     })
 
@@ -763,7 +769,7 @@ def quick_add_website():
             icon=data.get('icon', ''),
             category_id=data['category_id'],
             created_by_id=current_user.id,
-            sort_order=1,  # 新添加的链接权重为1
+            sort_order=data.get('sort_order', 0),  # 使用提交的权重值，默认为0
             is_private=data.get('is_private', 0)  # 默认为公开
         )
         
