@@ -225,8 +225,8 @@ def add_website():
             category_id=form.category_id.data,
             is_featured=form.is_featured.data,
             is_private=form.is_private.data,
-            created_by_id=current_user.id,
-            sort_order=1  # 新链接权重设为1（最小值）
+            sort_order=form.sort_order.data,  # 使用表单中的排序权重
+            created_by_id=current_user.id
         )
         db.session.add(website)
         db.session.commit()
@@ -263,49 +263,59 @@ def add_website():
 def edit_website(id):
     website = Website.query.get_or_404(id)
     form = WebsiteForm(obj=website)
+    
     if form.validate_on_submit():
-        try:
-            # 记录修改前的状态
-            old_title = website.title
-            old_url = website.url
-            old_description = website.description
-            old_category_id = website.category_id
-            old_category = Category.query.get(old_category_id) if old_category_id else None
-            old_category_name = old_category.name if old_category else None
-            old_is_featured = website.is_featured
-            old_is_private = website.is_private
+        # 记录修改前的值
+        old_title = website.title
+        old_url = website.url
+        old_description = website.description
+        old_category_id = website.category_id
+        old_category_name = website.category.name if website.category else None
+        old_is_featured = website.is_featured
+        old_is_private = website.is_private
+        old_sort_order = website.sort_order
+        
+        # 更新数据
+        website.title = form.title.data
+        website.url = form.url.data
+        website.description = form.description.data
+        website.icon = form.icon.data
+        website.category_id = form.category_id.data
+        website.is_featured = form.is_featured.data
+        website.is_private = form.is_private.data
+        website.sort_order = form.sort_order.data
+        
+        db.session.commit()
+        
+        # 记录修改操作
+        changes = {}
+        if old_title != website.title:
+            changes['title'] = {'old': old_title, 'new': website.title}
+        if old_url != website.url:
+            changes['url'] = {'old': old_url, 'new': website.url}
+        if old_description != website.description:
+            changes['description'] = {'old': old_description, 'new': website.description}
+        if old_category_id != website.category_id:
+            new_category_name = website.category.name if website.category else None
+            changes['category'] = {
+                'old': {'id': old_category_id, 'name': old_category_name}, 
+                'new': {'id': website.category_id, 'name': new_category_name}
+            }
+        if old_is_featured != website.is_featured:
+            changes['is_featured'] = {'old': old_is_featured, 'new': website.is_featured}
+        if old_is_private != website.is_private:
+            changes['is_private'] = {'old': old_is_private, 'new': website.is_private}
+        if old_sort_order != website.sort_order:
+            changes['sort_order'] = {'old': old_sort_order, 'new': website.sort_order}
+        
+        if changes:  # 仅当有变更时才记录
+            import json
+            # 获取分类名称
+            category = Category.query.get(form.category_id.data) if form.category_id.data else None
+            category_name = category.name if category else None
             
-            # 更新网站信息
-            form.populate_obj(website)
-            # 处理私有/公开选项
-            website.is_private = form.is_private.data
-            db.session.commit()
-            
-            # 确定哪些字段发生了变化
-            changes = {}
-            if old_title != website.title:
-                changes['title'] = {'old': old_title, 'new': website.title}
-            if old_url != website.url:
-                changes['url'] = {'old': old_url, 'new': website.url}
-            if old_description != website.description:
-                changes['description'] = {'old': old_description, 'new': website.description}
-                
-            if old_category_id != website.category_id:
-                new_category = Category.query.get(website.category_id) if website.category_id else None
-                new_category_name = new_category.name if new_category else None
-                changes['category'] = {
-                    'old': old_category_name, 
-                    'new': new_category_name
-                }
-                
-            if old_is_featured != website.is_featured:
-                changes['is_featured'] = {'old': old_is_featured, 'new': website.is_featured}
-            if old_is_private != website.is_private:
-                changes['is_private'] = {'old': old_is_private, 'new': website.is_private}
-            
-            # 如果有变化，才记录修改操作
-            if changes:
-                import json
+            try:
+                # 创建操作日志
                 operation_log = OperationLog(
                     user_id=current_user.id,
                     operation_type='MODIFY',
@@ -314,19 +324,17 @@ def edit_website(id):
                     website_url=website.url,
                     website_icon=website.icon,
                     category_id=website.category_id,
-                    category_name=new_category_name if 'category' in changes else (old_category_name or None),
+                    category_name=category_name,
                     details=json.dumps(changes)
                 )
                 db.session.add(operation_log)
                 db.session.commit()
-        except Exception as e:
-            # 记录日志失败不影响主功能
-            current_app.logger.error(f"记录修改操作日志失败: {str(e)}")
-            # 确保网站信息已保存
-            db.session.commit()
+            except Exception as e:
+                current_app.logger.error(f"记录修改操作日志失败: {str(e)}")
         
         flash('网站更新成功', 'success')
         return redirect(url_for('admin.websites'))
+        
     return render_template('admin/website_form.html', title='编辑网站', form=form)
 
 @bp.route('/website/delete/<int:id>')

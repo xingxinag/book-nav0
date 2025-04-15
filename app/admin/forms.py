@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, TextAreaField, BooleanField, SubmitField, SelectField, HiddenField, IntegerField, PasswordField
-from wtforms.validators import DataRequired, Length, URL, Optional, ValidationError, Email, EqualTo
+from wtforms.validators import DataRequired, Length, URL, Optional, ValidationError, Email, EqualTo, NumberRange
 from app.models import Category, User
 
 class CategoryForm(FlaskForm):
@@ -31,6 +31,8 @@ class WebsiteForm(FlaskForm):
     description = TextAreaField('网站描述', validators=[Optional(), Length(max=512)])
     icon = StringField('图标URL', validators=[Optional(), Length(max=256)])
     category_id = SelectField('分类', coerce=int, validators=[DataRequired()])
+    sort_order = IntegerField('排序权重', validators=[Optional(), NumberRange(min=0, max=9999)], 
+                            default=0, description='值越大排序越靠前，默认为0')
     is_featured = BooleanField('推荐')
     is_private = BooleanField('设为私有')
     submit_btn = SubmitField('提交')

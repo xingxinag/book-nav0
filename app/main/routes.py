@@ -41,13 +41,14 @@ def index():
             )
         category.website_list = websites_query.order_by(
             Website.sort_order.desc(), 
+            Website.created_at.asc(),
             Website.views.desc()
         ).all()
-        
+    
     return render_template('index.html', 
-                         title='首页', 
-                         categories=categories, 
-                         featured_sites=featured_sites)
+                           title='首页', 
+                           categories=categories, 
+                           featured_sites=featured_sites)
 
 @bp.route('/category/<int:id>')
 def category(id):
@@ -67,7 +68,8 @@ def category(id):
         )
     
     websites = websites_query.order_by(
-        Website.sort_order.desc(), 
+        Website.sort_order.desc(),
+        Website.created_at.asc(), 
         Website.views.desc()
     ).all()
     
@@ -866,7 +868,7 @@ def search_in_category(category_id):
         )
     
     # 执行查询
-    websites = websites.order_by(Website.sort_order.desc(), Website.views.desc()).all()
+    websites = websites.order_by(Website.sort_order.desc(), Website.created_at.asc(), Website.views.desc()).all()
     
     result = []
     for site in websites:
@@ -905,6 +907,7 @@ def add():
             category_id=form.category_id.data if form.category_id.data != 0 else None,
             is_featured=False,  # 用户添加的不能直接设为推荐
             is_private=form.is_private.data,
+            sort_order=form.sort_order.data,  # 使用用户设置的排序权重
             created_by_id=current_user.id
         )
         
@@ -955,6 +958,7 @@ def edit(id):
         old_category_id = website.category_id
         old_category_name = website.category.name if website.category else None
         old_is_private = website.is_private
+        old_sort_order = website.sort_order
         
         # 更新网站信息
         website.title = form.title.data
@@ -963,6 +967,7 @@ def edit(id):
         website.icon = form.icon.data
         website.category_id = form.category_id.data if form.category_id.data != 0 else None
         website.is_private = form.is_private.data
+        website.sort_order = form.sort_order.data
         
         db.session.commit()
         
@@ -974,6 +979,8 @@ def edit(id):
             changes['url'] = {'old': old_url, 'new': website.url}
         if old_description != website.description:
             changes['description'] = {'old': old_description, 'new': website.description}
+        if old_sort_order != website.sort_order:
+            changes['sort_order'] = {'old': old_sort_order, 'new': website.sort_order}
             
         if old_category_id != website.category_id:
             new_category_name = website.category.name if website.category else None
