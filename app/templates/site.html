@@ -148,8 +148,8 @@
           <img src="{{ website.icon }}" alt="{{ website.title }}" />
         </div>
         {% else %}
-        <div class="site-icon text-primary">
-          <i class="bi bi-globe"></i>
+        <div class="site-icon">
+          <div class="default-site-icon">{{ website.title|first|upper }}</div>
         </div>
         {% endif %}
       </div>
@@ -262,8 +262,8 @@
             <img src="{{ site.icon }}" alt="{{ site.title }}" />
           </div>
           {% else %}
-          <div class="related-icon text-primary">
-            <i class="bi bi-globe"></i>
+          <div class="related-icon">
+            <div class="default-site-icon">{{ site.title|first|upper }}</div>
           </div>
           {% endif %}
           <div class="flex-grow-1">

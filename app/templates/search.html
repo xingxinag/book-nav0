@@ -130,8 +130,8 @@
           <img src="{{ website.icon }}" alt="{{ website.title }}" />
         </div>
         {% else %}
-        <div class="website-icon text-primary">
-          <i class="bi bi-globe"></i>
+        <div class="website-icon">
+          <div class="default-site-icon">{{ website.title|first|upper }}</div>
         </div>
         {% endif %}
         <div class="website-info">

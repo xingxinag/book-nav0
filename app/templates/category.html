@@ -476,7 +476,11 @@ DEBUG - Settings信息:
               {% if website.icon %}
               <img src="{{ website.icon }}" alt="{{ website.title }}" />
               {% else %}
-              <i class="bi bi-globe text-primary"></i>
+              <div class="default-site-icon">
+                <script>
+                  document.write("{{ website.title }}".charAt(0).toUpperCase());
+                </script>
+              </div>
               {% endif %}
             </div>
             <div class="site-text">
@@ -844,7 +848,10 @@ DEBUG - Settings信息:
       if (website.icon) {
         siteIcon.innerHTML = `<img src="${website.icon}" alt="${website.title}" />`;
       } else {
-        siteIcon.innerHTML = '<i class="bi bi-globe text-primary"></i>';
+        const defaultIcon = document.createElement("div");
+        defaultIcon.className = "default-site-icon";
+        defaultIcon.textContent = website.title.charAt(0).toUpperCase();
+        siteIcon.appendChild(defaultIcon);
       }
 
       // 文本部分

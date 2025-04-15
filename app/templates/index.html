@@ -208,7 +208,9 @@ head %}
               {% if website.icon %}
               <img src="{{ website.icon }}" alt="{{ website.title }}" />
               {% else %}
-              <i class="bi bi-globe text-primary"></i>
+              <div class="default-site-icon">
+                {{ website.title|first|upper }}
+              </div>
               {% endif %}
             </div>
             <div class="site-text">
