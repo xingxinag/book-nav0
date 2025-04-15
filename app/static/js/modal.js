@@ -19,8 +19,11 @@ document.addEventListener("DOMContentLoaded", function () {
         .textContent.trim();
       const cardIcon = window.currentCard.querySelector(".site-icon img");
 
-      // 获取排序权重值 - 从data-sort-order属性获取
-      const sortOrder = window.currentCard.getAttribute("data-sort-order");
+      // 获取排序权重值 - 优先使用data-sort-order，不存在则使用data-sort
+      let sortOrder = window.currentCard.getAttribute("data-sort-order");
+      if (!sortOrder) {
+        sortOrder = window.currentCard.getAttribute("data-sort");
+      }
 
       // 填充表单
       document.getElementById("editLinkId").value = cardId;
