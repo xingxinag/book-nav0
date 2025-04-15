@@ -227,26 +227,33 @@ body.sidebar-active .sidebar {
 }
 
 /* 分类拖拽排序相关样式 */
-.sidebar-menu-item .drag-handle {
+.sidebar-menu-item .sidebar-drag-handle {
   display: none;
   cursor: grab;
   opacity: 0.6;
-  margin-right: 5px;
+  margin-left: auto;
+  padding-left: 8px;
   flex-shrink: 0;
   color: var(--primary-color);
+  font-size: 14px;
+  transition: opacity 0.2s ease;
 }
 
-.user-admin .sidebar-menu-item .drag-handle {
-  display: inline-block;
+.user-admin .sidebar-menu-item .sidebar-drag-handle {
+  display: inline-block !important; /* 使用 !important 覆盖全局设置 */
 }
 
+.sidebar-menu-item:hover .sidebar-drag-handle {
+  opacity: 0.9;
+}
+
+/* 拖拽相关样式 */
 .sidebar-menu-item.dragging {
   opacity: 0.8;
   background: var(--bg-hover);
   position: relative;
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: scale(1.02);
   border-radius: 4px;
 }
 
@@ -283,19 +290,12 @@ body.sidebar-active .sidebar {
   width: 100%;
 }
 
+/* 删除伪元素指示器 */
 /* 为管理员模式添加指示器 */
 .user-admin .sidebar-menu-item .sidebar-menu-link::after {
-  content: "";
-  display: block;
-  flex-grow: 1;
-  text-align: right;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  display: none;
 }
 
 .user-admin .sidebar-menu-item:hover .sidebar-menu-link::after {
-  content: "↕️";
-  opacity: 0.5;
-  font-size: 0.75rem;
-  margin-left: 5px;
+  display: none;
 }

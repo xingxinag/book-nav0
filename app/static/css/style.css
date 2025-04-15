@@ -341,7 +341,13 @@ body {
   z-index: 100;
 }
 
+/* 更具体地限定拖拽手柄 */
 .drag-handle {
+  display: none !important; /* 默认隐藏所有拖拽手柄 */
+}
+
+/* 站点卡片中的拖拽手柄 */
+.site-card .drag-handle {
   position: absolute;
   right: 10px;
   top: 10px;
@@ -357,6 +363,11 @@ body {
   transition: opacity 0.2s;
   font-size: 12px;
   cursor: move;
+}
+
+/* 处理右上角独立显示的拖拽手柄 */
+.sidebar-content .drag-handle:not(.sidebar-drag-handle) {
+  display: none !important;
 }
 
 .site-card:hover .drag-handle {
