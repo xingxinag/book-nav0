@@ -18,7 +18,7 @@
   <div class="navbar-right">
     {% if not current_user.is_authenticated %}
     <a href="{{ url_for('auth.login') }}" class="navbar-action" title="登录">
-      <i class="bi bi-box-arrow-in-right"></i>
+      <i class="bi bi-person-fill"></i>
     </a>
     {% else %}
     <div class="user-dropdown">

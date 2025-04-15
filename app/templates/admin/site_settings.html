@@ -115,12 +115,17 @@
                   <div class="mb-2">
                     {{ form.site_favicon.label(class="form-label") }} {{
                     form.site_favicon(class="form-control") }}
-                    <div class="form-text">外部图床URL或相对路径</div>
+                    <div class="form-text">
+                      外部图床URL或相对路径，推荐使用:
+                      /static/uploads/favicons/favicon-64.png
+                    </div>
                   </div>
                   <div>
                     {{ form.favicon_file.label(class="form-label") }} {{
                     form.favicon_file(class="form-control") }}
-                    <div class="form-text">推荐使用.ico或.png格式</div>
+                    <div class="form-text">
+                      推荐使用.ico、.png、.jpg或.svg格式，建议尺寸为64x64像素
+                    </div>
                   </div>
                 </div>
               </div>

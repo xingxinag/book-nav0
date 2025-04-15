@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-type="{% block page_type %}default{% endblock %}">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+
+    <!-- 预设侧边栏状态，避免刷新抖动 -->
+    <script>
+      (function () {
+        var pageType =
+          document.documentElement.getAttribute("data-page-type") || "default";
+        var storageKey =
+          "sidebarActive" + (pageType !== "default" ? "-" + pageType : "");
+        var savedState = localStorage.getItem(storageKey);
+
+        // 分类页面默认关闭侧边栏，除非明确保存了开启状态
+        if (pageType === "category") {
+          if (savedState === "true") {
+            document.documentElement.classList.add("sidebar-active-preload");
+          }
+        } else {
+          // 其他页面使用原来的逻辑
+          if (
+            savedState === "true" ||
+            (savedState === null && window.innerWidth >= 768)
+          ) {
+            document.documentElement.classList.add("sidebar-active-preload");
+          }
+        }
+      })();
+    </script>
+
+    {% if settings and settings.site_keywords %}
+    <meta name="keywords" content="{{ settings.site_keywords }}" />
+    {% endif %} {% if settings and settings.site_description %}
+    <meta name="description" content="{{ settings.site_description }}" />
+    {% endif %}
+
+    <title>
+      {% if title %}{{ title }} - {% endif %}{% if settings %}{{
+      settings.site_name }}{% else %}以蓝导航{% endif %}
+    </title>
+    
+    <!-- 本地化的CSS资源 -->
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" />
+    
+    <!-- Font Awesome精简版 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/font-awesome/css/fontawesome.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/font-awesome/css/solid.min.css') }}" />
+    
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" />
+    
+    <!-- 动画库 -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/animate.css/animate.min.css') }}" />
+    
+    <!-- 自定义CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tooltip.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/back-to-top.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/footer.css') }}" />
+    
+    <!-- Favicon -->
+    {% if settings and settings.site_favicon %}
+    <link rel="icon" href="{{ settings.site_favicon }}" type="image/{{ 'svg+xml' if settings.site_favicon.endswith('.svg') else 'x-icon' }}" />
+    <link rel="shortcut icon" href="{{ settings.site_favicon }}" />
+    <link rel="apple-touch-icon" href="{{ settings.site_favicon }}" />
+    {% else %}
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/favicon.ico') }}" />
+    {% endif %}
+    
+    {% block head %}{% endblock %}
+  </head>
+  <body class="{% if current_user.is_authenticated and current_user.is_admin %}user-admin{% endif %} {% block body_class %}{% endblock %}">
+    <main>
+      {% with messages = get_flashed_messages(with_categories=true) %} 
+      {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show animate__animated animate__fadeIn" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %} 
+      {% endwith %} 
+      
+      {% block content %}{% endblock %}
+    </main>
+
+    {% block footer %} 
+    {% with year = now.year %} 
+    {% include 'common/footer.html' %} 
+    {% endwith %} 
+    {% endblock %}
+
+    <!-- 本地化的JavaScript脚本 -->
+    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/particles.js/particles.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/back-to-top.js') }}"></script>
+    
+    <!-- 页面底部通用JS -->
+    <script>
+      // 处理图标加载错误，所有页面都会执行这段代码
+      document.addEventListener("DOMContentLoaded", function () {
+        // 为所有网站图标添加错误处理
+        function handleSiteImages() {
+          const siteImages = document.querySelectorAll(".site-icon img, .related-icon img");
+          siteImages.forEach((img) => {
+            img.onerror = function () {
+              const siteName = this.alt || "site";
+              const firstLetter = siteName.charAt(0).toUpperCase();
+              const parentEl = this.parentElement;
+
+              // 移除错误的图片
+              this.remove();
+
+              // 创建默认图标
+              const defaultIcon = document.createElement("div");
+              defaultIcon.className = "default-site-icon";
+              defaultIcon.textContent = firstLetter;
+              parentEl.appendChild(defaultIcon);
+            };
+
+            // 检查图片是否已经加载并且是有效图标
+            if (img.complete) {
+              validateImage(img);
+            } else {
+              img.onload = function () {
+                validateImage(this);
+              };
+            }
+          });
+        }
+
+        // 验证图片是否有效
+        function validateImage(img) {
+          if (img.naturalWidth === 0 || img.naturalHeight === 0) {
+            img.onerror();
+          }
+        }
+
+        // 初始化图片处理
+        handleSiteImages();
+
+        // 监听动态加载的内容
+        const observer = new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            if (mutation.addedNodes.length) {
+              handleSiteImages();
+            }
+          });
+        });
+
+        // 配置观察器
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
+      });
+    </script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html> 

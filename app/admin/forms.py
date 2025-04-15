@@ -76,7 +76,7 @@ class SiteSettingsForm(FlaskForm):
     site_logo = StringField('站点Logo URL', validators=[Optional(), Length(max=256)])
     logo_file = FileField('上传Logo', validators=[FileAllowed(['jpg', 'png', 'gif', 'svg'], '只允许上传图片!')])
     site_favicon = StringField('站点图标URL', validators=[Optional(), Length(max=256)])
-    favicon_file = FileField('上传Favicon', validators=[FileAllowed(['ico', 'png', 'jpg'], '只允许上传图片!')])
+    favicon_file = FileField('上传Favicon', validators=[FileAllowed(['ico', 'png', 'jpg', 'svg'], '只允许上传图片!')])
     site_keywords = StringField('站点关键词', validators=[Optional(), Length(max=512)])
     site_description = TextAreaField('站点描述', validators=[Optional(), Length(max=1024)])
     footer_content = TextAreaField('页脚内容', validators=[Optional()])
