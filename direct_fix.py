@@ -38,9 +38,9 @@ if cursor.fetchone():
         # 5. 添加display_limit字段
         print("正在添加display_limit字段...")
         try:
-            cursor.execute("ALTER TABLE category ADD COLUMN display_limit INTEGER DEFAULT 8")
+            cursor.execute("ALTER TABLE category ADD COLUMN display_limit INTEGER DEFAULT 10")
             conn.commit()
-            print("已成功添加display_limit字段，默认值为8")
+            print("已成功添加display_limit字段，默认值为10")
         except sqlite3.Error as e:
             print(f"添加字段时出错: {e}")
 else:

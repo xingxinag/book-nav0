@@ -222,7 +222,7 @@ head %}
         {% endfor %}
       </div>
 
-      {% if websites|length > (category.display_limit or 8) %}
+      {% if websites|length > (category.display_limit or 10) %}
       <div class="text-center mt-2">
         <a
           href="{{ url_for('main.category', id=category.id) }}"

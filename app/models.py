@@ -69,7 +69,7 @@ class Category(db.Model):
     icon = db.Column(db.String(64))
     color = db.Column(db.String(16))
     order = db.Column(db.Integer, default=0)
-    display_limit = db.Column(db.Integer, default=8)  # 首页展示数量限制，默认为8个
+    display_limit = db.Column(db.Integer, default=10)  # 首页展示数量限制，默认为10个
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # 添加父分类关系

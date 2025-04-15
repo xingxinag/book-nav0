@@ -16,8 +16,8 @@ null_categories = Category.query.filter(Category.display_limit == None).all()
 if null_categories:
     print(f"发现{len(null_categories)}个分类的display_limit为NULL，正在修复...")
     for category in null_categories:
-        print(f"修复分类: {category.name}, 设置display_limit=8")
-        category.display_limit = 8
+        print(f"修复分类: {category.name}, 设置display_limit=10")
+        category.display_limit = 10
     
     db.session.commit()
     print("修复完成！")
