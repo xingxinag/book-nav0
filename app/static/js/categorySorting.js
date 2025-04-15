@@ -20,14 +20,11 @@ function isAdminPage() {
 
 // 启用侧边栏分类的拖拽排序
 function enableSidebarCategorySorting() {
-  console.log("初始化侧边栏拖拽排序");
-
   // 获取分类菜单容器
   const container = document.querySelector(
     ".sidebar-content .sidebar-group:first-child .sidebar-menu"
   );
   if (!container) {
-    console.error("未找到侧边栏分类菜单容器");
     return;
   }
 
@@ -37,11 +34,8 @@ function enableSidebarCategorySorting() {
   // 获取所有分类项
   const categoryItems = container.querySelectorAll(".sidebar-menu-item");
   if (categoryItems.length === 0) {
-    console.error("未找到侧边栏分类项");
     return;
   }
-
-  console.log(`找到 ${categoryItems.length} 个分类项`);
 
   // 为每个分类项设置ID和拖拽属性
   categoryItems.forEach((item, index) => {
@@ -103,8 +97,6 @@ function enableSidebarCategorySorting() {
     item.addEventListener("dragenter", handleDragEnter);
     item.addEventListener("dragleave", handleDragLeave);
     item.addEventListener("drop", handleDrop);
-
-    console.log(`为分类 "${categoryName}" (ID: ${categoryId}) 启用拖拽`);
   });
 
   // 为容器添加类以支持拖拽样式
@@ -135,8 +127,6 @@ function handleDragStart(e) {
   items.forEach((item, index) => {
     item.dataset.position = index;
   });
-
-  console.log(`开始拖拽分类: ${this.querySelector("a").textContent.trim()}`);
 }
 
 // 拖拽结束事件处理
@@ -155,7 +145,6 @@ function handleDragEnd(e) {
   saveNewOrder(container);
 
   currentDraggedItem = null;
-  console.log("拖拽结束");
 }
 
 // 拖拽经过事件处理
@@ -217,8 +206,6 @@ function handleDrop(e) {
       // 向上拖动
       this.parentNode.insertBefore(draggedItem, this);
     }
-
-    console.log(`移动分类从位置 ${draggedIndex} 到 ${targetIndex}`);
   }
 
   return false;
@@ -247,11 +234,8 @@ function saveNewOrder(container) {
   });
 
   if (items.length === 0) {
-    console.warn("没有找到要排序的分类项");
     return;
   }
-
-  console.log(`准备保存新排序: ${JSON.stringify(items)}`);
 
   // 发送排序数据到服务器
   fetch("/api/category/update_order", {
@@ -265,20 +249,17 @@ function saveNewOrder(container) {
     .then((response) => response.json())
     .then((data) => {
       if (data.success) {
-        console.log(`排序更新成功: ${data.message}`);
         // 可以添加视觉反馈，如提示消息
         if (typeof showToast === "function") {
           showToast("success", "分类排序已更新");
         }
       } else {
-        console.error(`排序更新失败: ${data.message}`);
         if (typeof showToast === "function") {
           showToast("error", "分类排序更新失败");
         }
       }
     })
     .catch((error) => {
-      console.error(`排序请求失败: ${error}`);
       if (typeof showToast === "function") {
         showToast("error", "网络错误，排序更新失败");
       }
@@ -295,17 +276,13 @@ function getCsrfToken() {
 function initCategorySorting() {
   // 检查是否在后端管理界面
   if (isAdminPage()) {
-    console.log("后端管理界面不启用分类排序");
     return;
   }
 
   // 检查是否为管理员
   if (!isAdminMode()) {
-    console.log("非管理员模式，不启用分类排序");
     return;
   }
-
-  console.log("初始化分类排序");
 
   // 启用侧边栏分类排序
   enableSidebarCategorySorting();

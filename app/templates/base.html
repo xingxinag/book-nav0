@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" data-page-type="{% block page_type %}default{% endblock %}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-    <!-- 预设侧边栏状态，避免刷新抖动 -->
+    <!-- 棰勮渚ц竟鏍忕姸鎬侊紝閬垮厤鍒锋柊鎶栧姩 -->
     <script>
       (function () {
         var pageType =
@@ -14,13 +14,13 @@
           "sidebarActive" + (pageType !== "default" ? "-" + pageType : "");
         var savedState = localStorage.getItem(storageKey);
 
-        // 分类页面默认关闭侧边栏，除非明确保存了开启状态
+        // 鍒嗙被椤甸潰榛樿鍏抽棴渚ц竟鏍忥紝闄ら潪鏄庣'淇濆瓨浜嗗紑鍚姸锟?
         if (pageType === "category") {
           if (savedState === "true") {
             document.documentElement.classList.add("sidebar-active-preload");
           }
         } else {
-          // 其他页面使用原来的逻辑
+          // 鍏朵粬椤甸潰浣跨敤鍘熸潵鐨勯€昏緫
           if (
             savedState === "true" ||
             (savedState === null && window.innerWidth >= 768)
@@ -49,14 +49,14 @@
 
     <title>
       {% if title %}{{ title }} - {% endif %}{% if settings %}{{
-      settings.site_name }}{% else %}炫酷导航{% endif %}
+      settings.site_name }}{% else %}鐐叿瀵艰埅{% endif %}
     </title>
-    <!-- 引入字体图标库 -->
+    <!-- 寮曞叆瀛椾綋鍥炬爣-->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}"
     />
-    <!-- 引入Font Awesome精简版 -->
+    <!-- 寮曞叆Font Awesome绮剧畝-->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='vendor/font-awesome/css/fontawesome.min.css') }}"
@@ -65,17 +65,17 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='vendor/font-awesome/css/solid.min.css') }}"
     />
-    <!-- 引入Bootstrap -->
+    <!-- 寮曞叆Bootstrap -->
     <link
       href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}"
       rel="stylesheet"
     />
-    <!-- 引入动画库 -->
+    <!-- 寮曞叆鍔ㄧ敾-->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='vendor/animate.css/animate.min.css') }}"
     />
-    <!-- 自定义CSS -->
+    <!-- 鑷畾涔塁SS -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
@@ -85,12 +85,12 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/tooltip.css') }}"
     />
-    <!-- 回到顶部CSS -->
+    <!-- 鍥炲埌椤堕儴CSS -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/back-to-top.css') }}"
     />
-    <!-- 页脚CSS -->
+    <!-- 椤佃剼CSS -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/footer.css') }}"
@@ -120,15 +120,15 @@
     />
     {% endif %}
     <style>
-      /* 修复CSS检查器错误 */
-      /* 清除所有无关样式错误 */
+      /* 淇CSS妫€鏌ュ櫒閿欒 */
+      /* 娓呴櫎鎵€鏈夋棤鍏虫牱寮忛敊*/
       @media screen {
         .dummy-class {
           color: inherit;
         }
       }
 
-      /* 自定义Bootstrap tooltip样式 */
+      /* 鑷畾涔塀ootstrap tooltip鏍峰紡 */
       .tooltip .tooltip-inner {
         background: linear-gradient(
           135deg,
@@ -149,27 +149,27 @@
         text-justify: inter-word;
       }
 
-      /* 上方箭头颜色 */
+      /* 涓婃柟绠ご棰滆壊 */
       .tooltip.bs-tooltip-bottom .tooltip-arrow::before {
         border-bottom-color: rgba(112, 73, 240, 0.95);
       }
 
-      /* 下方箭头颜色 */
+      /* 涓嬫柟绠ご棰滆壊 */
       .tooltip.bs-tooltip-top .tooltip-arrow::before {
         border-top-color: rgba(87, 50, 218, 0.98);
       }
 
-      /* 左侧箭头颜色 */
+      /* 宸︿晶绠ご棰滆壊 */
       .tooltip.bs-tooltip-start .tooltip-arrow::before {
         border-left-color: rgba(112, 73, 240, 0.95);
       }
 
-      /* 右侧箭头颜色 */
+      /* 鍙充晶绠ご棰滆壊 */
       .tooltip.bs-tooltip-end .tooltip-arrow::before {
         border-right-color: rgba(112, 73, 240, 0.95);
       }
 
-      /* 确保tooltip显示 */
+      /* 纭繚tooltip鏄剧ず */
       .tooltip {
         opacity: 1 !important;
         z-index: 9999 !important;
@@ -202,21 +202,21 @@
       {% endif %} {% endwith %} {% block content %}{% endblock %}
     </main>
 
-    {% block footer %} {# 引入模块化页脚 #} {% with year = now.year %} {%
+    {% block footer %} {# 寮曞叆妯″潡鍖栭〉#} {% with year = now.year %} {%
     include 'common/footer.html' %} {% endwith %} {% endblock %}
 
-    <!-- JavaScript脚本 -->
+    <!-- JavaScript鑴氭湰 -->
     <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/particles.js/particles.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
-    <!-- 回到顶部JS -->
+    <!-- 鍥炲埌椤堕儴JS -->
     <script src="{{ url_for('static', filename='js/back-to-top.js') }}"></script>
-    <!-- 页面底部通用JS -->
+    <!-- 椤甸潰搴曢儴閫氱敤JS -->
     <script>
-      // 处理图标加载错误，所有页面都会执行这段代码
+      // 澶勭悊鍥炬爣鍔犺浇閿欒锛屾墍鏈夐〉闈㈤兘浼氭墽琛岃繖娈典唬锟?
       document.addEventListener("DOMContentLoaded", function () {
-        // 为所有网站图标添加错误处理
+        // 涓烘墍鏈夌綉绔欏浘鏍囨坊鍔犻敊璇锟?
         function handleSiteImages() {
           const siteImages = document.querySelectorAll(
             ".site-icon img, .related-icon img"
@@ -227,17 +227,17 @@
               const firstLetter = siteName.charAt(0).toUpperCase();
               const parentEl = this.parentElement;
 
-              // 移除错误的图片
+              // 绉婚櫎閿欒鐨勫浘锟?
               this.remove();
 
-              // 创建默认图标
+              // 鍒涘缓榛樿鍥炬爣
               const defaultIcon = document.createElement("div");
               defaultIcon.className = "default-site-icon";
               defaultIcon.textContent = firstLetter;
               parentEl.appendChild(defaultIcon);
             };
 
-            // 检查图片是否已经加载并且是有效图标
+            // 妫€鏌ュ浘鐗囨槸鍚﹀凡缁忓姞杞藉苟涓旀槸鏈夋晥鍥炬爣
             if (img.complete) {
               validateImage(img);
             } else {
@@ -248,17 +248,17 @@
           });
         }
 
-        // 验证图片是否有效
+        // 楠岃瘉鍥剧墖鏄惁鏈夋晥
         function validateImage(img) {
           if (img.naturalWidth === 0 || img.naturalHeight === 0) {
             img.onerror();
           }
         }
 
-        // 初始化图片处理
+        // 鍒濆鍖栧浘鐗囧锟?
         handleSiteImages();
 
-        // 监听动态加载的内容
+        // 鐩戝惉鍔ㄦ€佸姞杞界殑鍐呭
         const observer = new MutationObserver(function (mutations) {
           mutations.forEach(function (mutation) {
             if (mutation.addedNodes.length) {
@@ -267,48 +267,11 @@
           });
         });
 
-        // 配置观察器
+        // 閰嶇疆瑙傚療锟?
         observer.observe(document.body, {
           childList: true,
           subtree: true,
         });
-
-        // 添加管理员模式检查日志
-        if (document.body.classList.contains("user-admin")) {
-          console.log("管理员模式已激活");
-
-          // 定义一个全局函数用于调试
-          window.checkCategorySorting = function () {
-            console.log("检查分类排序初始化：");
-            console.log(
-              "- 是否管理员模式:",
-              document.body.classList.contains("user-admin")
-            );
-            console.log(
-              "- 侧边栏状态:",
-              document.querySelector(".sidebar") ? "已加载" : "未加载"
-            );
-            const sidebarMenu = document.querySelector(
-              ".sidebar-content .sidebar-group:first-child .sidebar-menu"
-            );
-            console.log("- 侧边栏菜单:", sidebarMenu ? "已找到" : "未找到");
-            if (sidebarMenu) {
-              const items = sidebarMenu.querySelectorAll(".sidebar-menu-item");
-              console.log("- 菜单项数量:", items.length);
-              const dataItems = sidebarMenu.querySelectorAll(
-                ".sidebar-menu-item[data-id]"
-              );
-              console.log("- 有data-id的项:", dataItems.length);
-            }
-          };
-
-          // 3秒后自动检查
-          setTimeout(function () {
-            if (window.checkCategorySorting) {
-              window.checkCategorySorting();
-            }
-          }, 3000);
-        }
       });
     </script>
     {% block scripts %}{% endblock %}

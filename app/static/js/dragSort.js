@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", function () {
   // 拖拽排序相关代码
   const cardContainers = document.querySelectorAll(".card-container.draggable");
-  console.log("找到拖拽容器:", cardContainers.length);
 
   cardContainers.forEach((container) => {
     enableDragSort(container);
@@ -14,9 +13,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function enableDragSort(container) {
     const cards = container.querySelectorAll(".site-card.draggable");
-    console.log(
-      `容器 ${container.dataset.categoryId} 中有 ${cards.length} 个可拖拽卡片`
-    );
 
     cards.forEach((card, index) => {
       // 长按开始拖拽
@@ -43,7 +39,6 @@ document.addEventListener("DOMContentLoaded", function () {
         dragHandle.addEventListener("mousedown", function (e) {
           e.stopPropagation(); // 阻止冒泡
           e.preventDefault();
-          console.log("通过拖拽句柄开始拖拽");
           startDragging(card, container, e.clientX, e.clientY);
         });
 
@@ -53,7 +48,6 @@ document.addEventListener("DOMContentLoaded", function () {
             e.stopPropagation();
             e.preventDefault();
             const touch = e.touches[0];
-            console.log("通过拖拽句柄开始触摸拖拽");
             startDragging(card, container, touch.clientX, touch.clientY);
           },
           { passive: false }
@@ -63,14 +57,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function startLongPress(card, x, y) {
-    console.log("开始长按", card.dataset.id);
     dragStartTime = Date.now();
     const initialX = x;
     const initialY = y;
 
     clearTimeout(longPressTimer);
     longPressTimer = setTimeout(() => {
-      console.log("长按时间到，开始拖拽");
       startDragging(card, card.parentNode, initialX, initialY);
     }, 300); // 长按300ms激活拖拽
 
@@ -81,7 +73,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener("touchcancel", cancelLongPress);
 
     function cancelLongPress() {
-      console.log("取消长按");
       clearTimeout(longPressTimer);
       document.removeEventListener("mouseup", cancelLongPress);
       document.removeEventListener("mouseleave", cancelLongPress);
@@ -92,11 +83,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function startDragging(card, container, initialX, initialY) {
     if (draggedCard) {
-      console.log("已有卡片正在拖拽中，忽略");
       return;
     }
 
-    console.log("开始拖拽:", card.dataset.id);
     draggedCard = card;
     draggedCard.classList.add("dragging");
 
@@ -165,7 +154,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function onMouseUp() {
-      console.log("拖拽结束");
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("mouseup", onMouseUp);
@@ -220,7 +208,6 @@ document.addEventListener("DOMContentLoaded", function () {
   function updateSortOrder(container) {
     const cards = container.querySelectorAll(".site-card");
     if (!cards.length) {
-      console.log("没有找到卡片，不更新排序");
       return;
     }
 
@@ -232,7 +219,6 @@ document.addEventListener("DOMContentLoaded", function () {
     cards.forEach((card, index) => {
       const websiteId = parseInt(card.dataset.id);
       if (isNaN(websiteId)) {
-        console.error("卡片ID无效:", card.dataset.id);
         return;
       }
 
@@ -251,8 +237,6 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
 
-    console.log("更新排序:", items);
-
     // 发送排序数据到服务器
     fetch("/api/website/update_order", {
       method: "POST",
@@ -267,14 +251,10 @@ document.addEventListener("DOMContentLoaded", function () {
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.success) {
-          console.log("排序保存成功:", data.message);
-        } else {
-          console.error("保存排序失败:", data.message);
-        }
+        // 处理响应，但不输出日志
       })
       .catch((error) => {
-        console.error("保存排序出错:", error);
+        // 处理错误，但不输出日志
       });
   }
 });
