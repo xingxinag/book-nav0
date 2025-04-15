@@ -54,6 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
               siteCard.title = site.description || "";
               siteCard.dataset.bsToggle = "tooltip";
               siteCard.dataset.bsPlacement = "bottom";
+              siteCard.target = "_blank"; // 添加新标签页打开属性
 
               // 添加私有标记
               if (site.is_private) {
