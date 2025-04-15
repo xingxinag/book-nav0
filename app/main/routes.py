@@ -14,7 +14,7 @@ from sqlalchemy import or_
 @bp.route('/')
 def index():
     # 获取所有分类，按照排序顺序
-    categories = Category.query.order_by(Category.order.asc()).all()
+    categories = Category.query.order_by(Category.order.desc()).all()
     
     # 获取推荐网站，只显示公开的或当前用户可见的
     featured_sites_query = Website.query.filter_by(is_featured=True)
@@ -74,7 +74,7 @@ def category(id):
     ).all()
     
     # 获取所有分类用于修改链接表单
-    all_categories = Category.query.order_by(Category.order.asc()).all()
+    all_categories = Category.query.order_by(Category.order.desc()).all()
     
     # 相关分类信息
     context = {
@@ -87,13 +87,13 @@ def category(id):
     # 如果是子分类，获取同级分类（兄弟分类）
     if category.parent_id is not None:
         siblings = Category.query.filter_by(parent_id=category.parent_id)\
-                                .order_by(Category.order.asc())\
+                                .order_by(Category.order.desc())\
                                 .all()
         context['siblings'] = siblings
     
     # 获取子分类列表
     children = Category.query.filter_by(parent_id=id)\
-                            .order_by(Category.order.asc())\
+                            .order_by(Category.order.desc())\
                             .all()
     if children:
         context['children'] = children
@@ -900,7 +900,7 @@ def search_in_category(category_id):
 def add():
     form = WebsiteForm()
     # 设置当前用户可见的分类
-    form.category_id.choices = [(c.id, c.name) for c in Category.query.order_by(Category.order.asc()).all()]
+    form.category_id.choices = [(c.id, c.name) for c in Category.query.order_by(Category.order.desc()).all()]
     form.category_id.choices.insert(0, (0, '-- 请选择分类 --'))
     
     if form.validate_on_submit():
@@ -953,7 +953,7 @@ def edit(id):
     
     form = WebsiteForm(obj=website)
     # 设置当前用户可见的分类
-    form.category_id.choices = [(c.id, c.name) for c in Category.query.order_by(Category.order.asc()).all()]
+    form.category_id.choices = [(c.id, c.name) for c in Category.query.order_by(Category.order.desc()).all()]
     form.category_id.choices.insert(0, (0, '-- 请选择分类 --'))
     
     if form.validate_on_submit():

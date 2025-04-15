@@ -233,12 +233,15 @@ function saveNewOrder(container) {
     ".sidebar-menu-item[data-id]"
   );
 
+  // 获取总数，用于计算权重
+  const totalItems = categoryItems.length;
+
   categoryItems.forEach((item, index) => {
     const id = parseInt(item.dataset.id, 10);
     if (!isNaN(id)) {
       items.push({
         id: id,
-        order: (index + 1) * 10, // 使用10的倍数作为排序值
+        order: (totalItems - index) * 10, // 值越大排序越靠前，使用10的倍数
       });
     }
   });

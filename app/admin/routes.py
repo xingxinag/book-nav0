@@ -53,7 +53,7 @@ def index():
 @login_required
 @admin_required
 def categories():
-    categories = Category.query.order_by(Category.order.asc()).all()
+    categories = Category.query.order_by(Category.order.desc()).all()
     return render_template('admin/categories.html', title='分类管理', categories=categories)
 
 @bp.route('/category/add', methods=['GET', 'POST'])
