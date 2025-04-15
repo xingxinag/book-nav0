@@ -15,6 +15,9 @@ import threading
 from queue import Queue
 from urllib.parse import urlparse
 import requests
+import shutil
+import sqlite3
+import tempfile
 
 def admin_required(f):
     @wraps(f)
@@ -663,9 +666,15 @@ def data_management():
 @superadmin_required
 def export_data():
     """导出数据库"""
+    # 获取导出格式，默认为本项目格式
+    export_format = request.args.get('format', 'native')
+    
     # 确定时间戳
     timestamp = datetime.now().strftime('%Y%m%d%H%M')
-    filename = f"booknav_export_{timestamp}.db3"
+    if export_format == 'onenav':
+        filename = f"booknav_export_onenav_{timestamp}.db3"
+    else:
+        filename = f"booknav_export_{timestamp}.db3"
     
     # 创建临时文件
     temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db3')
@@ -690,9 +699,11 @@ def export_data():
         shutil.copy2(db_path, temp_db_path)
         current_app.logger.info(f"数据库文件已复制")
         
-        # 将导出转换为OneNav格式
-        if not convert_to_onenav_format(temp_db_path):
-            raise Exception("转换为OneNav格式失败")
+        # 如果选择OneNav格式，则进行格式转换
+        if export_format == 'onenav':
+            current_app.logger.info("将导出转换为OneNav格式")
+            if not convert_to_onenav_format(temp_db_path):
+                raise Exception("转换为OneNav格式失败")
         
         # 读取临时文件的内容
         with open(temp_db_path, 'rb') as f:
@@ -725,67 +736,88 @@ def export_data():
 @superadmin_required
 def import_data():
     """导入数据库"""
-    try:
-        # 获取上传的文件
-        if 'db_file' not in request.files:
-            flash('没有选择文件', 'danger')
-            return redirect(url_for('admin.data_management'))
-            
-        uploaded_file = request.files['db_file']
-        if uploaded_file.filename == '':
-            flash('未选择文件', 'danger')
-            return redirect(url_for('admin.data_management'))
+    form = DataImportForm()
+    if form.validate_on_submit():
+        db_file = form.db_file.data
+        import_type = form.import_type.data
         
-        # 检查文件扩展名
-        allowed_extensions = ['.db', '.db3', '.sqlite', '.sqlite3']
-        file_ext = os.path.splitext(uploaded_file.filename)[1].lower()
-        if file_ext not in allowed_extensions:
-            flash(f'不支持的文件类型: {file_ext}，仅支持 {", ".join(allowed_extensions)}', 'danger')
+        # 检查文件是否存在
+        if not db_file:
+            flash('请选择要导入的数据库文件', 'danger')
             return redirect(url_for('admin.data_management'))
         
-        # 保存上传的文件
-        filename = secure_filename(uploaded_file.filename)
-        temp_path = os.path.join(tempfile.gettempdir(), filename)
-        uploaded_file.save(temp_path)
+        # 创建临时文件保存上传内容
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix='.db3')
+        temp_db_path = temp_db.name
+        temp_db.close()
         
-        # 获取导入类型
-        import_mode = request.form.get('import_type', 'merge')
-        
-        # 验证数据库格式
-        if not is_valid_sqlite_db(temp_path):
-            flash('上传的文件不是有效的SQLite数据库或格式不兼容', 'danger')
-            os.unlink(temp_path)
-            return redirect(url_for('admin.data_management'))
-            
-        # 检查是否为OneNav格式
-        is_onenav = is_onenav_db(temp_path)
-        
-        if not is_onenav:
-            flash('上传的数据库不是OneNav格式', 'danger')
-            os.unlink(temp_path)
-            return redirect(url_for('admin.data_management'))
-            
-        # 使用migrate_onenav.py中的代码处理导入
-        # 获取管理员用户
-        admin_id = current_user.id
-        
-        # 使用修改后的导入函数
         try:
-            results = import_onenav_direct(temp_path, import_mode, admin_id)
-            flash(f'导入成功! {results["cats_count"]}个分类, {results["links_count"]}个链接', 'success')
+            # 保存上传的文件
+            db_file.save(temp_db_path)
+            
+            # 在导入前先创建一个备份（安全措施）
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            backup_filename = f"pre_import_backup_{timestamp}.db3"
+            backup_dir = os.path.join(current_app.root_path, 'backups')
+            os.makedirs(backup_dir, exist_ok=True)
+            backup_path = os.path.join(backup_dir, backup_filename)
+            
+            # 复制当前数据库作为备份
+            db_path = current_app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+            if not os.path.isabs(db_path):
+                db_path = os.path.join(current_app.root_path, db_path)
+            shutil.copy2(db_path, backup_path)
+            current_app.logger.info(f"已创建数据库备份: {backup_path}")
+            
+            # 自动检测数据库格式
+            if is_project_db(temp_db_path):
+                # 如果是本项目数据库格式
+                current_app.logger.info("检测到本项目数据库格式")
+                success, cat_count, link_count = import_project_db(temp_db_path, import_type, current_user.id)
+                if success:
+                    flash(f'数据导入成功! 导入了{cat_count}个分类和{link_count}个链接', 'success')
+                else:
+                    flash('数据导入失败', 'danger')
+            elif is_onenav_db(temp_db_path):
+                # 如果是OneNav格式
+                current_app.logger.info("检测到OneNav数据库格式")
+                
+                # 如果是替换模式，清空现有数据
+                if import_type == "replace":
+                    current_app.logger.info("执行替换模式，清空现有数据...")
+                    Website.query.delete()
+                    Category.query.delete()
+                    db.session.commit()
+                
+                try:
+                    results = import_onenav_direct(temp_db_path, import_type, current_user.id)
+                    flash(f'导入成功! {results["cats_count"]}个分类, {results["links_count"]}个链接', 'success')
+                except Exception as e:
+                    flash(f'导入过程中发生错误: {str(e)}', 'danger')
+                    current_app.logger.error(f"导入错误: {str(e)}")
+            else:
+                # 如果格式无法识别
+                flash('无法识别的数据库格式', 'danger')
+                
+            # 删除临时文件
+            os.unlink(temp_db_path)
+                
         except Exception as e:
-            flash(f'导入过程中发生错误: {str(e)}', 'danger')
-            current_app.logger.error(f"导入错误: {str(e)}")
+            flash(f'数据导入失败: {str(e)}', 'danger')
+            current_app.logger.error(f"数据导入失败: {str(e)}")
+            if os.path.exists(temp_db_path):
+                os.unlink(temp_db_path)
+                
+        return redirect(url_for('admin.data_management'))
         
-        # 删除临时文件
-        os.unlink(temp_path)
-        return redirect(url_for('admin.data_management'))
-    except Exception as e:
-        flash(f'导入数据失败: {str(e)}', 'danger')
-        current_app.logger.error(f"数据导入错误: {str(e)}")
-        return redirect(url_for('admin.data_management'))
+    # 验证失败
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(f'{getattr(form, field).label.text}: {error}', 'danger')
+            
+    return redirect(url_for('admin.data_management'))
 
-def import_onenav_direct(db_path, import_mode, admin_id):
+def import_onenav_direct(db_path, import_type, admin_id):
     """直接导入OneNav数据库，集成自migrate_onenav.py"""
     results = {"cats_count": 0, "links_count": 0}
     
@@ -794,7 +826,7 @@ def import_onenav_direct(db_path, import_mode, admin_id):
     source_conn.row_factory = sqlite3.Row
     
     # 如果是替换模式，清空现有数据
-    if import_mode == "replace":
+    if import_type == "replace":
         current_app.logger.info("执行替换模式，清空现有数据...")
         Website.query.delete()
         Category.query.delete()
@@ -810,7 +842,7 @@ def import_onenav_direct(db_path, import_mode, admin_id):
     
     # 获取现有分类（合并模式使用）
     existing_categories = {}
-    if import_mode == "merge":
+    if import_type == "merge":
         existing_categories = {c.name.lower(): c for c in Category.query.all()}
     
     # 先处理一级分类
@@ -818,7 +850,7 @@ def import_onenav_direct(db_path, import_mode, admin_id):
         if category['fid'] == 0:  # 一级分类
             # 检查合并模式下是否已存在同名分类
             cat_name = category['name'].lower()
-            if import_mode == "merge" and cat_name in existing_categories:
+            if import_type == "merge" and cat_name in existing_categories:
                 # 使用现有分类ID
                 category_mapping[category['id']] = existing_categories[cat_name].id
             else:
@@ -834,7 +866,7 @@ def import_onenav_direct(db_path, import_mode, admin_id):
                 
                 # 保存ID映射关系
                 category_mapping[category['id']] = new_category.id
-                if import_mode == "merge":
+                if import_type == "merge":
                     existing_categories[cat_name] = new_category
     
     # 再处理二级分类
@@ -844,7 +876,7 @@ def import_onenav_direct(db_path, import_mode, admin_id):
             if category['fid'] in category_mapping:
                 # 检查合并模式下是否已存在同名分类
                 cat_name = category['name'].lower()
-                if import_mode == "merge" and cat_name in existing_categories:
+                if import_type == "merge" and cat_name in existing_categories:
                     # 使用现有分类ID
                     category_mapping[category['id']] = existing_categories[cat_name].id
                 else:
@@ -861,7 +893,7 @@ def import_onenav_direct(db_path, import_mode, admin_id):
                     
                     # 保存ID映射关系
                     category_mapping[category['id']] = new_category.id
-                    if import_mode == "merge":
+                    if import_type == "merge":
                         existing_categories[cat_name] = new_category
     
     db.session.commit()
@@ -869,7 +901,7 @@ def import_onenav_direct(db_path, import_mode, admin_id):
     
     # 获取现有URL，避免重复导入
     existing_urls = {}
-    if import_mode == "merge":
+    if import_type == "merge":
         existing_urls = {w.url.lower(): True for w in Website.query.all()}
     
     # 迁移链接
@@ -884,7 +916,7 @@ def import_onenav_direct(db_path, import_mode, admin_id):
         if link['fid'] in category_mapping:
             # 检查URL是否重复（合并模式）
             url_lower = link['url'].lower()
-            if import_mode == "merge" and url_lower in existing_urls:
+            if import_type == "merge" and url_lower in existing_urls:
                 skipped_count += 1
                 continue
                 
@@ -909,7 +941,7 @@ def import_onenav_direct(db_path, import_mode, admin_id):
                 )
                 db.session.add(new_website)
                 migrated_count += 1
-                if import_mode == "merge":
+                if import_type == "merge":
                     existing_urls[url_lower] = True
                 
                 # 每100条提交一次，避免内存问题
@@ -1581,3 +1613,176 @@ def process_missing_icons(app):
         finally:
             # 更新状态为已完成
             icon_fetch_status['is_running'] = False
+
+def is_project_db(db_path):
+    """检查是否为本项目数据库格式"""
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # 检查是否包含项目特有的表结构
+        required_tables = ['category', 'website', 'user']
+        for table in required_tables:
+            cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
+            if not cursor.fetchone():
+                conn.close()
+                return False
+        
+        # 检查category表是否有color字段（本项目特有）
+        cursor.execute("PRAGMA table_info(category)")
+        columns = cursor.fetchall()
+        has_color = False
+        for column in columns:
+            if column[1] == 'color':
+                has_color = True
+                break
+        
+        conn.close()
+        return has_color
+    except Exception as e:
+        current_app.logger.error(f"检查项目数据库格式失败: {str(e)}")
+        return False
+
+def import_project_db(db_path, import_type, admin_id):
+    """导入本项目格式的数据库"""
+    try:
+        # 备份现有数据库
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        backup_filename = f"pre_import_backup_{timestamp}.db3"
+        backup_dir = os.path.join(current_app.root_path, 'backups')
+        os.makedirs(backup_dir, exist_ok=True)
+        backup_path = os.path.join(backup_dir, backup_filename)
+        
+        # 复制当前数据库作为备份
+        db_path_current = current_app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', '')
+        if not os.path.isabs(db_path_current):
+            db_path_current = os.path.join(current_app.root_path, db_path_current)
+        shutil.copy2(db_path_current, backup_path)
+        
+        # 如果是替换模式，直接使用导入的数据库替换现有数据库
+        if import_type == "replace":
+            current_app.logger.info("执行替换模式，直接替换数据库文件")
+            shutil.copy2(db_path, db_path_current)
+            
+            # 重新连接数据库（强制SQLAlchemy重新加载数据）
+            db.session.remove()
+            db.engine.dispose()
+            
+            # 获取数据库统计信息
+            conn = sqlite3.connect(db_path_current)
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM category")
+            cat_count = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM website")
+            link_count = cursor.fetchone()[0]
+            conn.close()
+            
+            return True, cat_count, link_count
+        else:
+            # 合并模式：保留现有数据，添加新数据
+            current_app.logger.info("执行合并模式，从导入的数据库添加数据")
+            
+            # 连接源数据库
+            source_conn = sqlite3.connect(db_path)
+            source_cursor = source_conn.cursor()
+            
+            # 获取分类数据
+            source_cursor.execute("SELECT id, name, description, icon, color, \"order\", parent_id FROM category")
+            categories = source_cursor.fetchall()
+            
+            # 获取网站数据
+            source_cursor.execute("""
+                SELECT id, title, url, description, icon, views, is_featured, sort_order, 
+                       category_id, is_private 
+                FROM website
+            """)
+            websites = source_cursor.fetchall()
+            
+            # 关闭源数据库连接
+            source_conn.close()
+            
+            # 导入分类
+            cat_id_mapping = {}  # 旧ID到新ID的映射
+            existing_categories = {c.name.lower(): c for c in Category.query.all()}
+            
+            for cat in categories:
+                cat_id, name, desc, icon, color, order, parent_id = cat
+                
+                # 检查是否已存在同名分类
+                cat_name = name.lower() if name else ""
+                if cat_name in existing_categories:
+                    # 使用现有分类ID
+                    cat_id_mapping[cat_id] = existing_categories[cat_name].id
+                else:
+                    # 创建新分类
+                    new_category = Category(
+                        name=name,
+                        description=desc or "",
+                        icon=icon or "folder",
+                        color=color or "#3498db",
+                        order=order or 0
+                    )
+                    db.session.add(new_category)
+                    db.session.flush()  # 获取新ID
+                    
+                    # 保存ID映射关系
+                    cat_id_mapping[cat_id] = new_category.id
+                    existing_categories[cat_name] = new_category
+            
+            db.session.commit()
+            
+            # 更新父子关系
+            for cat in categories:
+                cat_id, _, _, _, _, _, parent_id = cat
+                if parent_id and parent_id in cat_id_mapping and cat_id in cat_id_mapping:
+                    child = Category.query.get(cat_id_mapping[cat_id])
+                    if child:
+                        child.parent_id = cat_id_mapping[parent_id]
+            
+            db.session.commit()
+            
+            # 导入网站数据
+            existing_urls = {w.url.lower(): True for w in Website.query.all()}
+            imported_count = 0
+            
+            for site in websites:
+                site_id, title, url, desc, icon, views, is_featured, sort_order, category_id, is_private = site
+                
+                # 检查URL是否已存在
+                url_lower = url.lower() if url else ""
+                if url_lower and url_lower in existing_urls:
+                    continue
+                
+                # 确定新的分类ID
+                new_cat_id = None
+                if category_id and category_id in cat_id_mapping:
+                    new_cat_id = cat_id_mapping[category_id]
+                
+                # 创建新网站
+                new_website = Website(
+                    title=title,
+                    url=url,
+                    description=desc or "",
+                    icon=icon,
+                    views=views or 0,
+                    is_featured=bool(is_featured),
+                    sort_order=sort_order or 0,
+                    category_id=new_cat_id,
+                    created_by_id=admin_id,
+                    is_private=bool(is_private),
+                    created_at=datetime.now()
+                )
+                db.session.add(new_website)
+                imported_count += 1
+                
+                # 每100条提交一次，避免内存问题
+                if imported_count % 100 == 0:
+                    db.session.commit()
+            
+            db.session.commit()
+            return True, len(cat_id_mapping), imported_count
+    
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"导入本项目数据库失败: {str(e)}")
+        raise e

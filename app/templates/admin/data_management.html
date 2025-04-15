@@ -46,10 +46,36 @@
                 建议定期导出数据作为备份，可以防止数据丢失。
               </div>
 
-              <a
-                href="{{ url_for('admin.export_data') }}"
-                class="btn btn-primary"
-              >
+              <div class="mb-3">
+                <label class="form-label">导出格式：</label>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="exportFormat"
+                    id="formatNative"
+                    value="native"
+                    checked
+                  />
+                  <label class="form-check-label" for="formatNative"
+                    >本项目格式</label
+                  >
+                </div>
+                <div class="form-check form-check-inline">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="exportFormat"
+                    id="formatOneNav"
+                    value="onenav"
+                  />
+                  <label class="form-check-label" for="formatOneNav"
+                    >OneNav兼容格式</label
+                  >
+                </div>
+              </div>
+
+              <a href="#" id="exportBtn" class="btn btn-primary">
                 <i class="bi bi-download"></i> 导出数据库
               </a>
             </div>
@@ -391,6 +417,19 @@
 {% endblock %} {% block admin_scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    // 导出按钮点击事件
+    const exportBtn = document.getElementById("exportBtn");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        const format = document.querySelector(
+          'input[name="exportFormat"]:checked'
+        ).value;
+        window.location.href =
+          "{{ url_for('admin.export_data') }}?format=" + format;
+      });
+    }
+
     // 文件上传验证
     const importForm = document.getElementById("import-form");
     const fileInput = document.getElementById("db_file");
