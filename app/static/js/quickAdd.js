@@ -100,7 +100,7 @@ function closeQuickAddModal() {
   document.getElementById("quickAddIcon").value = "";
   document.getElementById("quickAddIconPreview").style.display = "none";
   document.getElementById("quickAddCategory").value = "";
-  document.getElementById("quickAddWeight").value = "1"; // 重置权重为默认值
+  document.getElementById("quickAddWeight").value = "0"; // 重置权重为默认值
 }
 
 function setQuickAddLoading(isLoading) {
@@ -153,7 +153,7 @@ async function submitQuickAdd() {
       category_id: parseInt(categoryId),
       is_private: document.getElementById("quickAddPrivate").checked ? 1 : 0,
       sort_order:
-        parseInt(document.getElementById("quickAddWeight").value) || 1,
+        parseInt(document.getElementById("quickAddWeight").value) || 0,
     };
 
     const response = await fetch("/api/website/quick-add", {
