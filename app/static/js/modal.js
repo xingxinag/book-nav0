@@ -207,9 +207,9 @@ document.addEventListener("DOMContentLoaded", function () {
               iconContainer.innerHTML = `<img src="${icon}" alt="${title}">`;
             }
           } else if (iconImg) {
-            // 如果清除了图标，显示默认图标
-            iconContainer.innerHTML =
-              '<i class="bi bi-globe text-primary"></i>';
+            // 如果清除了图标，显示默认图标（使用网站标题首字母）
+            const firstLetter = title.trim().charAt(0).toUpperCase();
+            iconContainer.innerHTML = `<div class="default-site-icon">${firstLetter}</div>`;
           }
 
           // 更新卡片的data-description属性

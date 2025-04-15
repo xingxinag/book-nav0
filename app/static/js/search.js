@@ -79,9 +79,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 img.alt = site.title;
                 iconContainer.appendChild(img);
               } else {
-                const icon = document.createElement("i");
-                icon.className = "bi bi-globe text-primary";
-                iconContainer.appendChild(icon);
+                // 使用网站标题首字母作为默认图标
+                const defaultIcon = document.createElement("div");
+                defaultIcon.className = "default-site-icon";
+                defaultIcon.textContent = site.title.charAt(0).toUpperCase();
+                iconContainer.appendChild(defaultIcon);
               }
 
               // 创建文本容器
