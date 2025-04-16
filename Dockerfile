@@ -40,7 +40,7 @@ COPY --from=builder /app/wheels /wheels
 RUN pip install --no-cache-dir /wheels/*
 
 # 配置Nginx
-COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/nginx.conf /defaults/nginx.conf
 
 # 复制应用代码
 COPY . .

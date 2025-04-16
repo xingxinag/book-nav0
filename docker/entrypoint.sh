@@ -51,5 +51,14 @@ fi
 chmod 666 /app/app.db
 ls -la /app/app.db
 
+
+# 检查Nginx配置文件
+if [ ! -f /etc/nginx/http.d/default.conf ]; then
+    echo "Nginx配置文件不存在，复制默认配置..."
+    mkdir -p /etc/nginx/http.d/
+    cp /defaults/nginx.conf /etc/nginx/http.d/default.conf
+    echo "Nginx配置文件已复制"
+fi
+
 echo "=== 启动应用服务 ==="
 exec supervisord -c /etc/supervisor/conf.d/supervisord.conf 
