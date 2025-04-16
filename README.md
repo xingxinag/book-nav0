@@ -2,8 +2,6 @@
 
 BookNav 是一个使用 Flask 构建的、可通过 Docker 轻松部署的个人导航网站项目。它旨在帮助用户整理和快速访问常用的网站链接，提供分类管理和丰富的交互功能，并支持邀请码注册系统来控制用户访问。
 
-![BookNav 预览](https://example.com/preview.png) _(可添加项目截图)_
-
 ## ✨ 特色功能
 
 BookNav 基于 Flask Web 框架打造，提供了以下核心功能：
@@ -133,8 +131,7 @@ version: "3"
 
 services:
   nav:
-    build: .
-    container_name: nav
+    image: yilan666/booknav-nav:latest
     restart: always
     ports:
       - "8988:80" # Nginx端口
@@ -144,7 +141,7 @@ services:
       - ./data/uploads:/app/app/uploads # 上传文件目录
       - ./config/nginx:/etc/nginx/http.d # Nginx配置
     environment:
-      - SECRET_KEY=Al@*BzuxXDAo7XFzd&x$
+      - SECRET_KEY=vHRh2vo15BpHftLMnTic # 修改加密密钥
       - FLASK_ENV=production
 ```
 
