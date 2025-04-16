@@ -6,6 +6,7 @@ from flask_wtf.csrf import CSRFProtect
 from config import Config
 import datetime
 import json
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -18,6 +19,11 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
+    # 应用 ProxyFix 中间件 (信任直接连接的 Nginx 代理)
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1
+    )
+
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
