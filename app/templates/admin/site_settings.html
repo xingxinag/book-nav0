@@ -1,4 +1,4 @@
-{% extends "admin/base.html" %} {% block content %}
+{% extends "admin/base.html" %} {% block admin_content %}
 <div class="container-fluid px-4">
   <h1 class="mt-4">站点设置</h1>
   <ol class="breadcrumb mb-4">
@@ -211,7 +211,7 @@
     </div>
   </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %} {% block admin_scripts %}
 <script>
   // 实时预览Logo和网站标题
   document.addEventListener("DOMContentLoaded", function () {
