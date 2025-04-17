@@ -20,6 +20,19 @@
     <div class="card-body">
       <form method="post" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
+        <!-- 添加隐藏字段用于标记清空操作 -->
+        <input
+          type="hidden"
+          name="clear_logo"
+          id="clear_logo_field"
+          value="0"
+        />
+        <input
+          type="hidden"
+          name="clear_favicon"
+          id="clear_favicon_field"
+          value="0"
+        />
 
         <div class="row mb-4">
           <div class="col-md-6">
@@ -60,13 +73,14 @@
           <div class="col-md-6">
             <div class="mb-3">
               <label class="form-label fw-bold">网站Logo</label>
-              <div class="d-flex align-items-center mb-2">
+              <div class="d-flex align-items-center mb-2" style="height: 50px">
                 <div class="site-logo-preview me-3">
-                  {% if settings.site_logo %}
+                  {% if settings.site_logo and settings.site_logo != "" %}
                   <img
                     src="{{ settings.site_logo }}"
                     alt="网站Logo"
                     style="max-height: 50px"
+                    onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\'><i class=\'bi bi-collection\'></i> 默认Logo</div>';"
                   />
                   {% else %}
                   <div class="text-center p-3 bg-light rounded">
@@ -81,6 +95,14 @@
                 ></span>
                 {{ form.site_logo(class="form-control", placeholder="Logo URL")
                 }}
+                <button
+                  class="btn btn-outline-secondary clear-input"
+                  type="button"
+                  data-target="site_logo"
+                  data-preview="site-logo-preview"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
               </div>
               <div class="form-text mb-2">外部图床URL或相对路径</div>
               <div class="input-group">
@@ -96,13 +118,14 @@
           <div class="col-md-6">
             <div class="mb-3">
               <label class="form-label fw-bold">网站图标</label>
-              <div class="d-flex align-items-center mb-2">
+              <div class="d-flex align-items-center mb-2" style="height: 50px">
                 <div class="favicon-preview me-3">
-                  {% if settings.site_favicon %}
+                  {% if settings.site_favicon and settings.site_favicon != "" %}
                   <img
                     src="{{ settings.site_favicon }}"
                     alt="网站图标"
                     style="max-height: 32px"
+                    onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\' style=\'width: 32px; height: 32px\'><i class=\'bi bi-globe\' style=\'font-size: 16px\'></i></div>';"
                   />
                   {% else %}
                   <div
@@ -120,6 +143,14 @@
                 ></span>
                 {{ form.site_favicon(class="form-control", placeholder="Favicon
                 URL") }}
+                <button
+                  class="btn btn-outline-secondary clear-input"
+                  type="button"
+                  data-target="site_favicon"
+                  data-preview="favicon-preview"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
               </div>
               <div class="form-text mb-2">外部图床URL或相对路径</div>
               <div class="input-group">
@@ -218,6 +249,7 @@
     const logoFileInput = document.getElementById("logo_file");
     const faviconUrlInput = document.getElementById("site_favicon");
     const faviconFileInput = document.getElementById("favicon_file");
+    const clearButtons = document.querySelectorAll(".clear-input");
 
     // 背景设置相关
     const bgTypeSelect = document.getElementById("background_type");
@@ -227,6 +259,146 @@
     const bgUploadContainer = document.getElementById("bgUploadContainer");
     const bgUrlHelp = document.getElementById("bgUrlHelp");
     const bgPreview = document.getElementById("bgPreview");
+
+    // 在页面加载时同步表单状态与预览
+    function syncFormAndPreviewState() {
+      // 检查会话存储中是否有清空标记
+      if (typeof Storage !== "undefined") {
+        if (
+          sessionStorage.getItem("site_logo_cleared") === "true" &&
+          logoUrlInput
+        ) {
+          logoUrlInput.value = "";
+          if (logoFileInput) logoFileInput.value = "";
+
+          const logoPreview = document.querySelector(".site-logo-preview");
+          if (logoPreview) {
+            logoPreview.innerHTML = `
+              <div class="text-center p-3 bg-light rounded">
+                <i class="bi bi-collection"></i> 默认Logo
+              </div>
+            `;
+          }
+        }
+
+        if (
+          sessionStorage.getItem("site_favicon_cleared") === "true" &&
+          faviconUrlInput
+        ) {
+          faviconUrlInput.value = "";
+          if (faviconFileInput) faviconFileInput.value = "";
+
+          const faviconPreview = document.querySelector(".favicon-preview");
+          if (faviconPreview) {
+            faviconPreview.innerHTML = `
+              <div class="text-center p-3 bg-light rounded" style="width: 32px; height: 32px">
+                <i class="bi bi-globe" style="font-size: 16px"></i>
+              </div>
+            `;
+          }
+        }
+      }
+
+      // 检查Logo状态
+      if (logoUrlInput && !logoUrlInput.value) {
+        const logoPreview = document.querySelector(".site-logo-preview");
+        if (logoPreview) {
+          logoPreview.innerHTML = `
+            <div class="text-center p-3 bg-light rounded">
+              <i class="bi bi-collection"></i> 默认Logo
+            </div>
+          `;
+        }
+      }
+
+      // 检查Favicon状态
+      if (faviconUrlInput && !faviconUrlInput.value) {
+        const faviconPreview = document.querySelector(".favicon-preview");
+        if (faviconPreview) {
+          faviconPreview.innerHTML = `
+            <div class="text-center p-3 bg-light rounded" style="width: 32px; height: 32px">
+              <i class="bi bi-globe" style="font-size: 16px"></i>
+            </div>
+          `;
+        }
+      }
+    }
+
+    // 在页面加载时执行同步
+    syncFormAndPreviewState();
+
+    // 监听表单提交事件，清除会话存储
+    const form = document.querySelector("form");
+    if (form) {
+      form.addEventListener("submit", function () {
+        if (typeof Storage !== "undefined") {
+          sessionStorage.removeItem("site_logo_cleared");
+          sessionStorage.removeItem("site_favicon_cleared");
+        }
+      });
+    }
+
+    // 处理清空按钮点击事件
+    clearButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        // 获取目标输入框ID和预览容器类名
+        const targetId = this.getAttribute("data-target");
+        const previewClass = this.getAttribute("data-preview");
+
+        // 清空输入框
+        const inputElement = document.getElementById(targetId);
+        if (inputElement) {
+          inputElement.value = "";
+
+          // 同时清空相关的文件输入控件
+          if (targetId === "site_logo" && logoFileInput) {
+            logoFileInput.value = "";
+            // 设置清空标记
+            document.getElementById("clear_logo_field").value = "1";
+          } else if (targetId === "site_favicon" && faviconFileInput) {
+            faviconFileInput.value = "";
+            // 设置清空标记
+            document.getElementById("clear_favicon_field").value = "1";
+          }
+
+          // 恢复默认预览
+          const previewContainer = document.querySelector("." + previewClass);
+          if (previewContainer) {
+            // 移除当前预览的图片
+            const currentImg = previewContainer.querySelector("img");
+            if (currentImg) {
+              currentImg.remove();
+            }
+
+            // 添加默认图标
+            if (previewClass === "site-logo-preview") {
+              previewContainer.innerHTML = `
+                <div class="text-center p-3 bg-light rounded">
+                  <i class="bi bi-collection"></i> 默认Logo
+                </div>
+              `;
+            } else if (previewClass === "favicon-preview") {
+              previewContainer.innerHTML = `
+                <div class="text-center p-3 bg-light rounded" style="width: 32px; height: 32px">
+                  <i class="bi bi-globe" style="font-size: 16px"></i>
+                </div>
+              `;
+            }
+          }
+        }
+
+        // 防止浏览器缓存，将表单值提交到会话存储中
+        if (typeof Storage !== "undefined") {
+          sessionStorage.setItem(targetId + "_cleared", "true");
+        }
+
+        // 创建确认对话框
+        if (confirm("是否立即保存此更改？")) {
+          // 自动提交表单
+          document.querySelector("form").submit();
+        }
+      });
+    });
 
     // 图片预览功能
     function handleFilePreview(fileInput, urlInput, previewContainer) {
@@ -248,6 +420,11 @@
               previewContainer.appendChild(previewImg);
             }
             previewImg.src = e.target.result;
+
+            // 添加错误处理，如果图片加载失败，显示默认图标
+            previewImg.onerror = function () {
+              showDefaultIcon(previewContainer);
+            };
           };
           reader.readAsDataURL(this.files[0]);
         }
@@ -272,8 +449,33 @@
             previewContainer.appendChild(previewImg);
           }
           previewImg.src = this.value;
+
+          // 添加错误处理，如果图片加载失败，显示默认图标
+          previewImg.onerror = function () {
+            showDefaultIcon(previewContainer);
+          };
+        } else {
+          // 如果URL为空，显示默认图标
+          showDefaultIcon(previewContainer);
         }
       });
+    }
+
+    // 显示默认图标
+    function showDefaultIcon(container) {
+      if (container.classList.contains("site-logo-preview")) {
+        container.innerHTML = `
+          <div class="text-center p-3 bg-light rounded">
+            <i class="bi bi-collection"></i> 默认Logo
+          </div>
+        `;
+      } else if (container.classList.contains("favicon-preview")) {
+        container.innerHTML = `
+          <div class="text-center p-3 bg-light rounded" style="width: 32px; height: 32px">
+            <i class="bi bi-globe" style="font-size: 16px"></i>
+          </div>
+        `;
+      }
     }
 
     // 初始化预览功能

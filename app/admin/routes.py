@@ -601,6 +601,9 @@ def site_settings():
                     settings.site_logo = url_for('static', filename=f'uploads/logos/{logo_filename}')
             elif form.site_logo.data:
                 settings.site_logo = form.site_logo.data
+            elif not form.site_logo.data and 'clear_logo' in request.form:
+                # 清空Logo
+                settings.site_logo = None
                 
             # 处理Favicon上传
             if form.favicon_file.data:
@@ -609,6 +612,9 @@ def site_settings():
                     settings.site_favicon = url_for('static', filename=f'uploads/favicons/{favicon_filename}')
             elif form.site_favicon.data:
                 settings.site_favicon = form.site_favicon.data
+            elif not form.site_favicon.data and 'clear_favicon' in request.form:
+                # 清空Favicon
+                settings.site_favicon = None
                 
             # 处理背景上传
             if form.background_file.data and form.background_type.data == 'image':
