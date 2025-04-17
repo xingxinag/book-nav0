@@ -8,7 +8,10 @@ body.bg-image {
 }
 
 body.bg-gradient {
-  background-image: var(--bg-gradient);
+  background-image: var(--bg-gradient) !important;
+  background-attachment: fixed !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
 }
 
 body.bg-color {

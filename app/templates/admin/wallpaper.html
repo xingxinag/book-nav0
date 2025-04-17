@@ -681,12 +681,30 @@
               if (bgType === "image") {
                 document.body.style.backgroundImage = `url(${bgUrl})`;
                 document.body.style.backgroundColor = "";
+                document.body.style.backgroundAttachment = "fixed";
+                document.body.style.backgroundRepeat = "no-repeat";
+                document.body.style.backgroundSize = "cover";
+                // 同时更新类名
+                document.body.classList.remove("bg-gradient", "bg-color");
+                document.body.classList.add("bg-image");
               } else if (bgType === "gradient") {
                 document.body.style.backgroundImage = bgUrl;
                 document.body.style.backgroundColor = "";
+                document.body.style.backgroundAttachment = "fixed";
+                document.body.style.backgroundRepeat = "no-repeat";
+                document.body.style.backgroundSize = "100% 100%";
+                // 同时更新类名
+                document.body.classList.remove("bg-image", "bg-color");
+                document.body.classList.add("bg-gradient");
               } else if (bgType === "color") {
                 document.body.style.backgroundImage = "";
                 document.body.style.backgroundColor = bgUrl;
+                document.body.style.backgroundAttachment = "";
+                document.body.style.backgroundRepeat = "";
+                document.body.style.backgroundSize = "";
+                // 同时更新类名
+                document.body.classList.remove("bg-image", "bg-gradient");
+                document.body.classList.add("bg-color");
               }
             } else {
               alert("应用背景失败：" + data.message);
@@ -748,6 +766,12 @@
                 // 更新页面背景
                 document.body.style.backgroundImage = "";
                 document.body.style.backgroundColor = "";
+                // 移除所有背景类
+                document.body.classList.remove(
+                  "bg-image",
+                  "bg-gradient",
+                  "bg-color"
+                );
 
                 // 可选：刷新页面
                 location.reload();

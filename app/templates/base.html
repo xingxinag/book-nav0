@@ -67,7 +67,10 @@
       }
 
       body.bg-gradient {
-        background-image: var(--bg-gradient);
+        background-image: var(--bg-gradient) !important;
+        background-attachment: fixed !important;
+        background-repeat: no-repeat !important;
+        background-size: 100% 100% !important;
       }
 
       body.bg-color {
@@ -163,16 +166,39 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const html = document.documentElement;
+        const body = document.body;
         const bgType = html.getAttribute("data-bg-type");
         const bgUrl = html.getAttribute("data-bg-url");
 
         if (bgType && bgUrl) {
+          // 确保body类名包含正确的背景类型
+          if (!body.classList.contains("bg-" + bgType)) {
+            // 移除现有的背景类型
+            body.classList.remove("bg-image", "bg-gradient", "bg-color");
+            // 添加当前背景类型
+            body.classList.add("bg-" + bgType);
+          }
+
           if (bgType === "image") {
             html.style.setProperty("--bg-image", `url("${bgUrl}")`);
+            // 直接设置body背景，以防CSS变量未生效
+            body.style.backgroundImage = `url("${bgUrl}")`;
+            body.style.backgroundSize = "cover";
+            body.style.backgroundPosition = "center";
+            body.style.backgroundAttachment = "fixed";
+            body.style.backgroundRepeat = "no-repeat";
           } else if (bgType === "gradient") {
             html.style.setProperty("--bg-gradient", bgUrl);
+            // 直接设置body背景，以防CSS变量未生效
+            body.style.backgroundImage = bgUrl;
+            body.style.backgroundAttachment = "fixed";
+            body.style.backgroundRepeat = "no-repeat";
+            body.style.backgroundSize = "100% 100%";
           } else if (bgType === "color") {
             html.style.setProperty("--bg-color", bgUrl);
+            // 直接设置body背景，以防CSS变量未生效
+            body.style.backgroundColor = bgUrl;
+            body.style.backgroundImage = "";
           }
         }
       });
