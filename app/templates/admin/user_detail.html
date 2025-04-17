@@ -136,7 +136,7 @@
       </div>
 
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-12">
           <div class="card mb-4">
             <div class="card-header bg-primary text-white">
               <h5 class="mb-0"><i class="bi bi-person-badge"></i> 基本信息</h5>
@@ -158,37 +158,44 @@
                   </span>
                 </div>
               </div>
-              <table class="table">
-                <tr>
-                  <th style="width: 120px">用户ID:</th>
-                  <td>{{ user.id }}</td>
-                </tr>
-                <tr>
-                  <th>邮箱:</th>
-                  <td>{{ user.email }}</td>
-                </tr>
-                <tr>
-                  <th>注册时间:</th>
-                  <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                </tr>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="card mb-4">
-            <div class="card-header bg-secondary text-white">
-              <h5 class="mb-0"><i class="bi bi-key"></i> 账户安全</h5>
-            </div>
-            <div class="card-body">
-              <div class="py-4 text-center">
-                <a
-                  href="{{ url_for('admin.edit_user', id=user.id) }}"
-                  class="btn btn-lg btn-outline-primary"
-                >
-                  <i class="bi bi-shield-lock"></i> 修改密码
-                </a>
+              <div class="row">
+                <div class="col-md-6">
+                  <table class="table">
+                    <tr>
+                      <th style="width: 120px">用户ID:</th>
+                      <td>{{ user.id }}</td>
+                    </tr>
+                    <tr>
+                      <th>邮箱:</th>
+                      <td>{{ user.email }}</td>
+                    </tr>
+                    <tr>
+                      <th>注册时间:</th>
+                      <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="col-md-6">
+                  <div class="card h-100 bg-light">
+                    <div class="card-body">
+                      <h5 class="card-title"><i class="bi bi-link-45deg"></i> 网站统计</h5>
+                      <div class="d-flex justify-content-around text-center mt-4">
+                        <div>
+                          <h3 class="mb-0">{{ websites|length }}</h3>
+                          <p class="text-muted">添加的网站</p>
+                        </div>
+                        <div>
+                          <h3 class="mb-0">{{ added_pagination.total if added_pagination else 0 }}</h3>
+                          <p class="text-muted">添加记录</p>
+                        </div>
+                        <div>
+                          <h3 class="mb-0">{{ modified_pagination.total if modified_pagination else 0 }}</h3>
+                          <p class="text-muted">修改记录</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
