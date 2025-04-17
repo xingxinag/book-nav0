@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from functools import wraps
 import os
-from flask import render_template, redirect, url_for, flash, request, abort, jsonify, session, current_app, send_file
-from flask_login import current_user, login_required
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify, session, current_app, send_file, send_from_directory
+from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.utils import secure_filename
 from app import db, csrf
 from app.admin import bp
@@ -18,6 +18,12 @@ import requests
 import shutil
 import sqlite3
 import tempfile
+import random
+import uuid
+import secrets
+from werkzeug.security import generate_password_hash
+from sqlalchemy import or_, func, desc, extract, case
+from sqlalchemy.exc import SQLAlchemyError
 
 def admin_required(f):
     @wraps(f)
@@ -1871,14 +1877,34 @@ def delete_background(id):
         return jsonify({'success': False, 'message': '没有权限删除此背景'})
     
     try:
+        # 保存图片URL用于后续删除文件
+        bg_url = background.url
+        
         # 如果当前正在使用这个背景，则重置默认背景
         settings = SiteSettings.get_settings()
         if settings.background_url == background.url:
             settings.background_type = 'none'
             settings.background_url = None
         
+        # 从数据库中删除记录
         db.session.delete(background)
         db.session.commit()
+        
+        # 删除物理文件（仅针对上传的图片，不删除外部URL）
+        if bg_url and '/static/uploads/backgrounds/' in bg_url:
+            try:
+                # 从URL中提取文件名
+                file_path = bg_url.split('/static/')[1]
+                full_path = os.path.join(current_app.root_path, 'static', file_path)
+                
+                # 检查文件是否存在，如果存在则删除
+                if os.path.exists(full_path):
+                    os.remove(full_path)
+                    current_app.logger.info(f'已删除背景图片文件: {full_path}')
+            except Exception as e:
+                current_app.logger.error(f'删除背景图片文件失败: {str(e)}')
+                # 文件删除失败不影响整体操作，继续返回成功
+        
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
