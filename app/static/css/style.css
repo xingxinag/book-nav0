@@ -331,9 +331,8 @@ body {
 }
 
 .site-card:hover {
-  transform: translateY(-5px);
   box-shadow: 0 8px 20px rgba(74, 136, 252, 0.3);
-  border: 0px solid #4a88fc;
+  border: 1px solid #4a88fc;
   filter: drop-shadow(0 0 5px rgba(74, 136, 252, 0.5));
 }
 

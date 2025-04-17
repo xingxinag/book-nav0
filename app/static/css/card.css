@@ -27,7 +27,7 @@
 
 /* 有背景时增加卡片不透明度和模糊效果 */
 body:not(.bg-none) .site-card {
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
@@ -36,7 +36,6 @@ body:not(.bg-none) .site-card {
 /* 修改卡片悬停效果，增加厚重感 */
 body:not(.bg-none) .site-card:hover {
   background-color: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   border-color: rgba(112, 73, 240, 0.2);
 }
 
@@ -65,7 +64,6 @@ body:not(.bg-none) .site-card:hover {
 }
 */
 .site-card:hover {
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   border-color: rgba(126, 37, 227, 0.5);
   border-width: 1px;
   border-style: solid;
@@ -144,7 +142,7 @@ body:not(.bg-none) .site-card:hover {
 .site-description {
   margin: 8px 0 0px 0;
   font-size: 14px;
-  color: #999;
+  color: rgb(128, 128, 128);
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
