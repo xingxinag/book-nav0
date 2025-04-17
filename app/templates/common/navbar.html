@@ -9,10 +9,13 @@
       src="{{ settings.site_logo }}"
       alt="{{ settings.site_name }}"
       style="max-height: 30px; margin-right: 8px"
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
     />
+    <i class="bi bi-collection me-2" style="display: none"></i>
     {% else %}
     <i class="bi bi-collection me-2"></i>
-    {% endif %} {{ settings.site_name if settings else '炫酷导航' }}
+    {% endif %}
+    <span>{{ settings.site_name if settings else '炫酷导航' }}</span>
   </a>
 
   <div class="navbar-right">
