@@ -30,12 +30,14 @@
         class="navbar-action user-dropdown-toggle"
         title="{{ current_user.username }}"
       >
-        {% if settings and settings.site_logo %}
+        {% if current_user.avatar %}
         <img
-          src="{{ settings.site_logo }}"
+          src="{{ current_user.avatar }}"
           alt="{{ current_user.username }}"
           class="user-avatar"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';"
         />
+        <i class="bi bi-person-circle" style="display: none"></i>
         {% else %}
         <i class="bi bi-person-circle"></i>
         {% endif %}

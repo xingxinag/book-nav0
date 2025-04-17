@@ -503,10 +503,19 @@ def user_detail(id):
 
 @bp.route('/user/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
-@superadmin_required
+@admin_required
 def edit_user(id):
+    """编辑用户"""
     user = User.query.get_or_404(id)
+    
+    # 普通管理员不能编辑超级管理员
+    if user.is_superadmin and not current_user.is_superadmin:
+        flash('权限不足，无法编辑超级管理员', 'danger')
+        return redirect(url_for('admin.users'))
+    
+    # 创建表单并使用用户数据进行预填充
     form = UserEditForm(user.username, user.email, obj=user)
+    
     if form.validate_on_submit():
         user.username = form.username.data
         user.email = form.email.data
@@ -517,9 +526,33 @@ def edit_user(id):
         
         # 只有超级管理员可以更改管理员权限，普通管理员不能改
         user.is_admin = form.is_admin.data
+        
         # 超级管理员权限只有当前用户是超级管理员时才能赋予他人
         if current_user.is_superadmin and form.is_superadmin.data:
             user.is_superadmin = True
+        
+        # 处理头像上传
+        avatar_file = request.files.get('avatar')
+        if avatar_file and avatar_file.filename:
+            # 确保文件名安全
+            filename = secure_filename(avatar_file.filename)
+            # 添加时间戳避免文件名冲突
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            avatar_filename = f"{timestamp}_{user.id}_{filename}"
+            
+            # 确保avatars目录存在
+            avatar_dir = os.path.join(current_app.root_path, 'static', 'uploads', 'avatars')
+            os.makedirs(avatar_dir, exist_ok=True)
+            
+            # 保存文件
+            avatar_path = os.path.join(avatar_dir, avatar_filename)
+            try:
+                avatar_file.save(avatar_path)
+                # 更新用户头像URL
+                user.avatar = url_for('static', filename=f'uploads/avatars/{avatar_filename}')
+                flash('头像已更新', 'success')
+            except Exception as e:
+                flash(f'头像上传失败: {str(e)}', 'danger')
         
         db.session.commit()
         flash('用户信息更新成功!', 'success')
