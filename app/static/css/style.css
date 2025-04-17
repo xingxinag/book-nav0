@@ -11,8 +11,7 @@ body {
 }
 
 .animated-hover:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
 /* 卡片样式 */
@@ -24,8 +23,7 @@ body {
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 /* 按钮样式 */
@@ -101,8 +99,10 @@ body {
 }
 
 .website-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  /* 移除上移效果，增加厚重感 */
+  /* transform: translateY(-3px); */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+  border: 1px solid rgba(112, 73, 240, 0.2);
 }
 
 .website-icon {

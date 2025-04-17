@@ -263,7 +263,7 @@
     {% block head %}{% endblock %}
   </head>
   <body
-    class="{% if current_user.is_authenticated and current_user.is_admin %}user-admin{% endif %} {% if settings and settings.background_type != 'none' %}bg-{{ settings.background_type }}{% endif %} {% block body_class %}{% endblock %}"
+    class="{% if current_user.is_authenticated and current_user.is_admin %}user-admin{% endif %} {% if settings and settings.background_type != 'none' %}bg-{{ settings.background_type }}{% else %}bg-none{% endif %} {% block body_class %}{% endblock %}"
   >
     <main>
       {% with messages = get_flashed_messages(with_categories=true) %} {% if

@@ -299,3 +299,28 @@ body.sidebar-active .sidebar {
 .user-admin .sidebar-menu-item:hover .sidebar-menu-link::after {
   display: none;
 }
+
+/* 侧边栏相关CSS调整，确保半透明背景层适配 */
+.sidebar-menu-item a {
+  padding: 10px 15px;
+  transition: all 0.3s ease;
+}
+
+/* 保留侧边栏透明背景，但移除菜单项特殊样式
+body:not(.bg-none) .sidebar {
+  background-color: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+body:not(.bg-none) .sidebar-menu-item a:hover {
+  background-color: rgba(255, 255, 255, 0.95);
+}
+*/
+
+/* 使侧边栏更加明显以避免背景干扰 */
+body:not(.bg-none) .sidebar {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}

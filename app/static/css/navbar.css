@@ -132,7 +132,6 @@
 
 .navbar-action:hover {
   background-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-1px);
 }
 
 .navbar-action i {
@@ -159,7 +158,6 @@
 }
 
 .user-dropdown-toggle:hover .user-avatar {
-  transform: scale(1.05);
   border-color: white;
 }
 
@@ -250,4 +248,12 @@
     visibility: visible;
     transform: translateY(0);
   }
+}
+
+/* 有背景时导航栏样式 */
+body:not(.bg-none) .navbar {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }

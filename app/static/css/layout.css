@@ -129,3 +129,42 @@ body:not(.sidebar-active) .main-content {
 .me-2 {
   margin-right: var(--spacing-sm);
 }
+
+/* 分类标题的半透明背景 */
+body:not(.bg-none) .category-heading {
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* 修改原来的.category-heading::after样式，使其跟随新的背景 */
+body:not(.bg-none) .category-heading::after {
+  bottom: 8px;
+  left: 12px;
+}
+
+/* 子分类标签半透明背景 */
+body:not(.bg-none) .subcategory-tags {
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* 使背景类叠加正确 */
+body.bg-image,
+body.bg-gradient,
+body.bg-color {
+  background-attachment: fixed;
+}
+
+body.bg-none {
+  /* 无背景状态 */
+  background: var(--bg-primary);
+}
