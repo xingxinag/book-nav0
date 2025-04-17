@@ -174,6 +174,10 @@ class SiteSettings(db.Model):
     site_keywords = db.Column(db.String(512), nullable=True)
     site_description = db.Column(db.String(1024), nullable=True)
     footer_content = db.Column(db.Text, nullable=True)  # 自定义页脚内容
+    background_image = db.Column(db.String(512), nullable=True)  # 旧字段，保留以确保兼容性
+    enable_background = db.Column(db.Boolean, default=False)  # 旧字段，保留以确保兼容性
+    background_type = db.Column(db.String(32), default='none')  # 背景类型：none, image, gradient, color
+    background_url = db.Column(db.String(512), nullable=True)  # 背景图片URL或颜色值
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 单例模式：确保只有一条记录
@@ -188,7 +192,22 @@ class SiteSettings(db.Model):
         return settings
     
     def __repr__(self):
-        return f'<SiteSettings {self.site_name}>' 
+        return f'<SiteSettings {self.site_name}>'
+
+
+class Background(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(128))  # 背景名称
+    url = db.Column(db.String(512))  # 背景URL
+    type = db.Column(db.String(32))  # 背景类型：image, gradient, color
+    device_type = db.Column(db.String(32))  # 设备类型：pc, mobile, both
+    created_by_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    created_by = db.relationship('User', backref='backgrounds')
+    
+    def __repr__(self):
+        return f'<Background {self.title}>'
 
 
 class OperationLog(db.Model):

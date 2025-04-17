@@ -6,8 +6,8 @@ from flask_login import current_user, login_required
 from werkzeug.utils import secure_filename
 from app import db, csrf
 from app.admin import bp
-from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm, UserEditForm, SiteSettingsForm, DataImportForm
-from app.models import Category, Website, InvitationCode, User, SiteSettings, OperationLog
+from app.admin.forms import CategoryForm, WebsiteForm, InvitationForm, UserEditForm, SiteSettingsForm, DataImportForm, BackgroundForm
+from app.models import Category, Website, InvitationCode, User, SiteSettings, OperationLog, Background
 from app.main.routes import get_website_icon
 import time
 import json
@@ -550,38 +550,57 @@ def delete_user(id):
 @login_required
 @superadmin_required
 def site_settings():
-    settings = SiteSettings.get_settings()
-    form = SiteSettingsForm(obj=settings)
-    
-    if form.validate_on_submit():
-        # 处理Logo上传
-        if form.logo_file.data:
-            logo_filename = save_image(form.logo_file.data, 'logos')
-            if logo_filename:
-                settings.site_logo = url_for('static', filename=f'uploads/logos/{logo_filename}')
-        elif form.site_logo.data:
-            settings.site_logo = form.site_logo.data
-            
-        # 处理Favicon上传
-        if form.favicon_file.data:
-            favicon_filename = save_image(form.favicon_file.data, 'favicons')
-            if favicon_filename:
-                settings.site_favicon = url_for('static', filename=f'uploads/favicons/{favicon_filename}')
-        elif form.site_favicon.data:
-            settings.site_favicon = form.site_favicon.data
-            
-        # 更新其他字段
-        settings.site_name = form.site_name.data
-        settings.site_subtitle = form.site_subtitle.data
-        settings.site_keywords = form.site_keywords.data
-        settings.site_description = form.site_description.data
-        settings.footer_content = form.footer_content.data
+    try:
+        settings = SiteSettings.get_settings()
+        form = SiteSettingsForm(obj=settings)
         
-        db.session.commit()
-        flash('站点设置已更新', 'success')
-        return redirect(url_for('admin.site_settings'))
-        
-    return render_template('admin/site_settings.html', title='站点设置', form=form, settings=settings)
+        if form.validate_on_submit():
+            # 处理Logo上传
+            if form.logo_file.data:
+                logo_filename = save_image(form.logo_file.data, 'logos')
+                if logo_filename:
+                    settings.site_logo = url_for('static', filename=f'uploads/logos/{logo_filename}')
+            elif form.site_logo.data:
+                settings.site_logo = form.site_logo.data
+                
+            # 处理Favicon上传
+            if form.favicon_file.data:
+                favicon_filename = save_image(form.favicon_file.data, 'favicons')
+                if favicon_filename:
+                    settings.site_favicon = url_for('static', filename=f'uploads/favicons/{favicon_filename}')
+            elif form.site_favicon.data:
+                settings.site_favicon = form.site_favicon.data
+                
+            # 处理背景上传
+            if form.background_file.data and form.background_type.data == 'image':
+                bg_filename = save_image(form.background_file.data, 'backgrounds')
+                if bg_filename:
+                    settings.background_url = url_for('static', filename=f'uploads/backgrounds/{bg_filename}')
+            elif form.background_url.data:
+                settings.background_url = form.background_url.data
+                
+            # 更新其他字段
+            settings.site_name = form.site_name.data
+            settings.site_subtitle = form.site_subtitle.data
+            settings.site_keywords = form.site_keywords.data
+            settings.site_description = form.site_description.data
+            settings.footer_content = form.footer_content.data
+            settings.background_type = form.background_type.data
+            
+            try:
+                db.session.commit()
+                flash('站点设置已更新', 'success')
+                return redirect(url_for('admin.site_settings'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'保存设置失败: {str(e)}', 'danger')
+                current_app.logger.error(f"保存站点设置失败: {str(e)}")
+                
+        return render_template('admin/site_settings.html', title='站点设置', form=form, settings=settings)
+    except Exception as e:
+        flash(f'加载站点设置失败: {str(e)}', 'danger')
+        current_app.logger.error(f"加载站点设置失败: {str(e)}")
+        return redirect(url_for('admin.index'))
 
 def save_image(file_data, subfolder):
     """保存上传的图片到static/uploads目录"""
@@ -1781,3 +1800,100 @@ def import_project_db(db_path, import_type, admin_id):
         db.session.rollback()
         current_app.logger.error(f"导入本项目数据库失败: {str(e)}")
         raise e
+
+@bp.route('/wallpaper', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def wallpaper():
+    """背景管理页面"""
+    form = BackgroundForm()
+    
+    if form.validate_on_submit():
+        background = Background(
+            title=form.title.data,
+            type=form.type.data,
+            device_type=form.device_type.data,
+            created_by_id=current_user.id
+        )
+        
+        # 处理图片上传
+        if form.background_file.data and form.type.data == 'image':
+            bg_filename = save_image(form.background_file.data, 'backgrounds')
+            if bg_filename:
+                background.url = url_for('static', filename=f'uploads/backgrounds/{bg_filename}')
+        elif form.url.data:
+            background.url = form.url.data
+        
+        db.session.add(background)
+        db.session.commit()
+        flash('背景添加成功', 'success')
+        return redirect(url_for('admin.wallpaper'))
+    
+    backgrounds = Background.query.order_by(Background.created_at.desc()).all()
+    return render_template('admin/wallpaper.html', title='背景管理', form=form, backgrounds=backgrounds)
+
+
+@bp.route('/apply-background', methods=['POST'])
+@login_required
+@admin_required
+def apply_background():
+    """应用背景"""
+    data = request.get_json()
+    if not data:
+        return jsonify({'success': False, 'message': '无效的请求数据'})
+    
+    bg_id = data.get('id')
+    bg_type = data.get('type')
+    bg_url = data.get('url')
+    
+    if not all([bg_type, bg_url]):
+        return jsonify({'success': False, 'message': '缺少必要参数'})
+    
+    try:
+        settings = SiteSettings.get_settings()
+        settings.background_type = bg_type
+        settings.background_url = bg_url
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@bp.route('/delete-background/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def delete_background(id):
+    """删除背景"""
+    background = Background.query.get_or_404(id)
+    
+    # 检查权限（只有超级管理员或创建者可以删除）
+    if not current_user.is_superadmin and background.created_by_id != current_user.id:
+        return jsonify({'success': False, 'message': '没有权限删除此背景'})
+    
+    try:
+        # 如果当前正在使用这个背景，则重置默认背景
+        settings = SiteSettings.get_settings()
+        if settings.background_url == background.url:
+            settings.background_type = 'none'
+            settings.background_url = None
+        
+        db.session.delete(background)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+
+@bp.route('/clear-background', methods=['POST'])
+@login_required
+@admin_required
+def clear_background():
+    """清除背景，恢复默认背景"""
+    try:
+        settings = SiteSettings.get_settings()
+        settings.background_type = 'none'
+        settings.background_url = None
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})

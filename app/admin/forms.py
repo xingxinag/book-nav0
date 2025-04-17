@@ -80,7 +80,31 @@ class SiteSettingsForm(FlaskForm):
     site_keywords = StringField('站点关键词', validators=[Optional(), Length(max=512)])
     site_description = TextAreaField('站点描述', validators=[Optional(), Length(max=1024)])
     footer_content = TextAreaField('页脚内容', validators=[Optional()])
+    background_type = SelectField('背景类型', choices=[
+        ('none', '无背景'),
+        ('image', '图片背景'),
+        ('gradient', '渐变色背景'),
+        ('color', '纯色背景')
+    ], validators=[Optional()])
+    background_url = StringField('背景URL', validators=[Optional(), Length(max=512)])
+    background_file = FileField('上传背景图片', validators=[FileAllowed(['jpg', 'png', 'gif', 'webp'], '只允许上传图片!')])
     submit_btn = SubmitField('保存设置')
+
+class BackgroundForm(FlaskForm):
+    title = StringField('背景名称', validators=[DataRequired(), Length(max=128)])
+    url = StringField('背景URL', validators=[Optional(), Length(max=512)])
+    type = SelectField('背景类型', choices=[
+        ('image', '图片背景'),
+        ('gradient', '渐变色背景'),
+        ('color', '纯色背景')
+    ], validators=[DataRequired()])
+    device_type = SelectField('设备类型', choices=[
+        ('pc', '电脑端'),
+        ('mobile', '移动端'),
+        ('both', '全部设备')
+    ], validators=[DataRequired()])
+    background_file = FileField('上传背景图片', validators=[FileAllowed(['jpg', 'png', 'gif', 'webp'], '只允许上传图片!')])
+    submit_btn = SubmitField('保存背景')
 
 class DataImportForm(FlaskForm):
     """数据导入表单"""

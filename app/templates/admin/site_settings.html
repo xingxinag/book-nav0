@@ -139,6 +139,54 @@
               <div class="form-text">支持HTML，可自定义页脚内容</div>
             </div>
 
+            <hr />
+
+            <!-- 背景设置部分 -->
+            <div class="mb-3">
+              <h4 class="mb-3">背景设置</h4>
+              <div class="row">
+                <div class="col-md-6">
+                  {{ form.background_type.label(class="form-label") }} {{
+                  form.background_type(class="form-control") }}
+                  <div class="form-text">选择网站背景类型</div>
+                </div>
+                <div class="col-md-6 bg-url-container" id="bgUrlContainer">
+                  {{ form.background_url.label(class="form-label") }} {{
+                  form.background_url(class="form-control") }}
+                  <div class="form-text bg-url-help" id="bgUrlHelp">
+                    背景URL或颜色代码
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="mt-3 bg-upload-container"
+                id="bgUploadContainer"
+                style="display: none"
+              >
+                <div class="mb-2">
+                  {{ form.background_file.label(class="form-label") }} {{
+                  form.background_file(class="form-control") }}
+                  <div class="form-text">上传背景图片（优先使用上传）</div>
+                </div>
+                <div class="bg-preview mt-2">
+                  <div id="bgPreview" class="p-3 bg-light rounded text-center">
+                    <p class="mb-0">背景预览</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-3">
+                <a
+                  href="{{ url_for('admin.wallpaper') }}"
+                  class="btn btn-outline-secondary"
+                >
+                  <i class="bi bi-images me-1"></i> 背景管理
+                </a>
+                <span class="text-muted ms-2">查看和管理所有背景</span>
+              </div>
+            </div>
+
             <div class="mt-4">
               {{ form.submit_btn(class="btn btn-primary") }}
             </div>
@@ -220,6 +268,15 @@
     const logoFileInput = document.getElementById("logo_file");
     const faviconUrlInput = document.getElementById("site_favicon");
     const faviconFileInput = document.getElementById("favicon_file");
+
+    // 背景设置相关
+    const bgTypeSelect = document.getElementById("background_type");
+    const bgUrlInput = document.getElementById("background_url");
+    const bgFileInput = document.getElementById("background_file");
+    const bgUrlContainer = document.getElementById("bgUrlContainer");
+    const bgUploadContainer = document.getElementById("bgUploadContainer");
+    const bgUrlHelp = document.getElementById("bgUrlHelp");
+    const bgPreview = document.getElementById("bgPreview");
 
     // 更新网站标题预览
     function updateNavbarPreview() {
@@ -308,6 +365,110 @@
       faviconUrlInput,
       document.querySelector(".favicon-preview")
     );
+
+    // 背景类型变化处理
+    if (bgTypeSelect) {
+      // 初始化时根据当前值设置
+      updateBackgroundUI(bgTypeSelect.value);
+
+      bgTypeSelect.addEventListener("change", function () {
+        updateBackgroundUI(this.value);
+      });
+
+      // 背景文件上传预览
+      if (bgFileInput) {
+        bgFileInput.addEventListener("change", function () {
+          if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              bgPreview.innerHTML = "";
+              bgPreview.style.backgroundImage = `url(${e.target.result})`;
+              bgPreview.style.backgroundSize = "cover";
+              bgPreview.style.backgroundPosition = "center";
+              bgPreview.style.height = "150px";
+              bgPreview.style.width = "100%";
+            };
+            reader.readAsDataURL(this.files[0]);
+          }
+        });
+      }
+
+      // 背景URL预览
+      if (bgUrlInput) {
+        bgUrlInput.addEventListener("input", function () {
+          updateBackgroundPreview(this.value, bgTypeSelect.value);
+        });
+
+        // 初始预览
+        if (bgUrlInput.value) {
+          updateBackgroundPreview(bgUrlInput.value, bgTypeSelect.value);
+        }
+      }
+    }
+
+    // 更新背景UI显示
+    function updateBackgroundUI(type) {
+      // 显示/隐藏相关字段
+      if (type === "none") {
+        bgUrlContainer.style.display = "none";
+        bgUploadContainer.style.display = "none";
+
+        // 重置预览
+        bgPreview.style.backgroundImage = "";
+        bgPreview.style.backgroundColor = "";
+        bgPreview.innerHTML = '<p class="mb-0">无背景</p>';
+      } else {
+        bgUrlContainer.style.display = "block";
+
+        if (type === "image") {
+          bgUploadContainer.style.display = "block";
+          bgUrlHelp.textContent = "背景图片URL";
+        } else {
+          bgUploadContainer.style.display = "none";
+
+          if (type === "gradient") {
+            bgUrlHelp.textContent =
+              "渐变色代码，例如：linear-gradient(135deg, #6e8efb, #a777e3)";
+          } else if (type === "color") {
+            bgUrlHelp.textContent =
+              "颜色代码，例如：#f5f7fa 或 rgba(245, 247, 250, 1)";
+          }
+        }
+
+        // 如果有当前值，更新预览
+        if (bgUrlInput.value) {
+          updateBackgroundPreview(bgUrlInput.value, type);
+        }
+      }
+    }
+
+    // 更新背景预览
+    function updateBackgroundPreview(value, type) {
+      if (!value) {
+        bgPreview.style.backgroundImage = "";
+        bgPreview.style.backgroundColor = "";
+        bgPreview.innerHTML = '<p class="mb-0">背景预览</p>';
+        return;
+      }
+
+      bgPreview.innerHTML = "";
+
+      if (type === "image") {
+        bgPreview.style.backgroundImage = `url(${value})`;
+        bgPreview.style.backgroundSize = "cover";
+        bgPreview.style.backgroundPosition = "center";
+        bgPreview.style.backgroundColor = "";
+      } else if (type === "gradient") {
+        bgPreview.style.backgroundImage = value;
+        bgPreview.style.backgroundColor = "";
+      } else if (type === "color") {
+        bgPreview.style.backgroundImage = "";
+        bgPreview.style.backgroundColor = value;
+      }
+
+      bgPreview.style.height = "150px";
+      bgPreview.style.width = "100%";
+    }
   });
 </script>
 {% endblock %}

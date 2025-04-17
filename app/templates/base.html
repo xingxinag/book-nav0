@@ -1,11 +1,28 @@
 ﻿<!DOCTYPE html>
-<html lang="zh-CN" data-page-type="{% block page_type %}default{% endblock %}">
+<html
+  lang="zh-CN"
+  data-page-type="{% block page_type %}default{% endblock %}"
+  {%
+  if
+  settings
+  and
+  settings.background_type
+  !="none"
+  and
+  settings.background_url
+  %}
+  data-bg-type="{{ settings.background_type }}"
+  data-bg-url="{{ settings.background_url }}"
+  {%
+  endif
+  %}
+>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-    <!-- 棰勮渚ц竟鏍忕姸鎬侊紝閬垮厤鍒锋柊鎶栧姩 -->
+    <!-- 预渲染侧边栏状态，避免刷新抖动 -->
     <script>
       (function () {
         var pageType =
@@ -14,13 +31,13 @@
           "sidebarActive" + (pageType !== "default" ? "-" + pageType : "");
         var savedState = localStorage.getItem(storageKey);
 
-        // 鍒嗙被椤甸潰榛樿鍏抽棴渚ц竟鏍忥紝闄ら潪鏄庣'淇濆瓨浜嗗紑鍚姸锟?
+        // 分类页面默认关闭侧边栏，除非明确保存了开启状态
         if (pageType === "category") {
           if (savedState === "true") {
             document.documentElement.classList.add("sidebar-active-preload");
           }
         } else {
-          // 鍏朵粬椤甸潰浣跨敤鍘熸潵鐨勯€昏緫
+          // 其他页面使用原来的逻辑
           if (
             savedState === "true" ||
             (savedState === null && window.innerWidth >= 768)
@@ -39,6 +56,23 @@
         padding-left: calc(var(--sidebar-width) + var(--spacing-lg)) !important;
         transition: none !important;
       }
+
+      /* 背景样式 */
+      body.bg-image {
+        background-image: var(--bg-image);
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+      }
+
+      body.bg-gradient {
+        background-image: var(--bg-gradient);
+      }
+
+      body.bg-color {
+        background-color: var(--bg-color);
+      }
     </style>
 
     {% if settings and settings.site_keywords %}
@@ -49,14 +83,14 @@
 
     <title>
       {% if title %}{{ title }} - {% endif %}{% if settings %}{{
-      settings.site_name }}{% else %}鐐叿瀵艰埅{% endif %}
+      settings.site_name }}{% else %}炫酷导航{% endif %}
     </title>
-    <!-- 寮曞叆瀛椾綋鍥炬爣-->
+    <!-- 引入字体图标-->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}"
     />
-    <!-- 寮曞叆Font Awesome绮剧畝-->
+    <!-- 引入Font Awesome精简-->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='vendor/font-awesome/css/fontawesome.min.css') }}"
@@ -65,17 +99,17 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='vendor/font-awesome/css/solid.min.css') }}"
     />
-    <!-- 寮曞叆Bootstrap -->
+    <!-- 引入Bootstrap -->
     <link
       href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}"
       rel="stylesheet"
     />
-    <!-- 寮曞叆鍔ㄧ敾-->
+    <!-- 引入动画-->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='vendor/animate.css/animate.min.css') }}"
     />
-    <!-- 鑷畾涔塁SS -->
+    <!-- 自定义CSS -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/style.css') }}"
@@ -85,15 +119,20 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/tooltip.css') }}"
     />
-    <!-- 鍥炲埌椤堕儴CSS -->
+    <!-- 回到顶部CSS -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/back-to-top.css') }}"
     />
-    <!-- 椤佃剼CSS -->
+    <!-- 页脚CSS -->
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/footer.css') }}"
+    />
+    <!-- 背景CSS -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/background.css') }}"
     />
     <!-- Favicon -->
     {% if settings and settings.site_favicon %}
@@ -119,16 +158,36 @@
       href="{{ url_for('static', filename='images/favicon.ico') }}"
     />
     {% endif %}
+
+    <!-- 背景处理脚本 -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const html = document.documentElement;
+        const bgType = html.getAttribute("data-bg-type");
+        const bgUrl = html.getAttribute("data-bg-url");
+
+        if (bgType && bgUrl) {
+          if (bgType === "image") {
+            html.style.setProperty("--bg-image", `url("${bgUrl}")`);
+          } else if (bgType === "gradient") {
+            html.style.setProperty("--bg-gradient", bgUrl);
+          } else if (bgType === "color") {
+            html.style.setProperty("--bg-color", bgUrl);
+          }
+        }
+      });
+    </script>
+
     <style>
-      /* 淇CSS妫€鏌ュ櫒閿欒 */
-      /* 娓呴櫎鎵€鏈夋棤鍏虫牱寮忛敊*/
+      /* 修CSS检查器错误 */
+      /* 清除所有无关样式错*/
       @media screen {
         .dummy-class {
           color: inherit;
         }
       }
 
-      /* 鑷畾涔塀ootstrap tooltip鏍峰紡 */
+      /* 自定义Bootstrap tooltip样式 */
       .tooltip .tooltip-inner {
         background: linear-gradient(
           135deg,
@@ -149,27 +208,27 @@
         text-justify: inter-word;
       }
 
-      /* 涓婃柟绠ご棰滆壊 */
+      /* 上方箭头颜色 */
       .tooltip.bs-tooltip-bottom .tooltip-arrow::before {
         border-bottom-color: rgba(112, 73, 240, 0.95);
       }
 
-      /* 涓嬫柟绠ご棰滆壊 */
+      /* 下方箭头颜色 */
       .tooltip.bs-tooltip-top .tooltip-arrow::before {
         border-top-color: rgba(87, 50, 218, 0.98);
       }
 
-      /* 宸︿晶绠ご棰滆壊 */
+      /* 左侧箭头颜色 */
       .tooltip.bs-tooltip-start .tooltip-arrow::before {
         border-left-color: rgba(112, 73, 240, 0.95);
       }
 
-      /* 鍙充晶绠ご棰滆壊 */
+      /* 右侧箭头颜色 */
       .tooltip.bs-tooltip-end .tooltip-arrow::before {
         border-right-color: rgba(112, 73, 240, 0.95);
       }
 
-      /* 纭繚tooltip鏄剧ず */
+      /* 确保tooltip显示 */
       .tooltip {
         opacity: 1 !important;
         z-index: 9999 !important;
@@ -178,7 +237,7 @@
     {% block head %}{% endblock %}
   </head>
   <body
-    class="{% if current_user.is_authenticated and current_user.is_admin %}user-admin{% endif %} {% block body_class %}{% endblock %}"
+    class="{% if current_user.is_authenticated and current_user.is_admin %}user-admin{% endif %} {% if settings and settings.background_type != 'none' %}bg-{{ settings.background_type }}{% endif %} {% block body_class %}{% endblock %}"
   >
     <main>
       {% with messages = get_flashed_messages(with_categories=true) %} {% if
@@ -202,21 +261,21 @@
       {% endif %} {% endwith %} {% block content %}{% endblock %}
     </main>
 
-    {% block footer %} {# 寮曞叆妯″潡鍖栭〉#} {% with year = now.year %} {%
-    include 'common/footer.html' %} {% endwith %} {% endblock %}
+    {% block footer %} {# 引入模块化页#} {% with year = now.year %} {% include
+    'common/footer.html' %} {% endwith %} {% endblock %}
 
-    <!-- JavaScript鑴氭湰 -->
+    <!-- JavaScript脚本 -->
     <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/particles.js/particles.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
-    <!-- 鍥炲埌椤堕儴JS -->
+    <!-- 回到顶部JS -->
     <script src="{{ url_for('static', filename='js/back-to-top.js') }}"></script>
-    <!-- 椤甸潰搴曢儴閫氱敤JS -->
+    <!-- 页面底部通用JS -->
     <script>
-      // 澶勭悊鍥炬爣鍔犺浇閿欒锛屾墍鏈夐〉闈㈤兘浼氭墽琛岃繖娈典唬锟?
+      // 处理图标加载错误，所有页面都会执行这段代码
       document.addEventListener("DOMContentLoaded", function () {
-        // 涓烘墍鏈夌綉绔欏浘鏍囨坊鍔犻敊璇锟?
+        // 为所有网站图标添加错误处理
         function handleSiteImages() {
           const siteImages = document.querySelectorAll(
             ".site-icon img, .related-icon img"
@@ -227,17 +286,17 @@
               const firstLetter = siteName.charAt(0).toUpperCase();
               const parentEl = this.parentElement;
 
-              // 绉婚櫎閿欒鐨勫浘锟?
+              // 移除错误的图片
               this.remove();
 
-              // 鍒涘缓榛樿鍥炬爣
+              // 创建默认图标
               const defaultIcon = document.createElement("div");
               defaultIcon.className = "default-site-icon";
               defaultIcon.textContent = firstLetter;
               parentEl.appendChild(defaultIcon);
             };
 
-            // 妫€鏌ュ浘鐗囨槸鍚﹀凡缁忓姞杞藉苟涓旀槸鏈夋晥鍥炬爣
+            // 检查图片是否已经加载并且是有效图标
             if (img.complete) {
               validateImage(img);
             } else {
@@ -248,17 +307,17 @@
           });
         }
 
-        // 楠岃瘉鍥剧墖鏄惁鏈夋晥
+        // 验证图片是否有效
         function validateImage(img) {
           if (img.naturalWidth === 0 || img.naturalHeight === 0) {
             img.onerror();
           }
         }
 
-        // 鍒濆鍖栧浘鐗囧锟?
+        // 初始化图片处理
         handleSiteImages();
 
-        // 鐩戝惉鍔ㄦ€佸姞杞界殑鍐呭
+        // 监听动态加载的内容
         const observer = new MutationObserver(function (mutations) {
           mutations.forEach(function (mutation) {
             if (mutation.addedNodes.length) {
@@ -267,7 +326,7 @@
           });
         });
 
-        // 閰嶇疆瑙傚療锟?
+        // 配置观察器
         observer.observe(document.body, {
           childList: true,
           subtree: true,
