@@ -5,11 +5,11 @@
   <div class="container text-center">
     {% if settings and settings.footer_content %} {{
     settings.footer_content|safe }} {% else %}
-    <p class="mb-0">
+    <p class="mb-0 text-center">
       © {{ year|default(2025) }} {% if settings %}{{ settings.site_name }}{%
       else %}炫酷导航{% endif %}
     </p>
-    <p class="mb-0 small text-muted">由Python + Flask强力驱动</p>
+    <p class="mb-0 small text-muted text-center">由Python + Flask强力驱动</p>
     {% endif %}
   </div>
 </footer>
