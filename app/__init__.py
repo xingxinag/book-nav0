@@ -70,21 +70,34 @@ def create_app(config_class=Config):
     
     @app.before_first_request
     def create_admin():
-        admin = User.query.filter_by(username=app.config['ADMIN_USERNAME']).first()
-        if not admin:
-            admin = User(
-                username=app.config['ADMIN_USERNAME'],
-                email=app.config['ADMIN_EMAIL'],
-                is_admin=True,
-                is_superadmin=True  # 设置初始管理员为超级管理员
-            )
-            admin.set_password(app.config['ADMIN_PASSWORD'])
-            db.session.add(admin)
-            db.session.commit()
-        elif admin.is_admin and not admin.is_superadmin:
-            # 确保现有管理员也是超级管理员
-            admin.is_superadmin = True
-            db.session.commit()
+        try:
+            admin = User.query.filter_by(username=app.config['ADMIN_USERNAME']).first()
+            if not admin:
+                # 尝试查找邮箱，防止email冲突
+                admin_by_email = User.query.filter_by(email=app.config['ADMIN_EMAIL']).first()
+                if admin_by_email:
+                    # 已有邮箱相同的用户，但用户名不是默认管理员
+                    print(f"警告: 已存在邮箱为 {app.config['ADMIN_EMAIL']} 的用户，跳过创建默认管理员")
+                    return
+                
+                # 创建新管理员
+                admin = User(
+                    username=app.config['ADMIN_USERNAME'],
+                    email=app.config['ADMIN_EMAIL'],
+                    is_admin=True,
+                    is_superadmin=True
+                )
+                admin.set_password(app.config['ADMIN_PASSWORD'])
+                db.session.add(admin)
+                db.session.commit()
+                print("默认管理员账户创建成功")
+            elif admin.is_admin and not admin.is_superadmin:
+                # 确保现有管理员也是超级管理员
+                admin.is_superadmin = True
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"创建/更新管理员账户时出错: {str(e)}")
     
     # 注册模板过滤器
     @app.template_filter('from_json')

@@ -3,54 +3,50 @@ set -e
 
 # 设置环境变量
 export FLASK_APP=run.py
-export DATABASE_URL="sqlite:////app/app.db"
+export DATABASE_URL="sqlite:////data/app.db"
 export PREFERRED_URL_SCHEME="http"
 
 echo "=== 容器启动 ==="
 
 # 检查数据库目录
 echo "创建必要目录..."
-mkdir -p /app/app/backups /app/app/uploads /data/backups /data/uploads
-chmod -R 777 /app/app/backups /app/app/uploads /data
+mkdir -p /app/app/backups /app/app/static/uploads/avatars /app/app/static/uploads/logos \
+         /app/app/static/uploads/favicons /app/app/static/uploads/backgrounds \
+         /data/backups /data/uploads/avatars /data/uploads/logos \
+         /data/uploads/favicons /data/uploads/backgrounds
+chmod -R 777 /app/app/backups /app/app/static/uploads /data
 
 # 检查宿主机数据库文件
 if [ ! -f /data/app.db ]; then
     echo "宿主机数据库不存在，创建新数据库..."
     
-    # 创建空数据库文件
-    touch /app/app.db
-    chmod 666 /app/app.db
+    # 直接在/data目录中创建数据库
+    touch /data/app.db
+    chmod 666 /data/app.db
     
-    # 直接使用python脚本创建数据库
+    # 直接使用python脚本创建数据库结构，但不创建用户
+    # 这样Flask的before_first_request将负责创建管理员用户
     cd /app
     python3 << EOF
 from app import create_app, db
-from app.models import User
 app = create_app()
 with app.app_context():
     db.create_all()
-    # 创建默认管理员
-    if not User.query.filter_by(username='admin').first():
-        admin = User(username='admin', email='admin@example.com', is_admin=True, is_superadmin=True)
-        admin.set_password('admin123')
-        db.session.add(admin)
-        db.session.commit()
-        print("默认管理员账户创建成功")
+    print("数据库表结构创建完成")
 EOF
     
-    # 复制到宿主机
-    cp /app/app.db /data/app.db
-    echo "数据库初始化完成"
+    echo "数据库初始化完成，管理员用户将由应用程序创建"
 else
     echo "使用现有数据库..."
-    cp /data/app.db /app/app.db
-    chmod 666 /app/app.db
+    chmod 666 /data/app.db
 fi
 
-# 确保数据库文件权限正确
-chmod 666 /app/app.db
-ls -la /app/app.db
-
+# 创建从/app/app.db到/data/app.db的符号链接
+if [ -f /app/app.db ]; then
+    rm /app/app.db
+fi
+ln -sf /data/app.db /app/app.db
+echo "数据库符号链接已创建"
 
 # 检查Nginx配置文件
 if [ ! -f /etc/nginx/http.d/default.conf ]; then
@@ -58,6 +54,13 @@ if [ ! -f /etc/nginx/http.d/default.conf ]; then
     mkdir -p /etc/nginx/http.d/
     cp /defaults/nginx.conf /etc/nginx/http.d/default.conf
     echo "Nginx配置文件已复制"
+fi
+
+# 进行数据库备份（容器启动时）
+if [ -f /data/app.db ] && [ -s /data/app.db ]; then
+    BACKUP_FILE="/app/app/backups/startup_backup_$(date +%Y%m%d%H%M%S).db3"
+    echo "创建启动时数据库备份: $BACKUP_FILE"
+    cp /data/app.db "$BACKUP_FILE" || echo "备份失败，继续启动..."
 fi
 
 echo "=== 启动应用服务 ==="
