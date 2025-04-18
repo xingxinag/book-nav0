@@ -44,7 +44,7 @@ BookNav 基于 Flask Web 框架打造，提供了以下核心功能：
 
 - **完整的后台管理界面**: 独立的管理控制台
 - **网站与分类管理**: 完整的增删改查功能，批量删除，批量修改公开，私有状态
-- **站点设置**: 自定义站点名称、Logo、SEO 信息等
+- **站点设置**: 自定义站点名称、Logo、SEO 信息等，支持自定义背景图片
 - **邀请码管理**: 生成和管理注册邀请码
 - **数据批量操作功能**：
   - 一键抓取图标
@@ -136,24 +136,57 @@ BookNav 基于 Flask Web 框架打造，提供了以下核心功能：
 
 #### 拉取镜像运行
 
-```
+```yaml
 version: "3"
 
 services:
   nav:
-    image: yilan666/booknav-nav:latest
+    image: yilan666/booknav-nav:1.2
+    container_name: nav
     restart: always
     ports:
       - "8988:80" # Nginx端口
     volumes:
-      - ./data:/data # 数据目录（包含数据库）
+      - ./data:/data # 数据目录
       - ./data/backups:/app/app/backups # 备份目录
-      - ./data/uploads:/app/app/uploads # 上传文件目录
+      - ./data/uploads:/app/app/static/uploads # 上传文件目录（静态文件中的上传目录）
       - ./config/nginx:/etc/nginx/http.d # Nginx配置
+    env_file:
+      - .env
     environment:
-      - SECRET_KEY=vHRh2vo15BpHftLMnTic # 修改加密密钥
-      - FLASK_ENV=production
+      - DATABASE_URL=sqlite:////data/app.db 
 ```
+
+docker-compose.yml文件同级目录下创建.env文件
+
+```env
+# 基本配置
+SECRET_KEY=
+FLASK_ENV=production
+DATABASE_URL=sqlite:////data/app.db
+
+# 管理员设置
+ADMIN_USERNAME=admin
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=admin123
+
+# 其他配置
+INVITATION_CODE_LENGTH=8
+```
+
+SECRET_KEY=
+
+ADMIN_USERNAME=
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
+
+这些参数自定义填写，执行
+
+```sh
+docker-compose up -d
+```
+
+用户名和密码为.env文件中自定义填写的
 
 ### 数据库初始化
 
