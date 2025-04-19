@@ -20,7 +20,7 @@
       }
       body {
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-          min-height: 100vh;
+          min-height: 80vh;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -99,6 +99,7 @@
       .redirect-container {
           width: 100%;
           max-width: 600px;
+          margin-top: -5vh; /* 向上偏移，避免过于居中 */
       }
       .redirect-card {
           width: 100%;
@@ -117,10 +118,10 @@
       }
 
       .redirect-header {
-          padding: 15px 20px;
+          padding: 12px 20px;
       }
       .redirect-body {
-          padding: 25px 20px;
+          padding: 20px 20px; /* 减少上下内边距 */
       }
       .redirect-footer {
           padding: 12px 20px;
@@ -140,7 +141,7 @@
           background-color: #f0f0f0;
           overflow: hidden;
           border-radius: 4px;
-          margin: 15px 0;
+          margin: 10px 0;
       }
       .redirect-progress .progress-bar {
           height: 100%;
@@ -629,6 +630,34 @@
               gap: 10px;
           }
       }
+
+      /* 减少一些不必要的外边距 */
+      .redirect-countdown.mb-4 {
+          margin-bottom: 1rem !important;
+      }
+
+      .site-info {
+          margin-bottom: 0.75rem !important;
+      }
+
+      .site-url {
+          margin-bottom: 0.75rem !important;
+      }
+
+      /* 头部更加紧凑 */
+      .redirect-header {
+          padding: 12px 20px;
+      }
+
+      @media (max-height: 700px) {
+          .redirect-container {
+              margin-top: -8vh; /* 在较小屏幕上更向上偏移 */
+          }
+
+          .redirect-body {
+              padding: 15px 20px; /* 在较小屏幕上进一步减少内边距 */
+          }
+      }
     </style>
   </head>
   <body class="theme-{{ settings.transition_theme or 'default' }}">
@@ -646,7 +675,7 @@
         <div class="redirect-body text-center">
           <!-- 网站信息 -->
           <div
-            class="site-info d-flex align-items-center justify-content-center mb-3"
+            class="site-info d-flex align-items-center justify-content-center mb-2"
           >
             <div class="site-icon me-2">
               <img
@@ -659,7 +688,7 @@
           </div>
 
           <!-- URL显示 -->
-          <div class="site-url text-muted mb-3">
+          <div class="site-url text-muted mb-2">
             <span class="d-inline-block text-truncate" style="max-width: 400px"
               >{{ website.url }}</span
             >
@@ -667,14 +696,14 @@
 
           <!-- 网站描述 -->
           {% if settings.transition_show_description and website.description %}
-          <div class="site-description mb-3">
+          <div class="site-description mb-2">
             <p class="text-secondary">{{ website.description }}</p>
           </div>
           {% endif %}
 
           <!-- 广告区1 -->
           {% if settings.transition_ad1 %}
-          <div class="redirect-ad mb-4">{{ settings.transition_ad1|safe }}</div>
+          <div class="redirect-ad mb-3">{{ settings.transition_ad1|safe }}</div>
           {% endif %}
 
           <!-- 进度指示与倒计时 -->
@@ -682,7 +711,7 @@
             <div id="redirect-progress-bar" class="progress-bar"></div>
           </div>
 
-          <p class="redirect-countdown mb-4">
+          <p class="redirect-countdown mb-3">
             将在
             <span id="countdown" class="fw-bold text-primary"
               >{{ countdown }}</span
@@ -698,12 +727,6 @@
               class="btn btn-primary px-4"
             >
               <i class="bi bi-arrow-right me-1"></i> 立即前往
-            </a>
-            <a
-              href="javascript:history.back()"
-              class="btn btn-outline-secondary"
-            >
-              返回
             </a>
           </div>
 
