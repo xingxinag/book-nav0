@@ -1,15 +1,7 @@
 {% extends "admin/base.html" %} {% block admin_content %}
 <div class="container-fluid px-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h1 class="mt-4">站点设置</h1>
-      <ol class="breadcrumb mb-2">
-        <li class="breadcrumb-item">
-          <a href="{{ url_for('admin.index') }}">首页</a>
-        </li>
-        <li class="breadcrumb-item active">站点设置</li>
-      </ol>
-    </div>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-gear"></i> 站点设置</h2>
   </div>
 
   <div class="card mb-4">
