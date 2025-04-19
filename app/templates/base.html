@@ -359,6 +359,20 @@
         });
       });
     </script>
-    {% block scripts %}{% endblock %}
+
+    <!-- 把settings对象传递给JavaScript -->
+    <script>
+      window.settings = {
+        enable_transition: {% if settings.enable_transition %}true{% else %}false{% endif %},
+        transition_remember_choice: {% if settings.transition_remember_choice %}true{% else %}false{% endif %},
+        transition_theme: "{{ settings.transition_theme or 'default' }}",
+        transition_color: "{{ settings.transition_color or '#6e8efb' }}"
+      };
+    </script>
+
+    {% if settings.enable_transition %}
+    <!-- 过渡页处理脚本 -->
+    <script src="{{ url_for('static', filename='js/transition.js') }}"></script>
+    {% endif %} {% block scripts %}{% endblock %}
   </body>
 </html>

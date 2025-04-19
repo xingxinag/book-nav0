@@ -88,6 +88,23 @@ class SiteSettingsForm(FlaskForm):
     ], validators=[Optional()])
     background_url = StringField('背景URL', validators=[Optional(), Length(max=512)])
     background_file = FileField('上传背景图片', validators=[FileAllowed(['jpg', 'png', 'gif', 'webp'], '只允许上传图片!')])
+    
+    # 过渡页设置
+    enable_transition = BooleanField('启用过渡页')
+    transition_time = IntegerField('访客停留时间', validators=[Optional(), NumberRange(min=1, max=30)], default=5)
+    admin_transition_time = IntegerField('管理员停留时间', validators=[Optional(), NumberRange(min=1, max=30)], default=3)
+    transition_ad1 = TextAreaField('广告1', validators=[Optional()])
+    transition_ad2 = TextAreaField('广告2', validators=[Optional()])
+    transition_remember_choice = BooleanField('允许用户选择不再显示')
+    transition_show_description = BooleanField('显示网站描述')
+    transition_theme = SelectField('主题风格', choices=[
+        ('default', '默认主题'),
+        ('minimal', '极简主题'),
+        ('card', '卡片主题'),
+        ('dark', '暗色主题')
+    ], validators=[Optional()])
+    transition_color = StringField('主色调', validators=[Optional(), Length(max=32)])
+    
     submit_btn = SubmitField('保存设置')
 
 class BackgroundForm(FlaskForm):

@@ -452,10 +452,12 @@ DEBUG - Settings信息:
       >
         {% for website in websites %}
         <a
-          href="{{ url_for('main.site', id=website.id) }}"
+          href="{% if settings.enable_transition %}{{ url_for('main.goto_website', website_id=website.id) }}{% else %}{{ url_for('main.site', id=website.id) }}{% endif %}"
           class="site-card {% if current_user.is_authenticated and current_user.is_admin %}draggable{% endif %}"
           data-id="{{ website.id }}"
-          data-sort="{{ website.sort_order }}"
+          data-website-id="{{ website.id }}"
+          data-website-url="{{ website.url }}"
+          data-sort="{{ website.sort_order|default(loop.index0*10) }}"
           title="{{ website.description }}"
           data-bs-toggle="tooltip"
           data-bs-placement="bottom"
@@ -809,7 +811,12 @@ DEBUG - Settings信息:
     // 创建网站卡片
     function createWebsiteCard(website) {
       const card = document.createElement("a");
-      card.href = `/site/${website.id}`;
+      // 根据是否启用过渡页来设置不同的链接
+      if (window.settings && window.settings.enable_transition) {
+        card.href = `/goto/${website.id}`;
+      } else {
+        card.href = `/site/${website.id}`;
+      }
       card.className = "site-card";
       card.dataset.id = website.id;
       card.dataset.sort = website.sort_order;

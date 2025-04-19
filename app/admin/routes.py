@@ -635,7 +635,13 @@ def site_settings():
         settings = SiteSettings.get_settings()
         form = SiteSettingsForm(obj=settings)
         
+        # 输出初始设置值
+        current_app.logger.info(f"初始设置: enable_transition={settings.enable_transition}, theme={settings.transition_theme}")
+        
         if form.validate_on_submit():
+            # 输出表单提交的值
+            current_app.logger.info(f"表单数据: enable_transition={form.enable_transition.data}, theme={form.transition_theme.data}")
+            
             # 处理Logo上传
             if form.logo_file.data:
                 logo_filename = save_image(form.logo_file.data, 'logos')
@@ -674,8 +680,26 @@ def site_settings():
             settings.footer_content = form.footer_content.data
             settings.background_type = form.background_type.data
             
+            # 更新过渡页设置
+            settings.enable_transition = form.enable_transition.data
+            settings.transition_time = form.transition_time.data
+            settings.admin_transition_time = form.admin_transition_time.data
+            settings.transition_ad1 = form.transition_ad1.data
+            settings.transition_ad2 = form.transition_ad2.data
+            settings.transition_remember_choice = form.transition_remember_choice.data
+            settings.transition_show_description = form.transition_show_description.data
+            settings.transition_theme = form.transition_theme.data
+            settings.transition_color = form.transition_color.data
+            
+            # 确认设置值已更新
+            current_app.logger.info(f"更新后的设置: enable_transition={settings.enable_transition}, theme={settings.transition_theme}")
+            
             try:
                 db.session.commit()
+                # 验证保存后的值
+                db.session.refresh(settings)
+                current_app.logger.info(f"保存后的设置: enable_transition={settings.enable_transition}, theme={settings.transition_theme}")
+                
                 flash('站点设置已更新', 'success')
                 return redirect(url_for('admin.site_settings'))
             except Exception as e:

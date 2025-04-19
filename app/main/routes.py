@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, jsonify, a
 from flask_login import current_user, login_required
 from app import db, csrf
 from app.main import bp
-from app.models import Category, Website, OperationLog
+from app.models import Category, Website, OperationLog, SiteSettings
 from app.main.forms import SearchForm, WebsiteForm
 from datetime import datetime, timedelta
 import requests
@@ -1059,4 +1059,40 @@ def delete(id):
     db.session.commit()
     
     flash('链接删除成功！', 'success')
-    return redirect(url_for('main.index')) 
+    return redirect(url_for('main.index'))
+
+@bp.route('/goto/<int:website_id>')
+def goto_website(website_id):
+    """显示过渡页并跳转到指定网站"""
+    website = Website.query.get_or_404(website_id)
+    
+    # 检查是否启用过渡页
+    settings = SiteSettings.get_settings()
+    if not settings.enable_transition:
+        # 如果未启用过渡页，直接跳转
+        return redirect(website.url)
+    
+    # 根据用户类型决定等待时间
+    countdown = settings.admin_transition_time if current_user.is_authenticated and current_user.is_admin else settings.transition_time
+    
+    # 记录访问（这里也增加一次计数）
+    website.views += 1
+    website.last_view = datetime.utcnow()
+    db.session.commit()
+    
+    return render_template('transition.html', website=website, countdown=countdown)
+
+@bp.route('/api/record-visit/<int:website_id>', methods=['POST'])
+def record_visit(website_id):
+    """记录网站访问次数的API"""
+    try:
+        website = Website.query.get_or_404(website_id)
+        
+        # 增加访问计数
+        website.views += 1
+        website.last_view = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({"success": True, "message": "访问记录成功", "views": website.views})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"记录失败: {str(e)}"}), 500 

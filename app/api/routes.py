@@ -185,3 +185,31 @@ def update_category_order():
         db.session.rollback()
         print(f"分类排序更新失败: {str(e)}")
         return jsonify({'success': False, 'message': f'更新排序失败: {str(e)}'}), 500 
+
+@bp.route('/record-visit/<int:website_id>', methods=['POST'])
+def record_visit(website_id):
+    """记录网站访问次数的API接口"""
+    try:
+        website = Website.query.get_or_404(website_id)
+        
+        # 增加网站浏览次数
+        website.views += 1
+        
+        # 记录今日访问量
+        from datetime import datetime, timedelta
+        today = datetime.utcnow().date()
+        
+        # 如果最后访问日期为空或不是今天，重置今日访问量
+        if website.last_view is None or website.last_view.date() < today:
+            website.views_today = 1
+        else:
+            website.views_today += 1
+        
+        # 更新最后访问时间
+        website.last_view = datetime.utcnow()
+        
+        db.session.commit()
+        return jsonify({'success': True, 'message': '访问记录已更新'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'记录访问失败: {str(e)}'}), 500 

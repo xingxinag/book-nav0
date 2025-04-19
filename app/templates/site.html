@@ -157,8 +157,10 @@
         <h1 class="mb-2">{{ website.title }}</h1>
         <div class="mb-3">
           <a
-            href="{{ website.url }}"
+            href="{% if settings.enable_transition %}{{ url_for('main.goto_website', website_id=website.id) }}{% else %}{{ website.url }}{% endif %}"
             class="btn btn-light"
+            data-website-id="{{ website.id }}"
+            data-website-url="{{ website.url }}"
             target="_blank"
             rel="noopener"
           >
@@ -217,18 +219,18 @@
           暂无描述 {% endif %}
         </p>
 
-        {% if website.url %}
         <div class="d-flex align-items-center mt-4">
           <span class="text-muted me-2">链接:</span>
           <a
-            href="{{ website.url }}"
+            href="{% if settings.enable_transition %}{{ url_for('main.goto_website', website_id=website.id) }}{% else %}{{ website.url }}{% endif %}"
             target="_blank"
             rel="noopener"
+            data-website-id="{{ website.id }}"
+            data-website-url="{{ website.url }}"
             class="text-truncate"
             >{{ website.url }}</a
           >
         </div>
-        {% endif %}
       </div>
 
       {% if website.tags %}

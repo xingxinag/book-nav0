@@ -181,6 +181,17 @@ class SiteSettings(db.Model):
     background_url = db.Column(db.String(512), nullable=True)  # 背景图片URL或颜色值
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # 过渡页设置
+    enable_transition = db.Column(db.Boolean, default=False)  # 是否启用过渡页
+    transition_time = db.Column(db.Integer, default=5)  # 访客停留时间（秒）
+    admin_transition_time = db.Column(db.Integer, default=3)  # 管理员停留时间（秒）
+    transition_ad1 = db.Column(db.Text, nullable=True)  # 过渡页广告位1
+    transition_ad2 = db.Column(db.Text, nullable=True)  # 过渡页广告位2
+    transition_remember_choice = db.Column(db.Boolean, default=True)  # 是否允许用户选择不再显示
+    transition_show_description = db.Column(db.Boolean, default=True)  # 是否显示网站描述
+    transition_theme = db.Column(db.String(32), default='default')  # 过渡页主题
+    transition_color = db.Column(db.String(32), default='#6e8efb')  # 过渡页主色调
+    
     # 单例模式：确保只有一条记录
     @classmethod
     def get_settings(cls):
