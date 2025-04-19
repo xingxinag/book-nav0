@@ -44,7 +44,7 @@ BookNav 基于 Flask Web 框架打造，提供了以下核心功能：
 
 - **完整的后台管理界面**: 独立的管理控制台
 - **网站与分类管理**: 完整的增删改查功能，批量删除，批量修改公开，私有状态
-- **站点设置**: 自定义站点名称、Logo、SEO 信息等，支持自定义背景图片
+- **站点设置**: 自定义站点名称、Logo、SEO 信息等，支持自定义背景图片，支持开启链接跳转过渡页（支持放广告）
 - **邀请码管理**: 生成和管理注册邀请码
 - **数据批量操作功能**：
   - 一键抓取图标
@@ -113,12 +113,14 @@ BookNav 基于 Flask Web 框架打造，提供了以下核心功能：
     - 安装 [Docker](https://docs.docker.com/get-docker/)
     - 安装 [Docker Compose](https://docs.docker.com/compose/install/)
 
-2.  **获取代码**:
+2. **获取代码**:
 
-    ```bash
-    git clone https://github.com/yourusername/booknav.git
-    cd booknav
-    ```
+   ```bash
+   git clone https://github.com/yourusername/booknav.git
+   cd booknav
+   sed -i 's/\r$//' docker/cleanup_backups.sh
+   sed -i 's/\r$//' docker/entrypoint.sh
+   ```
 
 3.  **构建与启动**:
 
@@ -141,7 +143,7 @@ version: "3"
 
 services:
   nav:
-    image: yilan666/booknav-nav:1.2
+    image: yilan666/booknav-nav:1.4
     container_name: nav
     restart: always
     ports:
