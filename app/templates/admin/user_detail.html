@@ -204,55 +204,188 @@
 
 <!-- 操作记录区域 -->
 <div class="card mb-4">
-        <div class="card-header">
-    <h5 class="mb-0"><i class="bi bi-clock-history"></i> 操作记录</h5>
+  <div class="card-header">
+    <div class="d-flex justify-content-between align-items-center">
+      <h5 class="mb-0"><i class="bi bi-clock-history"></i> 操作记录</h5>
+      <div>
+        <button type="button" class="btn btn-danger btn-sm me-2" id="clearSelectedBtn" style="display: none;" onclick="batchDeleteRecords('all')">
+          <i class="bi bi-trash"></i> 删除选中
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" onclick="clearAllRecords({{ user.id }})">
+          <i class="bi bi-trash"></i> 清空所有记录
+        </button>
+      </div>
+    </div>
   </div>
   <div class="card-body p-0">
     <!-- 标签页切换 -->
     <ul class="nav nav-tabs" id="recordsTabs" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active d-flex align-items-center" id="added-tab" data-bs-toggle="tab" data-bs-target="#added-tab-pane" type="button" role="tab" aria-controls="added-tab-pane" aria-selected="true">
-          <i class="bi bi-plus-circle me-1"></i> 添加的链接 <span class="badge bg-primary ms-2">{{ added_records|length if added_records else 0 }}</span>
+        <button class="nav-link active d-flex align-items-center" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-tab-pane" type="button" role="tab" aria-controls="all-tab-pane" aria-selected="true">
+          <i class="bi bi-list-ul me-1"></i> 全部记录 <span class="badge bg-primary ms-2">{{ (added_pagination.total if added_pagination else 0) + (modified_pagination.total if modified_pagination else 0) + (deleted_pagination.total if deleted_pagination else 0) }}</span>
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link d-flex align-items-center" id="added-tab" data-bs-toggle="tab" data-bs-target="#added-tab-pane" type="button" role="tab" aria-controls="added-tab-pane" aria-selected="false">
+          <i class="bi bi-plus-circle me-1"></i> 添加记录 <span class="badge bg-primary ms-2">{{ added_pagination.total if added_pagination else 0 }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link d-flex align-items-center" id="modified-tab" data-bs-toggle="tab" data-bs-target="#modified-tab-pane" type="button" role="tab" aria-controls="modified-tab-pane" aria-selected="false">
-          <i class="bi bi-pencil-square me-1"></i> 修改的链接 <span class="badge bg-primary ms-2">{{ modified_records|length if modified_records else 0 }}</span>
+          <i class="bi bi-pencil-square me-1"></i> 修改记录 <span class="badge bg-primary ms-2">{{ modified_pagination.total if modified_pagination else 0 }}</span>
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link d-flex align-items-center" id="deleted-tab" data-bs-toggle="tab" data-bs-target="#deleted-tab-pane" type="button" role="tab" aria-controls="deleted-tab-pane" aria-selected="false">
-          <i class="bi bi-trash me-1"></i> 删除的链接 <span class="badge bg-primary ms-2">{{ deleted_records|length if deleted_records else 0 }}</span>
+          <i class="bi bi-trash me-1"></i> 删除记录 <span class="badge bg-primary ms-2">{{ deleted_pagination.total if deleted_pagination else 0 }}</span>
         </button>
       </li>
     </ul>
     
     <!-- 标签页内容 -->
     <div class="tab-content" id="recordsTabsContent">
-      <!-- 添加记录标签页 -->
-      <div class="tab-pane fade show active" id="added-tab-pane" role="tabpanel" aria-labelledby="added-tab" tabindex="0">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="row align-items-center">
-            <div class="col-md-8">
-              <div class="batch-actions" id="batchActionsAdded">
-                <button type="button" class="btn btn-danger btn-sm" onclick="batchDeleteRecords('added')">
-                  <i class="bi bi-trash"></i> 删除选中
-                </button>
-              </div>
-            </div>
-            <div class="col-md-4 text-end">
-              <select class="form-select form-select-sm" style="width: auto; display: inline-block;" 
-                      onchange="changeRecordPageSize(this, 'added')">
-                <option value="10" {% if request.args.get('added_per_page')|int == 10 or not request.args.get('added_per_page') %}selected{% endif %}>10条/页</option>
-                <option value="20" {% if request.args.get('added_per_page')|int == 20 %}selected{% endif %}>20条/页</option>
-                <option value="50" {% if request.args.get('added_per_page')|int == 50 %}selected{% endif %}>50条/页</option>
-                <option value="100" {% if request.args.get('added_per_page')|int == 100 %}selected{% endif %}>100条/页</option>
-              </select>
-            </div>
+      <!-- 全部记录标签页 -->
+      <div class="tab-pane fade show active" id="all-tab-pane" role="tabpanel" aria-labelledby="all-tab" tabindex="0">
+        {% if all_records %}
+        <div class="admin-table-container">
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">
+                    <input type="checkbox" class="form-check-input" id="selectAllAll">
+                  </th>
+                  <th>网站名称</th>
+                  <th>分类</th>
+                  <th>操作类型</th>
+                  <th>操作时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for record in all_records %}
+                <tr>
+                  <td>
+                    <input type="checkbox" class="form-check-input record-checkbox all-checkbox" value="{{ record.id }}" data-type="{{ record.operation_type|lower }}">
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="website-icon">
+                        {% if record.website_icon %}
+                        <img
+                          src="{{ record.website_icon }}"
+                          alt="{{ record.website_title }}"
+                          style="width: 100%; height: 100%; object-fit: contain"
+                        />
+                        {% else %}
+                        <i class="bi bi-globe text-primary" style="font-size: 24px"></i>
+                        {% endif %}
+                      </div>
+                      <div class="website-info">
+                        <div class="website-title">{{ record.website_title }}</div>
+                        <div class="website-url">{{ record.website_url }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    {% if record.category_name %}
+                    <span class="badge bg-primary">{{ record.category_name }}</span>
+                    {% else %}
+                    <span class="badge bg-secondary">未分类</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if record.operation_type == 'ADD' %}
+                    <span class="badge bg-success">添加</span>
+                    {% elif record.operation_type == 'MODIFY' %}
+                    <span class="badge bg-warning text-dark">修改</span>
+                    {% elif record.operation_type == 'DELETE' %}
+                    <span class="badge bg-danger">删除</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                  <td>
+                    <div class="action-buttons">
+                      {% if record.website_id and record.operation_type != 'DELETE' %}
+                      <a href="{{ url_for('main.site', id=record.website_id) }}" target="_blank" class="btn btn-action" style="background-color: #edf2f7; color: #4a5568;" title="查看链接">
+                        <i class="bi bi-eye"></i>
+                      </a>
+                      {% endif %}
+                      
+                      {% if record.operation_type == 'MODIFY' %}
+                      <button class="btn btn-action btn-edit" data-bs-toggle="modal" data-bs-target="#modifyDetailModal{{ record.id }}" title="查看详情">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      {% elif record.operation_type == 'DELETE' %}
+                      <button class="btn btn-action btn-edit" data-bs-toggle="modal" data-bs-target="#deleteDetailModal{{ record.id }}" title="查看详情">
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      {% endif %}
+                      
+                      <button class="btn btn-action btn-delete" onclick="deleteRecord({{ record.id }}, '{% if record.operation_type == 'ADD' %}添加{% elif record.operation_type == 'MODIFY' %}修改{% else %}删除{% endif %}记录')" title="删除记录">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
           </div>
         </div>
         
+        <!-- 分页，修改为居中样式 -->
+        <div class="d-flex justify-content-center align-items-center mt-3 mb-3">
+          <div class="me-3">
+            <select class="form-select form-select-sm d-inline-block" style="width: 80px" onchange="changeRecordPageSize(this, 'all')">
+              <option value="10" {% if request.args.get('all_per_page')|int == 10 or not request.args.get('all_per_page') %}selected{% endif %}>10条</option>
+              <option value="20" {% if request.args.get('all_per_page')|int == 20 %}selected{% endif %}>20条</option>
+              <option value="50" {% if request.args.get('all_per_page')|int == 50 %}selected{% endif %}>50条</option>
+              <option value="100" {% if request.args.get('all_per_page')|int == 100 %}selected{% endif %}>100条</option>
+            </select>
+            <span class="ms-1">每页</span>
+          </div>
+          <nav aria-label="分页导航">
+            <ul class="pagination pagination-sm mb-0">
+              <li class="page-item {% if not all_pagination.has_prev %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, all_page=all_pagination.prev_num, all_per_page=request.args.get('all_per_page', 10)) }}">
+                  <i class="bi bi-chevron-left"></i>
+                </a>
+              </li>
+
+              {% for page in all_pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                {% if page %}
+                  <li class="page-item {% if page == all_pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, all_page=page, all_per_page=request.args.get('all_per_page', 10)) }}">
+                      {{ page }}
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">...</a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+
+              <li class="page-item {% if not all_pagination.has_next %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, all_page=all_pagination.next_num, all_per_page=request.args.get('all_per_page', 10)) }}">
+                  <i class="bi bi-chevron-right"></i>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+        
+        {% else %}
+        <div class="admin-table-empty">
+          <i class="bi bi-emoji-neutral"></i>
+          <p>该用户尚未有任何操作记录</p>
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- 添加记录标签页 -->
+      <div class="tab-pane fade" id="added-tab-pane" role="tabpanel" aria-labelledby="added-tab" tabindex="0">
         {% if added_records %}
         <div class="admin-table-container">
           <div class="table-responsive">
@@ -320,11 +453,20 @@
           </div>
         </div>
         
-        <!-- 分页 -->
+        <!-- 分页，修改为居中样式 -->
         {% if added_pagination and added_pagination.pages > 1 %}
-        <div class="pagination-container d-flex justify-content-center align-items-center mt-3 mb-3">
-          <nav>
-            <ul class="pagination">
+        <div class="d-flex justify-content-center align-items-center mt-3 mb-3">
+          <div class="me-3">
+            <select class="form-select form-select-sm d-inline-block" style="width: 80px" onchange="changeRecordPageSize(this, 'added')">
+              <option value="10" {% if request.args.get('added_per_page')|int == 10 or not request.args.get('added_per_page') %}selected{% endif %}>10条</option>
+              <option value="20" {% if request.args.get('added_per_page')|int == 20 %}selected{% endif %}>20条</option>
+              <option value="50" {% if request.args.get('added_per_page')|int == 50 %}selected{% endif %}>50条</option>
+              <option value="100" {% if request.args.get('added_per_page')|int == 100 %}selected{% endif %}>100条</option>
+            </select>
+            <span class="ms-1">每页</span>
+          </div>
+          <nav aria-label="分页导航">
+            <ul class="pagination pagination-sm mb-0">
               <li class="page-item {% if not added_pagination.has_prev %}disabled{% endif %}">
                 <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, added_page=added_pagination.prev_num, added_per_page=request.args.get('added_per_page', 10)) }}">
                   <i class="bi bi-chevron-left"></i>
@@ -365,28 +507,6 @@
       
       <!-- 修改记录标签页 -->
       <div class="tab-pane fade" id="modified-tab-pane" role="tabpanel" aria-labelledby="modified-tab" tabindex="0">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="row align-items-center">
-            <div class="col-md-8">
-              <div class="batch-actions" id="batchActionsModified">
-                <button type="button" class="btn btn-danger btn-sm" onclick="batchDeleteRecords('modified')">
-                  <i class="bi bi-trash"></i> 删除选中
-                </button>
-              </div>
-            </div>
-            <div class="col-md-4 text-end">
-              <select class="form-select form-select-sm" style="width: auto; display: inline-block;" 
-                      onchange="changeRecordPageSize(this, 'modified')">
-                <option value="10" {% if request.args.get('modified_per_page')|int == 10 or not request.args.get('modified_per_page') %}selected{% endif %}>10条/页</option>
-                <option value="20" {% if request.args.get('modified_per_page')|int == 20 %}selected{% endif %}>20条/页</option>
-                <option value="50" {% if request.args.get('modified_per_page')|int == 50 %}selected{% endif %}>50条/页</option>
-                <option value="100" {% if request.args.get('modified_per_page')|int == 100 %}selected{% endif %}>100条/页</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
         {% if modified_records %}
         <div class="admin-table-container">
           <div class="table-responsive">
@@ -452,11 +572,20 @@
           </div>
         </div>
         
-        <!-- 分页 -->
+        <!-- 分页，修改为居中样式 -->
         {% if modified_pagination and modified_pagination.pages > 1 %}
-        <div class="pagination-container d-flex justify-content-center align-items-center mt-3 mb-3">
-          <nav>
-            <ul class="pagination">
+        <div class="d-flex justify-content-center align-items-center mt-3 mb-3">
+          <div class="me-3">
+            <select class="form-select form-select-sm d-inline-block" style="width: 80px" onchange="changeRecordPageSize(this, 'modified')">
+              <option value="10" {% if request.args.get('modified_per_page')|int == 10 or not request.args.get('modified_per_page') %}selected{% endif %}>10条</option>
+              <option value="20" {% if request.args.get('modified_per_page')|int == 20 %}selected{% endif %}>20条</option>
+              <option value="50" {% if request.args.get('modified_per_page')|int == 50 %}selected{% endif %}>50条</option>
+              <option value="100" {% if request.args.get('modified_per_page')|int == 100 %}selected{% endif %}>100条</option>
+            </select>
+            <span class="ms-1">每页</span>
+          </div>
+          <nav aria-label="分页导航">
+            <ul class="pagination pagination-sm mb-0">
               <li class="page-item {% if not modified_pagination.has_prev %}disabled{% endif %}">
                 <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, modified_page=modified_pagination.prev_num, modified_per_page=request.args.get('modified_per_page', 10)) }}">
                   <i class="bi bi-chevron-left"></i>
@@ -497,28 +626,6 @@
       
       <!-- 删除记录标签页 -->
       <div class="tab-pane fade" id="deleted-tab-pane" role="tabpanel" aria-labelledby="deleted-tab" tabindex="0">
-        <!-- 工具栏 -->
-        <div class="toolbar">
-          <div class="row align-items-center">
-            <div class="col-md-8">
-              <div class="batch-actions" id="batchActionsDeleted">
-                <button type="button" class="btn btn-danger btn-sm" onclick="batchDeleteRecords('deleted')">
-                  <i class="bi bi-trash"></i> 删除选中
-                </button>
-              </div>
-            </div>
-            <div class="col-md-4 text-end">
-              <select class="form-select form-select-sm" style="width: auto; display: inline-block;" 
-                      onchange="changeRecordPageSize(this, 'deleted')">
-                <option value="10" {% if request.args.get('deleted_per_page')|int == 10 or not request.args.get('deleted_per_page') %}selected{% endif %}>10条/页</option>
-                <option value="20" {% if request.args.get('deleted_per_page')|int == 20 %}selected{% endif %}>20条/页</option>
-                <option value="50" {% if request.args.get('deleted_per_page')|int == 50 %}selected{% endif %}>50条/页</option>
-                <option value="100" {% if request.args.get('deleted_per_page')|int == 100 %}selected{% endif %}>100条/页</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
         {% if deleted_records %}
         <div class="admin-table-container">
           <div class="table-responsive">
@@ -584,11 +691,20 @@
           </div>
         </div>
         
-        <!-- 分页 -->
+        <!-- 分页，修改为居中样式 -->
         {% if deleted_pagination and deleted_pagination.pages > 1 %}
-        <div class="pagination-container d-flex justify-content-center align-items-center mt-3 mb-3">
-          <nav>
-            <ul class="pagination">
+        <div class="d-flex justify-content-center align-items-center mt-3 mb-3">
+          <div class="me-3">
+            <select class="form-select form-select-sm d-inline-block" style="width: 80px" onchange="changeRecordPageSize(this, 'deleted')">
+              <option value="10" {% if request.args.get('deleted_per_page')|int == 10 or not request.args.get('deleted_per_page') %}selected{% endif %}>10条</option>
+              <option value="20" {% if request.args.get('deleted_per_page')|int == 20 %}selected{% endif %}>20条</option>
+              <option value="50" {% if request.args.get('deleted_per_page')|int == 50 %}selected{% endif %}>50条</option>
+              <option value="100" {% if request.args.get('deleted_per_page')|int == 100 %}selected{% endif %}>100条</option>
+            </select>
+            <span class="ms-1">每页</span>
+          </div>
+          <nav aria-label="分页导航">
+            <ul class="pagination pagination-sm mb-0">
               <li class="page-item {% if not deleted_pagination.has_prev %}disabled{% endif %}">
                 <a class="page-link" href="{{ url_for('admin.user_detail', id=user.id, deleted_page=deleted_pagination.prev_num, deleted_per_page=request.args.get('deleted_per_page', 10)) }}">
                   <i class="bi bi-chevron-left"></i>
@@ -809,19 +925,18 @@
     // 全选/取消全选 - 添加记录
     const selectAllAdded = document.getElementById('selectAllAdded');
     const addedCheckboxes = document.querySelectorAll('.added-checkbox');
-    const batchActionsAdded = document.getElementById('batchActionsAdded');
     
     if (selectAllAdded) {
       selectAllAdded.addEventListener('change', function() {
         addedCheckboxes.forEach(checkbox => {
           checkbox.checked = this.checked;
         });
-        updateBatchActions('added');
+        updateClearSelectedBtn();
       });
       
       addedCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-          updateBatchActions('added');
+          updateClearSelectedBtn();
         });
       });
     }
@@ -829,19 +944,18 @@
     // 全选/取消全选 - 修改记录
     const selectAllModified = document.getElementById('selectAllModified');
     const modifiedCheckboxes = document.querySelectorAll('.modified-checkbox');
-    const batchActionsModified = document.getElementById('batchActionsModified');
     
     if (selectAllModified) {
       selectAllModified.addEventListener('change', function() {
         modifiedCheckboxes.forEach(checkbox => {
           checkbox.checked = this.checked;
         });
-        updateBatchActions('modified');
+        updateClearSelectedBtn();
       });
       
       modifiedCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-          updateBatchActions('modified');
+          updateClearSelectedBtn();
         });
       });
     }
@@ -849,35 +963,73 @@
     // 全选/取消全选 - 删除记录
     const selectAllDeleted = document.getElementById('selectAllDeleted');
     const deletedCheckboxes = document.querySelectorAll('.deleted-checkbox');
-    const batchActionsDeleted = document.getElementById('batchActionsDeleted');
     
     if (selectAllDeleted) {
       selectAllDeleted.addEventListener('change', function() {
         deletedCheckboxes.forEach(checkbox => {
           checkbox.checked = this.checked;
         });
-        updateBatchActions('deleted');
+        updateClearSelectedBtn();
       });
       
       deletedCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-          updateBatchActions('deleted');
+          updateClearSelectedBtn();
         });
       });
     }
     
-    // 更新批量操作按钮显示状态
-    function updateBatchActions(type) {
-      const batchActions = document.getElementById(`batchActions${type.charAt(0).toUpperCase() + type.slice(1)}`);
-      if (!batchActions) return;
+    // 全选/取消全选 - 全部记录
+    const selectAllAll = document.getElementById('selectAllAll');
+    const allCheckboxes = document.querySelectorAll('.all-checkbox');
+    const clearSelectedBtn = document.getElementById('clearSelectedBtn');
+    
+    if (selectAllAll) {
+      selectAllAll.addEventListener('change', function() {
+        allCheckboxes.forEach(checkbox => {
+          checkbox.checked = this.checked;
+        });
+        updateClearSelectedBtn();
+      });
       
-      const checkedCount = document.querySelectorAll(`.${type}-checkbox:checked`).length;
+      allCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          updateClearSelectedBtn();
+        });
+      });
+    }
+    
+    // 更新顶部的删除选中按钮显示状态
+    function updateClearSelectedBtn() {
+      const activeTab = document.querySelector('.tab-pane.active');
+      const tabId = activeTab.id;
+      let checkedCount = 0;
+      
+      if (tabId === 'all-tab-pane') {
+        checkedCount = document.querySelectorAll('.all-checkbox:checked').length;
+      } else if (tabId === 'added-tab-pane') {
+        checkedCount = document.querySelectorAll('.added-checkbox:checked').length;
+      } else if (tabId === 'modified-tab-pane') {
+        checkedCount = document.querySelectorAll('.modified-checkbox:checked').length;
+      } else if (tabId === 'deleted-tab-pane') {
+        checkedCount = document.querySelectorAll('.deleted-checkbox:checked').length;
+      }
+      
       if (checkedCount > 0) {
-        batchActions.classList.add('show');
+        clearSelectedBtn.style.display = 'inline-block';
       } else {
-        batchActions.classList.remove('show');
+        clearSelectedBtn.style.display = 'none';
       }
     }
+    
+    // 监听标签页切换事件，更新删除选中按钮状态
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabButtons.forEach(button => {
+      button.addEventListener('shown.bs.tab', updateClearSelectedBtn);
+    });
+    
+    // 初始化删除选中按钮状态
+    updateClearSelectedBtn();
     
     // 处理网站图标加载错误
     const siteIcons = document.querySelectorAll(".website-icon img");
@@ -934,7 +1086,18 @@
     const selectedIds = getSelectedIds(type);
     if (!selectedIds.length) return;
     
-    if (!confirm(`确定要删除选中的 ${selectedIds.length} 条${type === 'added' ? '添加' : type === 'modified' ? '修改' : '删除'}记录吗？`)) return;
+    let confirmMessage = '';
+    if (type === 'added') {
+      confirmMessage = `确定要删除选中的 ${selectedIds.length} 条添加记录吗？`;
+    } else if (type === 'modified') {
+      confirmMessage = `确定要删除选中的 ${selectedIds.length} 条修改记录吗？`;
+    } else if (type === 'deleted') {
+      confirmMessage = `确定要删除选中的 ${selectedIds.length} 条删除记录吗？`;
+    } else {
+      confirmMessage = `确定要删除选中的 ${selectedIds.length} 条操作记录吗？`;
+    }
+    
+    if (!confirm(confirmMessage)) return;
 
     fetch('/admin/api/operation-log/batch-delete', {
       method: 'POST',
@@ -958,10 +1121,51 @@
     });
   }
   
+  // 清空所有记录
+  function clearAllRecords(userId) {
+    if (!confirm('确定要清空该用户的所有操作记录吗？此操作不可恢复！')) return;
+    
+    fetch(`/admin/api/operation-log/clear-all/${userId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.message || '清空失败');
+      }
+    })
+    .catch(error => {
+      console.error('清空记录出错:', error);
+      alert('操作失败，请重试');
+    });
+  }
+  
   // 获取选中的记录ID
   function getSelectedIds(type) {
-    return Array.from(document.querySelectorAll(`.${type}-checkbox:checked`))
-      .map(checkbox => parseInt(checkbox.value));
+    const activeTab = document.querySelector('.tab-pane.active');
+    const tabId = activeTab.id;
+    
+    if (tabId === 'all-tab-pane') {
+      return Array.from(document.querySelectorAll('.all-checkbox:checked'))
+        .map(checkbox => parseInt(checkbox.value));
+    } else if (tabId === 'added-tab-pane') {
+      return Array.from(document.querySelectorAll('.added-checkbox:checked'))
+        .map(checkbox => parseInt(checkbox.value));
+    } else if (tabId === 'modified-tab-pane') {
+      return Array.from(document.querySelectorAll('.modified-checkbox:checked'))
+        .map(checkbox => parseInt(checkbox.value));
+    } else if (tabId === 'deleted-tab-pane') {
+      return Array.from(document.querySelectorAll('.deleted-checkbox:checked'))
+        .map(checkbox => parseInt(checkbox.value));
+    }
+    
+    return [];
   }
   
   // 处理每页显示条数变更

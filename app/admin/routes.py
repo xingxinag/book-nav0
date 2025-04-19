@@ -466,11 +466,13 @@ def user_detail(id):
     websites = Website.query.filter_by(created_by_id=user.id).all()
     
     page_size = {
+        'all': request.args.get('all_per_page', 10, type=int),
         'added': request.args.get('added_per_page', 10, type=int),
         'modified': request.args.get('modified_per_page', 10, type=int),
         'deleted': request.args.get('deleted_per_page', 10, type=int)
     }
     page = {
+        'all': request.args.get('all_page', 1, type=int),
         'added': request.args.get('added_page', 1, type=int),
         'modified': request.args.get('modified_page', 1, type=int),
         'deleted': request.args.get('deleted_page', 1, type=int)
@@ -492,7 +494,18 @@ def user_detail(id):
         operation_type='DELETE'
     ).order_by(OperationLog.created_at.desc())
     
+    # 全部操作记录查询
+    all_records_query = OperationLog.query.filter_by(
+        user_id=user.id
+    ).order_by(OperationLog.created_at.desc())
+    
     # 使用分页
+    all_pagination = all_records_query.paginate(
+        page=page['all'], 
+        per_page=page_size['all'],
+        error_out=False
+    )
+    
     added_pagination = added_records_query.paginate(
         page=page['added'], 
         per_page=page_size['added'],
@@ -509,6 +522,7 @@ def user_detail(id):
         error_out=False
     )
     
+    all_records = all_pagination.items
     added_records = added_pagination.items
     modified_records = modified_pagination.items
     deleted_records = deleted_pagination.items
@@ -518,9 +532,11 @@ def user_detail(id):
         title='用户详情', 
         user=user, 
         websites=websites,
+        all_records=all_records,
         added_records=added_records,
         modified_records=modified_records,
         deleted_records=deleted_records,
+        all_pagination=all_pagination,
         added_pagination=added_pagination,
         modified_pagination=modified_pagination,
         deleted_pagination=deleted_pagination
@@ -733,6 +749,31 @@ def batch_delete_operation_logs():
     db.session.commit()
     
     return jsonify({'success': True, 'message': f'已删除 {len(logs)} 条日志'})
+
+@bp.route('/api/operation-log/clear-all/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def clear_all_operation_logs(user_id):
+    """清空指定用户的所有操作记录"""
+    try:
+        # 验证用户存在
+        user = User.query.get_or_404(user_id)
+        
+        # 获取用户所有操作记录数量
+        count = OperationLog.query.filter_by(user_id=user_id).count()
+        
+        # 删除所有操作记录
+        OperationLog.query.filter_by(user_id=user_id).delete()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'已清空用户 {user.username} 的所有操作记录，共 {count} 条'
+        })
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"清空操作记录失败: {str(e)}")
+        return jsonify({'success': False, 'message': f'操作失败: {str(e)}'}), 500
 
 # 数据库导入导出
 import io
