@@ -5,7 +5,9 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll('[data-bs-toggle="tooltip"]')
   );
   var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl);
+    return new bootstrap.Tooltip(tooltipTriggerEl, {
+      trigger: "hover",
+    });
   });
 
   // 添加导航栏滚动效果
