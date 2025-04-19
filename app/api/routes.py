@@ -2,7 +2,8 @@ from flask import jsonify, request
 from flask_login import current_user, login_required
 from app import db, csrf
 from app.api import bp
-from app.models import Website, Category
+from app.models import Website, Category, OperationLog
+import json
 
 @bp.route('/website/<int:id>/delete', methods=['DELETE'])
 @login_required
@@ -16,8 +17,31 @@ def delete_website(id):
     website = Website.query.get_or_404(id)
     
     try:
+        # 记录删除操作
+        details = {
+            'description': website.description,
+            'is_private': website.is_private,
+            'is_featured': website.is_featured
+        }
+        
+        operation_log = OperationLog(
+            user_id=current_user.id,
+            operation_type='DELETE',
+            website_id=None,  # 删除后ID不存在
+            website_title=website.title,
+            website_url=website.url,
+            website_icon=website.icon,
+            category_id=website.category_id,
+            category_name=website.category.name if website.category else None,
+            details=json.dumps(details)
+        )
+        
+        db.session.add(operation_log)
+        
+        # 删除网站
         db.session.delete(website)
         db.session.commit()
+        
         return jsonify({
             'success': True,
             'message': '网站删除成功'
@@ -42,10 +66,69 @@ def update_website(id):
     data = request.get_json()
 
     try:
+        # 记录修改前的状态
+        old_title = website.title
+        old_url = website.url
+        old_description = website.description
+        old_icon = website.icon
+        old_category_id = website.category_id
+        old_category_name = website.category.name if website.category else None
+        old_is_private = website.is_private
+        old_is_featured = website.is_featured
+        old_sort_order = website.sort_order
+        
+        # 更新网站信息
         website.title = data.get('title', website.title)
         website.url = data.get('url', website.url)
         website.description = data.get('description', website.description)
         website.icon = data.get('icon', website.icon)
+        
+        if 'category_id' in data and data['category_id']:
+            website.category_id = data['category_id']
+        
+        if 'is_private' in data:
+            website.is_private = bool(data['is_private'])
+            
+        if 'sort_order' in data:
+            website.sort_order = int(data['sort_order'])
+        
+        # 确定哪些字段发生了变化
+        changes = {}
+        if old_title != website.title:
+            changes['title'] = {'old': old_title, 'new': website.title}
+        if old_url != website.url:
+            changes['url'] = {'old': old_url, 'new': website.url}
+        if old_description != website.description:
+            changes['description'] = {'old': old_description, 'new': website.description}
+        if old_icon != website.icon:
+            changes['icon'] = {'old': old_icon, 'new': website.icon}
+        if old_sort_order != website.sort_order:
+            changes['sort_order'] = {'old': old_sort_order, 'new': website.sort_order}
+            
+        if old_category_id != website.category_id:
+            new_category_name = website.category.name if website.category else None
+            changes['category'] = {
+                'old': old_category_name, 
+                'new': new_category_name
+            }
+            
+        if old_is_private != website.is_private:
+            changes['is_private'] = {'old': old_is_private, 'new': website.is_private}
+        
+        # 如果有变化，记录修改操作
+        if changes:
+            operation_log = OperationLog(
+                user_id=current_user.id,
+                operation_type='MODIFY',
+                website_id=website.id,
+                website_title=website.title,
+                website_url=website.url,
+                website_icon=website.icon,
+                category_id=website.category_id,
+                category_name=website.category.name if website.category else None,
+                details=json.dumps(changes)
+            )
+            db.session.add(operation_log)
         
         db.session.commit()
         return jsonify({

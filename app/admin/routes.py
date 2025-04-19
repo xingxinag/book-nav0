@@ -172,7 +172,33 @@ def batch_delete_websites():
         website_ids = data['ids']
         if not isinstance(website_ids, list):
             return jsonify({'success': False, 'message': '无效的ID列表'}), 400
+        
+        # 先获取所有要删除的网站信息，用于记录操作日志
+        websites = Website.query.filter(Website.id.in_(website_ids)).all()
+        
+        for website in websites:
+            # 记录删除操作
+            import json
+            details = {
+                'description': website.description,
+                'is_private': website.is_private,
+                'is_featured': website.is_featured
+            }
             
+            operation_log = OperationLog(
+                user_id=current_user.id,
+                operation_type='DELETE',
+                website_id=None,  # 删除后ID不存在
+                website_title=website.title,
+                website_url=website.url,
+                website_icon=website.icon,
+                category_id=website.category_id,
+                category_name=website.category.name if website.category else None,
+                details=json.dumps(details)
+            )
+            
+            db.session.add(operation_log)
+        
         # 删除选中的网站
         deleted_count = Website.query.filter(Website.id.in_(website_ids)).delete(synchronize_session=False)
         db.session.commit()
