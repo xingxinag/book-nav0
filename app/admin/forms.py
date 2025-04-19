@@ -91,8 +91,8 @@ class SiteSettingsForm(FlaskForm):
     
     # 过渡页设置
     enable_transition = BooleanField('启用过渡页')
-    transition_time = IntegerField('访客停留时间', validators=[Optional(), NumberRange(min=1, max=30)], default=5)
-    admin_transition_time = IntegerField('管理员停留时间', validators=[Optional(), NumberRange(min=1, max=30)], default=3)
+    transition_time = IntegerField('访客停留时间', validators=[NumberRange(min=0, max=30)], default=5, description='设置为0则不显示过渡页直接跳转')
+    admin_transition_time = IntegerField('管理员停留时间', validators=[NumberRange(min=0, max=30)], default=3, description='设置为0则不显示过渡页直接跳转')
     transition_ad1 = TextAreaField('广告1', validators=[Optional()])
     transition_ad2 = TextAreaField('广告2', validators=[Optional()])
     transition_remember_choice = BooleanField('允许用户选择不再显示')

@@ -915,6 +915,13 @@
           }
           {% endif %}
 
+          // 确保倒计时大于0，避免除以零错误
+          if ({{ countdown }} <= 0) {
+              console.error('倒计时时间设置为0，直接跳转');
+              window.location.href = targetUrl;
+              return;
+          }
+
           // 设置倒计时
           const timer = setInterval(function() {
               count--;

@@ -1080,6 +1080,10 @@ def goto_website(website_id):
     website.last_view = datetime.utcnow()
     db.session.commit()
     
+    # 如果倒计时设置为0，直接跳转
+    if countdown == 0:
+        return redirect(website.url)
+    
     return render_template('transition.html', website=website, countdown=countdown)
 
 @bp.route('/api/record-visit/<int:website_id>', methods=['POST'])

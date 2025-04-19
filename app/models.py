@@ -183,8 +183,8 @@ class SiteSettings(db.Model):
     
     # 过渡页设置
     enable_transition = db.Column(db.Boolean, default=False)  # 是否启用过渡页
-    transition_time = db.Column(db.Integer, default=5)  # 访客停留时间（秒）
-    admin_transition_time = db.Column(db.Integer, default=3)  # 管理员停留时间（秒）
+    transition_time = db.Column(db.Integer, default=5)  # 访客停留时间（秒），设为0表示不显示过渡页直接跳转
+    admin_transition_time = db.Column(db.Integer, default=3)  # 管理员停留时间（秒），设为0表示不显示过渡页直接跳转
     transition_ad1 = db.Column(db.Text, nullable=True)  # 过渡页广告位1
     transition_ad2 = db.Column(db.Text, nullable=True)  # 过渡页广告位2
     transition_remember_choice = db.Column(db.Boolean, default=True)  # 是否允许用户选择不再显示
