@@ -1,366 +1,353 @@
 {% extends "admin/base.html" %} {% block admin_content %}
-<div class="container-fluid px-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2><i class="bi bi-gear"></i> 站点设置</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-gear"></i> 站点设置</h2>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <i class="bi bi-gear me-1"></i>
+    站点设置
   </div>
+  <div class="card-body">
+    <!-- 标签页导航 -->
+    <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link active"
+          id="basic-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#basic"
+          type="button"
+          role="tab"
+          aria-controls="basic"
+          aria-selected="true"
+        >
+          <i class="bi bi-info-circle me-1"></i> 基本设置
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="appearance-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#appearance"
+          type="button"
+          role="tab"
+          aria-controls="appearance"
+          aria-selected="false"
+        >
+          <i class="bi bi-image me-1"></i> 外观设置
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="background-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#background"
+          type="button"
+          role="tab"
+          aria-controls="background"
+          aria-selected="false"
+        >
+          <i class="bi bi-palette me-1"></i> 背景设置
+        </button>
+      </li>
+    </ul>
 
-  <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-      <i class="bi bi-gear me-1"></i>
-      站点设置
-    </div>
-    <div class="card-body">
-      <!-- 标签页导航 -->
-      <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link active"
-            id="basic-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#basic"
-            type="button"
-            role="tab"
-            aria-controls="basic"
-            aria-selected="true"
-          >
-            <i class="bi bi-info-circle me-1"></i> 基本设置
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link"
-            id="appearance-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#appearance"
-            type="button"
-            role="tab"
-            aria-controls="appearance"
-            aria-selected="false"
-          >
-            <i class="bi bi-image me-1"></i> 外观设置
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button
-            class="nav-link"
-            id="background-tab"
-            data-bs-toggle="tab"
-            data-bs-target="#background"
-            type="button"
-            role="tab"
-            aria-controls="background"
-            aria-selected="false"
-          >
-            <i class="bi bi-palette me-1"></i> 背景设置
-          </button>
-        </li>
-      </ul>
+    <form method="post" enctype="multipart/form-data">
+      {{ form.hidden_tag() }}
+      <!-- 添加隐藏字段用于标记清空操作 -->
+      <input type="hidden" name="clear_logo" id="clear_logo_field" value="0" />
+      <input
+        type="hidden"
+        name="clear_favicon"
+        id="clear_favicon_field"
+        value="0"
+      />
 
-      <form method="post" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-        <!-- 添加隐藏字段用于标记清空操作 -->
-        <input
-          type="hidden"
-          name="clear_logo"
-          id="clear_logo_field"
-          value="0"
-        />
-        <input
-          type="hidden"
-          name="clear_favicon"
-          id="clear_favicon_field"
-          value="0"
-        />
-
-        <!-- 标签页内容 -->
-        <div class="tab-content" id="settingsTabsContent">
-          <!-- 基本设置标签页 -->
-          <div
-            class="tab-pane fade show active"
-            id="basic"
-            role="tabpanel"
-            aria-labelledby="basic-tab"
-          >
-            <div class="card shadow-sm border-0 mb-4">
-              <div class="card-header bg-light">
-                <h5 class="mb-0">
-                  <i class="bi bi-info-circle me-2"></i>网站基本信息设置
-                </h5>
-                <p class="text-muted small mb-0">
-                  设置网站的基本信息，如名称、副标题和SEO相关内容
-                </p>
-              </div>
-              <div class="card-body">
-                <div class="row mb-4">
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      {{ form.site_name.label(class="form-label fw-bold") }} {{
-                      form.site_name(class="form-control") }} {% if
-                      form.site_name.errors %} {% for error in
-                      form.site_name.errors %}
-                      <div class="text-danger">{{ error }}</div>
-                      {% endfor %} {% endif %}
-                      <div class="form-text">
-                        网站标题将显示在浏览器标签和导航栏
-                      </div>
-                    </div>
-
-                    <div class="mb-3">
-                      {{ form.site_subtitle.label(class="form-label fw-bold") }}
-                      {{ form.site_subtitle(class="form-control") }}
-                      <div class="form-text">副标题可显示在网站首页或页脚</div>
+      <!-- 标签页内容 -->
+      <div class="tab-content" id="settingsTabsContent">
+        <!-- 基本设置标签页 -->
+        <div
+          class="tab-pane fade show active"
+          id="basic"
+          role="tabpanel"
+          aria-labelledby="basic-tab"
+        >
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light">
+              <h5 class="mb-0">
+                <i class="bi bi-info-circle me-2"></i>网站基本信息设置
+              </h5>
+              <p class="text-muted small mb-0">
+                设置网站的基本信息，如名称、副标题和SEO相关内容
+              </p>
+            </div>
+            <div class="card-body">
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    {{ form.site_name.label(class="form-label fw-bold") }} {{
+                    form.site_name(class="form-control") }} {% if
+                    form.site_name.errors %} {% for error in
+                    form.site_name.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                    {% endfor %} {% endif %}
+                    <div class="form-text">
+                      网站标题将显示在浏览器标签和导航栏
                     </div>
                   </div>
 
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      {{ form.site_keywords.label(class="form-label fw-bold") }}
-                      {{ form.site_keywords(class="form-control") }}
-                      <div class="form-text">
-                        用于SEO，多个关键词之间用英文逗号分隔
-                      </div>
-                    </div>
-
-                    <div class="mb-3">
-                      {{ form.site_description.label(class="form-label fw-bold")
-                      }} {{ form.site_description(class="form-control", rows=3)
-                      }}
-                      <div class="form-text">网站描述用于SEO和社交媒体分享</div>
-                    </div>
+                  <div class="mb-3">
+                    {{ form.site_subtitle.label(class="form-label fw-bold") }}
+                    {{ form.site_subtitle(class="form-control") }}
+                    <div class="form-text">副标题可显示在网站首页或页脚</div>
                   </div>
                 </div>
 
-                <div class="mb-4">
-                  <label class="form-label fw-bold"
-                    >{{ form.footer_content.label }}</label
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    {{ form.site_keywords.label(class="form-label fw-bold") }}
+                    {{ form.site_keywords(class="form-control") }}
+                    <div class="form-text">
+                      用于SEO，多个关键词之间用英文逗号分隔
+                    </div>
+                  </div>
+
+                  <div class="mb-3">
+                    {{ form.site_description.label(class="form-label fw-bold")
+                    }} {{ form.site_description(class="form-control", rows=3) }}
+                    <div class="form-text">网站描述用于SEO和社交媒体分享</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label fw-bold"
+                  >{{ form.footer_content.label }}</label
+                >
+                {{ form.footer_content(class="form-control", rows=4) }}
+                <div class="form-text">
+                  支持HTML，可自定义页脚内容，如版权信息、备案号、友情链接等
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 外观设置标签页 -->
+        <div
+          class="tab-pane fade"
+          id="appearance"
+          role="tabpanel"
+          aria-labelledby="appearance-tab"
+        >
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light">
+              <h5 class="mb-0"><i class="bi bi-image me-2"></i>网站标识设置</h5>
+              <p class="text-muted small mb-0">自定义网站Logo和Favicon图标</p>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">网站Logo</label>
+                    <div
+                      class="d-flex align-items-center mb-2"
+                      style="height: 50px"
+                    >
+                      <div class="site-logo-preview me-3">
+                        {% if settings.site_logo and settings.site_logo != "" %}
+                        <img
+                          src="{{ settings.site_logo }}"
+                          alt="网站Logo"
+                          style="max-height: 50px"
+                          onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\'><i class=\'bi bi-collection\'></i> 默认Logo</div>';"
+                        />
+                        {% else %}
+                        <div class="text-center p-3 bg-light rounded">
+                          <i class="bi bi-collection"></i> 默认Logo
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="input-group mb-2">
+                      <span class="input-group-text"
+                        ><i class="bi bi-link-45deg"></i
+                      ></span>
+                      {{ form.site_logo(class="form-control", placeholder="Logo
+                      URL") }}
+                      <button
+                        class="btn btn-outline-secondary clear-input"
+                        type="button"
+                        data-target="site_logo"
+                        data-preview="site-logo-preview"
+                      >
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                    <div class="form-text mb-2">外部图床URL或相对路径</div>
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="bi bi-upload"></i
+                      ></span>
+                      {{ form.logo_file(class="form-control") }}
+                    </div>
+                    <div class="form-text">或直接上传图片（优先使用上传）</div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label class="form-label fw-bold">网站图标</label>
+                    <div
+                      class="d-flex align-items-center mb-2"
+                      style="height: 50px"
+                    >
+                      <div class="favicon-preview me-3">
+                        {% if settings.site_favicon and settings.site_favicon !=
+                        "" %}
+                        <img
+                          src="{{ settings.site_favicon }}"
+                          alt="网站图标"
+                          style="max-height: 32px"
+                          onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\' style=\'width: 32px; height: 32px\'><i class=\'bi bi-globe\' style=\'font-size: 16px\'></i></div>';"
+                        />
+                        {% else %}
+                        <div
+                          class="text-center p-3 bg-light rounded"
+                          style="width: 32px; height: 32px"
+                        >
+                          <i class="bi bi-globe" style="font-size: 16px"></i>
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="input-group mb-2">
+                      <span class="input-group-text"
+                        ><i class="bi bi-link-45deg"></i
+                      ></span>
+                      {{ form.site_favicon(class="form-control",
+                      placeholder="Favicon URL") }}
+                      <button
+                        class="btn btn-outline-secondary clear-input"
+                        type="button"
+                        data-target="site_favicon"
+                        data-preview="favicon-preview"
+                      >
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                    <div class="form-text mb-2">外部图床URL或相对路径</div>
+                    <div class="input-group">
+                      <span class="input-group-text"
+                        ><i class="bi bi-upload"></i
+                      ></span>
+                      {{ form.favicon_file(class="form-control") }}
+                    </div>
+                    <div class="form-text">
+                      推荐使用.ico、.png格式，建议尺寸为64x64像素
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 背景设置标签页 -->
+        <div
+          class="tab-pane fade"
+          id="background"
+          role="tabpanel"
+          aria-labelledby="background-tab"
+        >
+          <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light">
+              <h5 class="mb-0">
+                <i class="bi bi-palette me-2"></i>网站背景设置
+              </h5>
+              <p class="text-muted small mb-0">
+                自定义网站背景效果，支持纯色、渐变色或图片背景
+              </p>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    {{ form.background_type.label(class="form-label fw-bold") }}
+                    {{ form.background_type(class="form-control") }}
+                    <div class="form-text">选择网站背景类型</div>
+                  </div>
+                  <div class="mt-3">
+                    <a
+                      href="{{ url_for('admin.wallpaper') }}"
+                      class="btn btn-outline-primary"
+                    >
+                      <i class="bi bi-images me-1"></i> 背景管理
+                    </a>
+                  </div>
+                </div>
+                <div class="col-md-8">
+                  <div class="bg-url-container" id="bgUrlContainer">
+                    <div class="mb-3">
+                      {{ form.background_url.label(class="form-label fw-bold")
+                      }} {{ form.background_url(class="form-control") }}
+                      <div class="form-text bg-url-help" id="bgUrlHelp">
+                        背景URL或颜色代码
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    class="bg-upload-container mb-3"
+                    id="bgUploadContainer"
+                    style="display: none"
                   >
-                  {{ form.footer_content(class="form-control", rows=4) }}
-                  <div class="form-text">
-                    支持HTML，可自定义页脚内容，如版权信息、备案号、友情链接等
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 外观设置标签页 -->
-          <div
-            class="tab-pane fade"
-            id="appearance"
-            role="tabpanel"
-            aria-labelledby="appearance-tab"
-          >
-            <div class="card shadow-sm border-0 mb-4">
-              <div class="card-header bg-light">
-                <h5 class="mb-0">
-                  <i class="bi bi-image me-2"></i>网站标识设置
-                </h5>
-                <p class="text-muted small mb-0">自定义网站Logo和Favicon图标</p>
-              </div>
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label fw-bold">网站Logo</label>
-                      <div
-                        class="d-flex align-items-center mb-2"
-                        style="height: 50px"
-                      >
-                        <div class="site-logo-preview me-3">
-                          {% if settings.site_logo and settings.site_logo != ""
-                          %}
-                          <img
-                            src="{{ settings.site_logo }}"
-                            alt="网站Logo"
-                            style="max-height: 50px"
-                            onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\'><i class=\'bi bi-collection\'></i> 默认Logo</div>';"
-                          />
-                          {% else %}
-                          <div class="text-center p-3 bg-light rounded">
-                            <i class="bi bi-collection"></i> 默认Logo
-                          </div>
-                          {% endif %}
-                        </div>
-                      </div>
-                      <div class="input-group mb-2">
-                        <span class="input-group-text"
-                          ><i class="bi bi-link-45deg"></i
-                        ></span>
-                        {{ form.site_logo(class="form-control",
-                        placeholder="Logo URL") }}
-                        <button
-                          class="btn btn-outline-secondary clear-input"
-                          type="button"
-                          data-target="site_logo"
-                          data-preview="site-logo-preview"
-                        >
-                          <i class="bi bi-x-lg"></i>
-                        </button>
-                      </div>
-                      <div class="form-text mb-2">外部图床URL或相对路径</div>
-                      <div class="input-group">
-                        <span class="input-group-text"
-                          ><i class="bi bi-upload"></i
-                        ></span>
-                        {{ form.logo_file(class="form-control") }}
-                      </div>
-                      <div class="form-text">
-                        或直接上传图片（优先使用上传）
-                      </div>
-                    </div>
+                    {{ form.background_file.label(class="form-label fw-bold") }}
+                    {{ form.background_file(class="form-control") }}
+                    <div class="form-text">上传背景图片（优先使用上传）</div>
                   </div>
 
-                  <div class="col-md-6">
-                    <div class="mb-3">
-                      <label class="form-label fw-bold">网站图标</label>
-                      <div
-                        class="d-flex align-items-center mb-2"
-                        style="height: 50px"
-                      >
-                        <div class="favicon-preview me-3">
-                          {% if settings.site_favicon and settings.site_favicon
-                          != "" %}
-                          <img
-                            src="{{ settings.site_favicon }}"
-                            alt="网站图标"
-                            style="max-height: 32px"
-                            onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\' style=\'width: 32px; height: 32px\'><i class=\'bi bi-globe\' style=\'font-size: 16px\'></i></div>';"
-                          />
-                          {% else %}
-                          <div
-                            class="text-center p-3 bg-light rounded"
-                            style="width: 32px; height: 32px"
-                          >
-                            <i class="bi bi-globe" style="font-size: 16px"></i>
-                          </div>
-                          {% endif %}
-                        </div>
-                      </div>
-                      <div class="input-group mb-2">
-                        <span class="input-group-text"
-                          ><i class="bi bi-link-45deg"></i
-                        ></span>
-                        {{ form.site_favicon(class="form-control",
-                        placeholder="Favicon URL") }}
-                        <button
-                          class="btn btn-outline-secondary clear-input"
-                          type="button"
-                          data-target="site_favicon"
-                          data-preview="favicon-preview"
-                        >
-                          <i class="bi bi-x-lg"></i>
-                        </button>
-                      </div>
-                      <div class="form-text mb-2">外部图床URL或相对路径</div>
-                      <div class="input-group">
-                        <span class="input-group-text"
-                          ><i class="bi bi-upload"></i
-                        ></span>
-                        {{ form.favicon_file(class="form-control") }}
-                      </div>
-                      <div class="form-text">
-                        推荐使用.ico、.png格式，建议尺寸为64x64像素
-                      </div>
-                    </div>
+                  <div
+                    class="bg-preview p-3 bg-light rounded text-center mt-3"
+                    id="bgPreview"
+                    style="height: 150px"
+                  >
+                    <p class="mb-0">背景预览</p>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- 背景设置标签页 -->
-          <div
-            class="tab-pane fade"
-            id="background"
-            role="tabpanel"
-            aria-labelledby="background-tab"
-          >
-            <div class="card shadow-sm border-0 mb-4">
-              <div class="card-header bg-light">
-                <h5 class="mb-0">
-                  <i class="bi bi-palette me-2"></i>网站背景设置
-                </h5>
-                <p class="text-muted small mb-0">
-                  自定义网站背景效果，支持纯色、渐变色或图片背景
-                </p>
-              </div>
-              <div class="card-body">
-                <div class="row">
-                  <div class="col-md-4">
-                    <div class="mb-3">
-                      {{ form.background_type.label(class="form-label fw-bold")
-                      }} {{ form.background_type(class="form-control") }}
-                      <div class="form-text">选择网站背景类型</div>
-                    </div>
-                    <div class="mt-3">
-                      <a
-                        href="{{ url_for('admin.wallpaper') }}"
-                        class="btn btn-outline-primary"
-                      >
-                        <i class="bi bi-images me-1"></i> 背景管理
-                      </a>
-                    </div>
-                  </div>
-                  <div class="col-md-8">
-                    <div class="bg-url-container" id="bgUrlContainer">
-                      <div class="mb-3">
-                        {{ form.background_url.label(class="form-label fw-bold")
-                        }} {{ form.background_url(class="form-control") }}
-                        <div class="form-text bg-url-help" id="bgUrlHelp">
-                          背景URL或颜色代码
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
-                      class="bg-upload-container mb-3"
-                      id="bgUploadContainer"
-                      style="display: none"
-                    >
-                      {{ form.background_file.label(class="form-label fw-bold")
-                      }} {{ form.background_file(class="form-control") }}
-                      <div class="form-text">上传背景图片（优先使用上传）</div>
-                    </div>
-
-                    <div
-                      class="bg-preview p-3 bg-light rounded text-center mt-3"
-                      id="bgPreview"
-                      style="height: 150px"
-                    >
-                      <p class="mb-0">背景预览</p>
-                    </div>
-
-                    <div class="alert alert-info mt-3">
-                      <i class="bi bi-info-circle me-2"></i>
-                      <strong>背景类型说明：</strong>
-                      <ul class="mb-0 mt-2">
-                        <li><strong>无背景</strong> - 使用系统默认背景</li>
-                        <li>
-                          <strong>图片背景</strong> -
-                          可上传自定义图片或使用外部链接
-                        </li>
-                        <li>
-                          <strong>渐变色背景</strong> - 使用CSS渐变代码，如
-                          linear-gradient(135deg, #6e8efb, #a777e3)
-                        </li>
-                        <li>
-                          <strong>纯色背景</strong> - 使用颜色代码，如 #f5f7fa
-                          或 rgba(245, 247, 250, 1)
-                        </li>
-                      </ul>
-                    </div>
+                  <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>背景类型说明：</strong>
+                    <ul class="mb-0 mt-2">
+                      <li><strong>无背景</strong> - 使用系统默认背景</li>
+                      <li>
+                        <strong>图片背景</strong> -
+                        可上传自定义图片或使用外部链接
+                      </li>
+                      <li>
+                        <strong>渐变色背景</strong> - 使用CSS渐变代码，如
+                        linear-gradient(135deg, #6e8efb, #a777e3)
+                      </li>
+                      <li>
+                        <strong>纯色背景</strong> - 使用颜色代码，如 #f5f7fa 或
+                        rgba(245, 247, 250, 1)
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="mt-4 text-end">
-          {{ form.submit_btn(class="btn btn-primary btn-lg px-5") }}
-        </div>
-      </form>
-    </div>
+      <div class="mt-4 text-end">
+        {{ form.submit_btn(class="btn btn-primary btn-lg px-5") }}
+      </div>
+    </form>
   </div>
 </div>
 {% endblock %} {% block admin_scripts %}
