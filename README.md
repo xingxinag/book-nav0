@@ -113,14 +113,14 @@ BookNav 基于 Flask Web 框架打造，提供了以下核心功能：
     - 安装 [Docker](https://docs.docker.com/get-docker/)
     - 安装 [Docker Compose](https://docs.docker.com/compose/install/)
 
-2. **获取代码**:
+2.  **获取代码**:
 
-   ```bash
-   git clone https://github.com/yourusername/booknav.git
-   cd booknav
-   sed -i 's/\r$//' docker/cleanup_backups.sh
-   sed -i 's/\r$//' docker/entrypoint.sh
-   ```
+    ```bash
+    git clone https://github.com/yourusername/booknav.git
+    cd booknav
+    sed -i 's/\r$//' docker/cleanup_backups.sh
+    sed -i 's/\r$//' docker/entrypoint.sh
+    ```
 
 3.  **构建与启动**:
 
@@ -143,7 +143,7 @@ version: "3"
 
 services:
   nav:
-    image: yilan666/booknav-nav:1.4
+    image: yilan666/booknav-nav:1.5
     container_name: nav
     restart: always
     ports:
@@ -156,10 +156,10 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=sqlite:////data/app.db 
+      - DATABASE_URL=sqlite:////data/app.db
 ```
 
-docker-compose.yml文件同级目录下创建.env文件
+docker-compose.yml 文件同级目录下创建.env 文件
 
 ```env
 # 基本配置
@@ -188,7 +188,7 @@ ADMIN_PASSWORD=
 docker-compose up -d
 ```
 
-用户名和密码为.env文件中自定义填写的
+用户名和密码为.env 文件中自定义填写的
 
 ### 数据库初始化
 
