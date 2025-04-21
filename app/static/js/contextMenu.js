@@ -182,65 +182,178 @@ document.addEventListener("DOMContentLoaded", function () {
           window.currentCard.querySelector(".site-title").textContent;
 
         // 弹出确认对话框
-        if (confirm(`确定要删除"${cardTitle}"吗？此操作不可恢复。`)) {
-          // 添加删除中状态
-          window.currentCard.classList.add("deleting");
+        showConfirmDialog({
+          title: "确认删除",
+          message: `您确定要删除"${cardTitle}"吗？此操作不可恢复。`,
+          confirmText: "删除",
+          cancelText: "取消",
+          isDanger: true,
+        }).then((confirmed) => {
+          if (confirmed) {
+            // 添加删除中状态
+            window.currentCard.classList.add("deleting");
 
-          // 半透明效果
-          window.currentCard.style.opacity = "0.7";
-          window.currentCard.style.pointerEvents = "none";
+            // 半透明效果
+            window.currentCard.style.opacity = "0.7";
+            window.currentCard.style.pointerEvents = "none";
 
-          // 发送删除请求
-          fetch(`/api/website/${cardId}/delete`, {
-            method: "DELETE",
-            headers: {
-              "Content-Type": "application/json",
-              "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')
-                .content,
-            },
-          })
-            .then((response) => response.json())
-            .then((data) => {
-              // 移除删除中状态
-              window.currentCard.classList.remove("deleting");
+            // 发送删除请求
+            fetch(`/api/website/${cardId}/delete`, {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')
+                  .content,
+              },
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                // 移除删除中状态
+                window.currentCard.classList.remove("deleting");
 
-              if (data.success) {
-                // 替换alert为showCopyToast
-                showCopyToast(data.message);
+                if (data.success) {
+                  // 替换alert为showCopyToast
+                  showCopyToast(data.message);
 
-                // 添加卡片淡出动画
-                window.currentCard.style.transition =
-                  "opacity 0.3s ease, transform 0.3s ease";
-                window.currentCard.style.opacity = "0";
-                window.currentCard.style.transform = "scale(0.95)";
+                  // 添加卡片淡出动画
+                  window.currentCard.style.transition =
+                    "opacity 0.3s ease, transform 0.3s ease";
+                  window.currentCard.style.opacity = "0";
+                  window.currentCard.style.transform = "scale(0.95)";
 
-                // 动画结束后从DOM中移除卡片
-                setTimeout(() => {
-                  window.currentCard.remove();
-                  window.currentCard = null;
-                }, 300);
-              } else {
+                  // 动画结束后从DOM中移除卡片
+                  setTimeout(() => {
+                    window.currentCard.remove();
+                    window.currentCard = null;
+                  }, 300);
+                } else {
+                  // 恢复卡片状态
+                  window.currentCard.style.opacity = "1";
+                  window.currentCard.style.pointerEvents = "auto";
+
+                  // 显示错误提示
+                  showCopyToast(
+                    "删除失败: " + (data.message || "未知错误"),
+                    "error"
+                  );
+                }
+              })
+              .catch((error) => {
+                // 移除删除中状态
+                window.currentCard.classList.remove("deleting");
+
                 // 恢复卡片状态
                 window.currentCard.style.opacity = "1";
                 window.currentCard.style.pointerEvents = "auto";
 
-                // 保留alert用于错误提示，因为错误需要用户确认
-                alert("删除失败: " + (data.message || "未知错误"));
-              }
-            })
-            .catch((error) => {
-              // 移除删除中状态
-              window.currentCard.classList.remove("deleting");
-
-              // 恢复卡片状态
-              window.currentCard.style.opacity = "1";
-              window.currentCard.style.pointerEvents = "auto";
-
-              console.error("删除链接出错:", error);
-              alert("删除链接时发生错误，请重试");
-            });
-        }
+                console.error("删除链接出错:", error);
+                showCopyToast("删除链接时发生错误，请重试", "error");
+              });
+          }
+        });
       }
     });
   }
 });
+
+/**
+ * 显示自定义确认对话框
+ * @param {Object} options - 配置选项
+ * @param {string} options.title - 对话框标题
+ * @param {string} options.message - 对话框消息
+ * @param {string} options.confirmText - 确认按钮文本
+ * @param {string} options.cancelText - 取消按钮文本
+ * @param {boolean} options.isDanger - 是否为危险操作
+ * @returns {Promise<boolean>} - 用户确认时返回true，取消时返回false
+ */
+function showConfirmDialog(options) {
+  return new Promise((resolve) => {
+    // 默认选项
+    const defaults = {
+      title: "确认操作",
+      message: "您确定要执行此操作吗？",
+      confirmText: "确定",
+      cancelText: "取消",
+      isDanger: false,
+    };
+
+    // 合并选项
+    const settings = { ...defaults, ...options };
+
+    // 创建对话框元素
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-dialog-overlay";
+
+    const dialog = document.createElement("div");
+    dialog.className = "confirm-dialog";
+
+    // 对话框头部
+    const header = document.createElement("div");
+    header.className = "confirm-dialog-header";
+    header.innerHTML = `
+      <i class="bi ${
+        settings.isDanger
+          ? "bi-exclamation-triangle-fill"
+          : "bi-question-circle-fill"
+      }"></i>
+      <div class="confirm-dialog-title">${settings.title}</div>
+    `;
+
+    // 对话框内容
+    const body = document.createElement("div");
+    body.className = "confirm-dialog-body";
+    body.textContent = settings.message;
+
+    // 对话框底部按钮
+    const footer = document.createElement("div");
+    footer.className = "confirm-dialog-footer";
+
+    const cancelBtn = document.createElement("button");
+    cancelBtn.className = "confirm-btn confirm-btn-cancel";
+    cancelBtn.textContent = settings.cancelText;
+    cancelBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(false);
+    };
+
+    const confirmBtn = document.createElement("button");
+    confirmBtn.className = `confirm-btn ${
+      settings.isDanger ? "confirm-btn-danger" : "confirm-btn-confirm"
+    }`;
+    confirmBtn.textContent = settings.confirmText;
+    confirmBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(true);
+    };
+
+    // 组装对话框
+    footer.appendChild(cancelBtn);
+    footer.appendChild(confirmBtn);
+
+    dialog.appendChild(header);
+    dialog.appendChild(body);
+    dialog.appendChild(footer);
+    overlay.appendChild(dialog);
+
+    // 添加到页面
+    document.body.appendChild(overlay);
+
+    // 聚焦到确认按钮
+    confirmBtn.focus();
+
+    // 添加键盘事件监听
+    const handleKeydown = (e) => {
+      if (e.key === "Escape") {
+        document.body.removeChild(overlay);
+        document.removeEventListener("keydown", handleKeydown);
+        resolve(false);
+      } else if (e.key === "Enter") {
+        document.body.removeChild(overlay);
+        document.removeEventListener("keydown", handleKeydown);
+        resolve(true);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeydown);
+  });
+}

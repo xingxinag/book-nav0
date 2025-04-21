@@ -640,3 +640,124 @@ textarea.modal-input {
   background-color: #f57c00;
   border-color: #f57c00;
 }
+
+/* 自定义确认对话框样式 */
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirm-dialog {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+}
+
+.confirm-dialog-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+}
+
+.confirm-dialog-header i {
+  font-size: 24px;
+  margin-right: 12px;
+  color: #e53935;
+}
+
+.confirm-dialog-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.confirm-dialog-body {
+  padding: 20px;
+  font-size: 15px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.confirm-dialog-footer {
+  padding: 12px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.confirm-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.confirm-btn-cancel {
+  background-color: #f5f5f5;
+  color: #555;
+}
+
+.confirm-btn-cancel:hover {
+  background-color: #eee;
+}
+
+.confirm-btn-confirm {
+  background: var(
+    --primary-gradient,
+    linear-gradient(135deg, #7049f0, #aa26ff)
+  );
+  color: white;
+}
+
+.confirm-btn-confirm:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.confirm-btn-danger {
+  background: linear-gradient(145deg, #f44336, #e53935);
+  color: white;
+}
+
+.confirm-btn-danger:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
