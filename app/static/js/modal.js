@@ -7,6 +7,76 @@ document.addEventListener("DOMContentLoaded", function () {
   const fetchInfoBtn = document.getElementById("fetchInfo");
   const editIconPreview = document.getElementById("editIconPreview");
 
+  /**
+   * 显示toast通知
+   * @param {string} message - 显示的消息
+   * @param {string} type - 通知类型：success, error, warning, info
+   */
+  function showToast(message, type = "success") {
+    // 检查是否已存在提示，如果有则移除
+    const existingToast = document.querySelector(".copy-toast");
+    if (existingToast) {
+      document.body.removeChild(existingToast);
+    }
+
+    // 根据类型确定图标和颜色
+    let icon, backgroundColor, borderColor;
+    switch (type) {
+      case "error":
+        icon = "bi-exclamation-circle-fill";
+        backgroundColor = "linear-gradient(145deg, #f44336, #e53935)";
+        borderColor = "#c62828";
+        break;
+      case "warning":
+        icon = "bi-exclamation-triangle-fill";
+        backgroundColor = "linear-gradient(145deg, #ff9800, #f57c00)";
+        borderColor = "#e65100";
+        break;
+      case "info":
+        icon = "bi-info-circle-fill";
+        backgroundColor = "linear-gradient(145deg, #2196f3, #1e88e5)";
+        borderColor = "#0d47a1";
+        break;
+      case "success":
+      default:
+        icon = "bi-check-circle-fill";
+        backgroundColor =
+          "var(--primary-gradient, linear-gradient(135deg, #7049f0, #aa26ff))";
+        borderColor = "rgba(112, 73, 240, 0.7)";
+        break;
+    }
+
+    // 创建新的提示元素
+    const toast = document.createElement("div");
+    toast.className = "copy-toast";
+    toast.style.background = backgroundColor;
+    toast.style.borderLeft = `4px solid ${borderColor}`;
+    toast.innerHTML = `
+      <i class="bi ${icon}"></i>
+      <span>${message}</span>
+    `;
+
+    // 添加到页面
+    document.body.appendChild(toast);
+
+    // 延迟一小段时间后显示，以便有渐入效果
+    setTimeout(() => {
+      toast.classList.add("show");
+    }, 10);
+
+    // 2.5秒后自动消失
+    setTimeout(() => {
+      toast.classList.remove("show");
+
+      // 动画结束后从DOM中移除
+      setTimeout(() => {
+        if (toast.parentNode) {
+          document.body.removeChild(toast);
+        }
+      }, 300); // 等待过渡动画完成
+    }, 2500);
+  }
+
   // 修改链接按钮点击事件
   editLinkBtn.addEventListener("click", function () {
     if (window.currentCard) {
@@ -135,7 +205,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 验证分类选择
     if (!categoryId) {
-      alert("请选择分类");
+      showToast("请选择分类", "info");
       return;
     }
 
@@ -225,16 +295,16 @@ document.addEventListener("DOMContentLoaded", function () {
           );
         }
 
-        alert("网站信息修改成功!");
+        showToast("网站信息修改成功!");
 
         // 关闭模态框而不刷新页面
         editLinkModal.style.display = "none";
       } else {
-        alert("修改失败: " + data.message);
+        showToast("修改失败: " + data.message, "error");
       }
     } catch (error) {
       console.error("修改链接出错:", error);
-      alert("修改链接时发生错误，请重试");
+      showToast("修改链接时发生错误，请重试", "error");
     }
   });
 
@@ -247,7 +317,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const url = urlInput.value.trim();
 
     if (!url) {
-      alert("请先输入网站链接地址");
+      showToast("请先输入网站链接地址", "info");
       return;
     }
 
@@ -308,14 +378,17 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("解析域名出错:", error);
           }
 
-          alert("网站信息获取成功！");
+          showToast("网站信息获取成功!");
         } else {
-          alert("获取网站信息失败: " + (data.message || "未知错误"));
+          showToast(
+            "获取网站信息失败: " + (data.message || "未知错误"),
+            "error"
+          );
         }
       })
       .catch((error) => {
         console.error("获取网站信息出错:", error);
-        alert("获取网站信息失败，请手动填写");
+        showToast("获取网站信息失败，请手动填写", "warning");
       })
       .finally(() => {
         // 移除加载状态
