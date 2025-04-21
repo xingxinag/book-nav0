@@ -287,13 +287,18 @@ def site_info(site_id):
 # 帮助解析网站信息的函数
 def parse_website_info(url):
     try:
+        # 确保URL有协议前缀
+        processed_url = url
+        if not processed_url.startswith(('http://', 'https://')):
+            processed_url = 'https://' + processed_url
+            
         # 添加超时和请求头以模拟浏览器
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         }
-        response = requests.get(request_url, headers=headers, timeout=10)
+        response = requests.get(processed_url, headers=headers, timeout=10)
         response.raise_for_status()  # 确保请求成功
         
         # 检测网页编码
@@ -365,8 +370,9 @@ def parse_website_info(url):
 def get_website_icon(url):
     try:
         # 确保URL有协议前缀
-        if not url.startswith(('http://', 'https://')):
-            url = 'http://' + url
+        processed_url = url
+        if not processed_url.startswith(('http://', 'https://')):
+            processed_url = 'http://' + processed_url
         
         # 使用小小API获取图标
         headers = {
@@ -374,13 +380,13 @@ def get_website_icon(url):
         }
         
         # 根据文档示例，完整URL作为参数
-        api_url = f"https://v2.xxapi.cn/api/ico?url={url}"
+        api_url = f"https://v2.xxapi.cn/api/ico?url={processed_url}"
         
         # 添加调试日志
         print(f"请求小小API: {api_url}")
         
         # 发送请求获取响应
-        response = requests.get(api_url, headers=headers)
+        response = requests.get(api_url, headers=headers, timeout=5)
         
         # 打印原始响应内容，帮助调试
         print(f"小小API响应: {response.text}")
@@ -400,7 +406,7 @@ def get_website_icon(url):
                 error_msg = result.get('msg', '无法获取图标')
                 print(f"小小API返回错误: {error_msg}")
                 # 备用方案：使用cccyun的favicon服务
-                parsed_url = urlparse(request_url)
+                parsed_url = urlparse(processed_url)
                 domain = parsed_url.netloc
                 return {
                     "success": False,
@@ -419,7 +425,7 @@ def get_website_icon(url):
                     }
         
         # 如果以上都失败，使用备用图标
-        parsed_url = urlparse(request_url)
+        parsed_url = urlparse(processed_url)
         domain = parsed_url.netloc
         return {
             "success": False,
@@ -429,7 +435,7 @@ def get_website_icon(url):
     except Exception as e:
         print(f"获取网站图标出错: {str(e)}")
         try:
-            parsed_url = urlparse(request_url)
+            parsed_url = urlparse(processed_url)
             domain = parsed_url.netloc
             return {
                 "success": False,
@@ -453,11 +459,21 @@ def fetch_website_info():
     result = parse_website_info(url)
     
     # 添加图标信息
-    icon_result = get_website_icon(request_url)
+    icon_result = get_website_icon(url)
     if icon_result["success"]:
         result["icon_url"] = icon_result["icon_url"]
     elif "fallback_url" in icon_result:
         result["icon_url"] = icon_result["fallback_url"]
+    
+    # 确保返回完整的数据结构
+    if result["success"]:
+        # 解析域名
+        processed_url = url
+        if not processed_url.startswith(('http://', 'https://')):
+            processed_url = 'https://' + processed_url
+        parsed_url = urlparse(processed_url)
+        domain = parsed_url.netloc
+        result["domain"] = domain
         
     return jsonify(result)
 
@@ -1109,8 +1125,8 @@ def record_visit(website_id):
 @bp.route('/api/fetch_website_info_with_progress')
 def fetch_website_info_with_progress():
     """获取网站信息的流式API（带进度）"""
-    url = request.args.get('url', '')
-    if not url:
+    original_url = request.args.get('url', '')
+    if not original_url:
         return jsonify({"success": False, "message": "未提供URL参数"})
     
     def generate():
@@ -1126,13 +1142,13 @@ def fetch_website_info_with_progress():
             }
             
             # 确保URL有协议前缀
-            request_url = url
-            if not request_url.startswith(('http://', 'https://')):
-                request_url = 'https://' + request_url
+            processed_url = original_url
+            if not processed_url.startswith(('http://', 'https://')):
+                processed_url = 'https://' + processed_url
                 
             # 发送请求
             yield json.dumps({"stage": "connecting", "progress": 20, "message": "正在下载网页内容..."}) + "\n"
-            response = requests.get(request_url, headers=headers, timeout=10)
+            response = requests.get(processed_url, headers=headers, timeout=10)
             response.raise_for_status()
             
             # 检测编码
@@ -1197,7 +1213,7 @@ def fetch_website_info_with_progress():
             yield json.dumps({"stage": "extracting_icon", "progress": 70, "message": "正在获取网站图标..."}) + "\n"
             
             # 解析域名
-            parsed_url = urlparse(request_url)
+            parsed_url = urlparse(processed_url)
             domain = parsed_url.netloc
             
             # 使用备用图标服务
@@ -1206,7 +1222,7 @@ def fetch_website_info_with_progress():
             # 尝试使用API获取更好的图标
             yield json.dumps({"stage": "fetching_icon", "progress": 80, "message": "正在获取高质量图标..."}) + "\n"
             try:
-                icon_result = get_website_icon(request_url)
+                icon_result = get_website_icon(processed_url)
                 if icon_result["success"]:
                     icon_url = icon_result["icon_url"]
                 elif "fallback_url" in icon_result:
@@ -1234,7 +1250,11 @@ def fetch_website_info_with_progress():
                 "stage": "error",
                 "progress": 0,
                 "message": f"错误: {error_message}",
-                "success": False
+                "success": False,
+                "title": "",
+                "description": "",
+                "domain": "",
+                "icon_url": ""
             }) + "\n"
     
     return Response(stream_with_context(generate()), 
