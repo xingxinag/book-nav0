@@ -149,12 +149,18 @@ document.addEventListener("DOMContentLoaded", function () {
       const checkResult = await checkResponse.json();
 
       if (checkResult.exists) {
-        const confirmUpdate = confirm(
-          `该链接已存在于分类"${checkResult.website.category_name}"中，标题为"${checkResult.website.title}"。\n\n是否仍要保存？`
-        );
-        if (!confirmUpdate) {
+        // 使用自定义对话框替代confirm
+        const action = await showDuplicateLinkPrompt(checkResult.website);
+
+        if (action === "view") {
+          // 导航到已有链接
+          navigateToExistingLink(checkResult.website);
+          return;
+        } else if (action === "cancel") {
+          // 用户选择取消添加
           return;
         }
+        // 用户选择继续添加
       }
 
       // 发送修改请求到服务器

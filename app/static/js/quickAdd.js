@@ -31,14 +31,22 @@ document.addEventListener("paste", async function (e) {
     const checkResult = await checkResponse.json();
 
     if (checkResult.exists) {
-      const confirmAdd = confirm(
-        `该链接已存在于分类"${checkResult.website.category_name}"中，标题为"${checkResult.website.title}"。\n\n是否仍要添加？`
-      );
-      if (!confirmAdd) {
-        closeQuickAddModal();
-        setQuickAddLoading(false);
+      // 使用自定义对话框替代confirm
+      closeQuickAddModal();
+
+      // 显示重复链接提示对话框
+      const action = await showDuplicateLinkPrompt(checkResult.website);
+
+      if (action === "view") {
+        // 导航到已有链接
+        navigateToExistingLink(checkResult.website);
+        return;
+      } else if (action === "cancel") {
+        // 用户选择取消添加
         return;
       }
+      // 用户选择继续添加，重新打开快速添加对话框
+      showQuickAddModal();
     }
 
     // 获取网站信息和图标
@@ -132,12 +140,18 @@ async function submitQuickAdd() {
     const checkResult = await checkResponse.json();
 
     if (checkResult.exists) {
-      const confirmAdd = confirm(
-        `该链接已存在于分类"${checkResult.website.category_name}"中，标题为"${checkResult.website.title}"。\n\n是否仍要添加？`
-      );
-      if (!confirmAdd) {
+      // 使用自定义对话框替代confirm
+      const action = await showDuplicateLinkPrompt(checkResult.website);
+
+      if (action === "view") {
+        // 导航到已有链接
+        navigateToExistingLink(checkResult.website);
+        return;
+      } else if (action === "cancel") {
+        // 用户选择取消添加
         return;
       }
+      // 用户选择继续添加
     }
 
     const submitBtn = document.querySelector("#quickAddModal .btn-primary");
