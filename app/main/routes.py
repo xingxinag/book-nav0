@@ -54,6 +54,9 @@ def index():
 def category(id):
     category = Category.query.get_or_404(id)
     
+    # 获取高亮显示参数
+    highlight_id = request.args.get('highlight')
+    
     # 构建查询：直接查询该分类下的网站
     websites_query = Website.query.filter_by(category_id=id)
     
@@ -82,6 +85,7 @@ def category(id):
         'category': category,
         'websites': websites,
         'all_categories': all_categories,
+        'highlight_id': highlight_id  # 添加高亮ID到上下文
     }
     
     # 如果是子分类，获取同级分类（兄弟分类）
@@ -838,7 +842,12 @@ def check_url_exists():
             'website': {
                 'id': website.id,
                 'title': website.title,
-                'category_name': website.category.name if website.category else None
+                'url': website.url,
+                'description': website.description,
+                'icon': website.icon,
+                'category_id': website.category_id,
+                'category_name': website.category.name if website.category else None,
+                'is_private': website.is_private
             }
         })
     

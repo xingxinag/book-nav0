@@ -131,13 +131,31 @@ function showDuplicateLinkPrompt(duplicateData) {
  */
 function navigateToExistingLink(websiteData) {
   if (!websiteData || !websiteData.category_id) {
-    console.error("无法导航：缺少必要的网站数据");
+    console.error("无法导航：缺少必要的网站数据", websiteData);
+    alert("无法查看链接：缺少必要的网站数据");
     return;
   }
 
-  // 构建分类页面URL
-  const categoryUrl = `/category/${websiteData.category_id}`;
+  // 显示导航提示
+  console.log("正在导航到:", websiteData);
 
-  // 导航到分类页面，并传递网站ID以便高亮显示
-  window.location.href = `${categoryUrl}?highlight=${websiteData.id}`;
+  // 更详细的日志，帮助调试问题
+  console.log(
+    `导航信息: ID=${websiteData.id}, 分类ID=${websiteData.category_id}, 标题=${websiteData.title}`
+  );
+
+  try {
+    // 构建分类页面URL
+    const categoryUrl = `/category/${websiteData.category_id}`;
+
+    // 导航到分类页面，并传递网站ID以便高亮显示
+    const finalUrl = `${categoryUrl}?highlight=${websiteData.id}`;
+    console.log("跳转URL:", finalUrl);
+
+    // 使用location.href进行导航
+    window.location.href = finalUrl;
+  } catch (error) {
+    console.error("导航过程中出错:", error);
+    alert("导航失败，请重试");
+  }
 }

@@ -624,8 +624,10 @@ textarea.modal-input {
 }
 
 #viewExistingLink:hover {
-  background-color: var(--primary-dark);
-  border-color: var(--primary-dark);
+  background-color: #5d3fd3;
+  border-color: #5d3fd3;
+  color: white;
+  box-shadow: 0 0 0 0.2rem rgba(112, 73, 240, 0.25);
 }
 
 #addDuplicateLink {

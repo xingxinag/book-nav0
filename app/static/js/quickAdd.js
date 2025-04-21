@@ -66,18 +66,77 @@ document.addEventListener("paste", async function (e) {
     document.getElementById("quickAddDescription").value =
       websiteInfo.description || "";
 
+    // 详细分析获取情况
+    const hasTitleSuccess =
+      websiteInfo.title && websiteInfo.title.trim() !== "";
+    const hasDescSuccess =
+      websiteInfo.description && websiteInfo.description.trim() !== "";
+    const hasIconSuccess =
+      websiteInfo.icon_url && websiteInfo.icon_url.trim() !== "";
+
     // 设置图标
-    if (websiteInfo.success && websiteInfo.icon_url) {
+    if (hasIconSuccess) {
       const iconInput = document.getElementById("quickAddIcon");
       const iconPreview = document.getElementById("quickAddIconPreview");
       iconInput.value = websiteInfo.icon_url;
       iconPreview.src = websiteInfo.icon_url;
       iconPreview.style.display = "block";
     }
+
+    // 根据获取结果提供精确的反馈
+    if (hasTitleSuccess && hasDescSuccess && hasIconSuccess) {
+      // 全部成功
+      showTemporaryNotification("网站信息获取成功", "success");
+    } else if (!websiteInfo.success) {
+      // API返回失败
+      let failReason = "";
+      if (websiteInfo.message) {
+        // 有错误信息
+        if (websiteInfo.message.includes("timeout")) {
+          failReason = "请求超时";
+        } else if (
+          websiteInfo.message.includes("403") ||
+          websiteInfo.message.includes("forbidden")
+        ) {
+          failReason = "网站禁止访问";
+        } else {
+          failReason = websiteInfo.message;
+        }
+      } else {
+        failReason = "未知原因";
+      }
+      showTemporaryNotification(`获取失败(${failReason})，请手动填写`, "error");
+    } else {
+      // 部分失败
+      let missingParts = [];
+      if (!hasTitleSuccess) missingParts.push("标题");
+      if (!hasDescSuccess) missingParts.push("描述");
+      if (!hasIconSuccess) missingParts.push("图标");
+
+      showTemporaryNotification(
+        `${missingParts.join("、")}获取失败，请手动补充`,
+        "warning"
+      );
+    }
   } catch (error) {
     console.error("获取网站信息失败:", error);
     // 如果获取失败，至少填充URL
     document.getElementById("quickAddUrl").value = pastedData;
+
+    // 提供错误类型信息
+    let errorMessage = "获取网站信息失败";
+    if (error.name === "AbortError") {
+      errorMessage += "(请求超时)";
+    } else if (
+      error.name === "TypeError" &&
+      error.message.includes("networkerror")
+    ) {
+      errorMessage += "(网络错误)";
+    } else if (error.message) {
+      errorMessage += `(${error.message})`;
+    }
+
+    showTemporaryNotification(`${errorMessage}，请手动填写`, "error");
   } finally {
     setQuickAddLoading(false);
   }
@@ -91,6 +150,41 @@ function isValidUrl(url) {
   } catch (error) {
     return false;
   }
+}
+
+// 显示临时通知
+function showTemporaryNotification(message, type = "info") {
+  // 检查是否已有通知元素
+  let notification = document.getElementById("quickAddNotification");
+  if (!notification) {
+    // 创建通知元素
+    notification = document.createElement("div");
+    notification.id = "quickAddNotification";
+    notification.className = "quick-add-notification";
+    document.body.appendChild(notification);
+  }
+
+  // 设置通知类型样式
+  notification.className = `quick-add-notification ${type}`;
+  notification.innerHTML = `<i class="bi bi-${
+    type === "success"
+      ? "check-circle"
+      : type === "warning"
+      ? "exclamation-triangle"
+      : "info-circle"
+  } me-2"></i>${message}`;
+
+  // 显示通知
+  notification.style.display = "block";
+
+  // 3秒后自动隐藏
+  setTimeout(() => {
+    notification.style.opacity = "0";
+    setTimeout(() => {
+      notification.style.display = "none";
+      notification.style.opacity = "1";
+    }, 300);
+  }, 3000);
 }
 
 function showQuickAddModal() {
@@ -182,15 +276,18 @@ async function submitQuickAdd() {
 
     const result = await response.json();
     if (result.success) {
+      showTemporaryNotification("网站添加成功！", "success");
       closeQuickAddModal();
       // 刷新页面以显示新添加的链接
-      window.location.reload();
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000); // 延迟1秒刷新，让用户看到成功通知
     } else {
-      alert(result.message || "添加失败");
+      showTemporaryNotification(result.message || "添加失败", "error");
     }
   } catch (error) {
     console.error("提交失败:", error);
-    alert("提交失败，请重试");
+    showTemporaryNotification("提交失败，请重试", "error");
   } finally {
     const submitBtn = document.querySelector("#quickAddModal .btn-primary");
     submitBtn.disabled = false;

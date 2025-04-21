@@ -442,3 +442,112 @@ textarea.modal-input {
   padding: 0.25rem 0.5rem;
   font-size: 0.875rem;
 }
+
+/* 高亮显示卡片样式 */
+@keyframes highlightPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(112, 73, 240, 0.7);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px 5px rgba(112, 73, 240, 0.7);
+    transform: scale(1.03);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(112, 73, 240, 0);
+    transform: scale(1);
+  }
+}
+
+.highlight-card {
+  animation: highlightPulse 1s ease-in-out 3;
+  z-index: 10;
+  position: relative;
+}
+
+/* 临时通知样式 */
+.quick-add-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.3s ease;
+  min-width: 200px;
+}
+
+.quick-add-notification.success {
+  background: linear-gradient(145deg, #4caf50, #43a047);
+  color: white;
+  border-left: 4px solid #2e7d32;
+}
+
+.quick-add-notification.warning {
+  background: linear-gradient(145deg, #ff9800, #f57c00);
+  color: white;
+  border-left: 4px solid #e65100;
+}
+
+.quick-add-notification.error {
+  background: linear-gradient(145deg, #f44336, #e53935);
+  color: white;
+  border-left: 4px solid #c62828;
+}
+
+.quick-add-notification.info {
+  background: linear-gradient(145deg, #2196f3, #1e88e5);
+  color: white;
+  border-left: 4px solid #0d47a1;
+}
+
+.quick-add-notification i {
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+/* 卡片删除中样式 */
+.site-card.deleting {
+  position: relative;
+  overflow: hidden;
+}
+
+.site-card.deleting::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.3);
+  z-index: 2;
+  border-radius: 10px;
+}
+
+.site-card.deleting::after {
+  content: "";
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid rgba(112, 73, 240, 0.7);
+  border-radius: 50%;
+  border-top-color: transparent;
+  left: calc(50% - 15px);
+  top: calc(50% - 15px);
+  z-index: 3;
+  animation: spinner-rotate 0.8s linear infinite;
+}
+
+@keyframes spinner-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

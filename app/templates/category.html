@@ -456,7 +456,7 @@ DEBUG - Settings信息:
           class="site-card {% if current_user.is_authenticated and current_user.is_admin %}draggable{% endif %}"
           data-id="{{ website.id }}"
           data-website-id="{{ website.id }}"
-          data-website-url="{{ website.url }}"
+          data-description="{{ website.description }}"
           data-sort="{{ website.sort_order|default(loop.index0*10) }}"
           title="{{ website.description }}"
           data-bs-toggle="tooltip"
@@ -766,6 +766,25 @@ DEBUG - Settings信息:
 
     // 暂存原始内容，用于恢复
     let originalContent = null;
+
+    // 处理高亮显示的网站卡片
+    {% if highlight_id %}
+    const highlightId = "{{ highlight_id }}";
+    const highlightCard = document.querySelector(`a.site-card[data-id="${highlightId}"]`);
+
+    if (highlightCard) {
+      // 滚动到该卡片
+      highlightCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // 添加高亮动画
+      highlightCard.classList.add('highlight-card');
+
+      // 3秒后移除高亮
+      setTimeout(() => {
+        highlightCard.classList.remove('highlight-card');
+      }, 3000);
+    }
+    {% endif %}
 
     // 搜索输入事件
     searchInput.addEventListener("input", function () {
