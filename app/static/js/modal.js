@@ -7,6 +7,34 @@ document.addEventListener("DOMContentLoaded", function () {
   const fetchInfoBtn = document.getElementById("fetchInfo");
   const editIconPreview = document.getElementById("editIconPreview");
 
+  // 创建加载状态覆盖层
+  const modalBody = editLinkModal.querySelector(".modal-body");
+  const loadingOverlay = document.createElement("div");
+  loadingOverlay.className = "form-loading-overlay";
+  loadingOverlay.innerHTML = `
+    <div class="form-loading-spinner"></div>
+    <div class="form-loading-text">正在加载...</div>
+  `;
+
+  // 确保modalBody是相对定位的，以便覆盖层可以正确定位
+  modalBody.style.position = "relative";
+  modalBody.appendChild(loadingOverlay);
+
+  /**
+   * 显示或隐藏表单加载状态
+   * @param {boolean} isLoading - 是否显示加载状态
+   * @param {string} loadingText - 加载状态文本
+   */
+  function setFormLoading(isLoading, loadingText = "正在加载...") {
+    if (isLoading) {
+      loadingOverlay.querySelector(".form-loading-text").textContent =
+        loadingText;
+      loadingOverlay.classList.add("show");
+    } else {
+      loadingOverlay.classList.remove("show");
+    }
+  }
+
   /**
    * 显示toast通知
    * @param {string} message - 显示的消息
@@ -116,6 +144,12 @@ document.addEventListener("DOMContentLoaded", function () {
         editIconPreview.style.display = "none";
       }
 
+      // 显示对话框
+      editLinkModal.style.display = "flex";
+
+      // 显示加载状态
+      setFormLoading(true, "正在获取网站信息...");
+
       // 从服务器获取完整信息
       fetch(`/site/${cardId}/info`)
         .then((response) => response.json())
@@ -151,10 +185,12 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch((error) => {
           console.error("获取网站信息出错:", error);
+          showToast("获取网站信息失败，请手动填写", "error");
+        })
+        .finally(() => {
+          // 隐藏加载状态
+          setFormLoading(false);
         });
-
-      // 显示对话框
-      editLinkModal.style.display = "flex";
     }
   });
 
@@ -210,6 +246,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     try {
+      // 显示加载状态
+      setFormLoading(true, "正在保存修改...");
+
       // 检查URL是否已存在（排除当前编辑的链接）
       const checkResponse = await fetch(
         `/api/check_url_exists?url=${encodeURIComponent(
@@ -219,6 +258,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const checkResult = await checkResponse.json();
 
       if (checkResult.exists) {
+        // 隐藏加载状态，因为将显示确认对话框
+        setFormLoading(false);
+
         // 使用自定义对话框替代confirm
         const action = await showDuplicateLinkPrompt(checkResult.website);
 
@@ -230,7 +272,9 @@ document.addEventListener("DOMContentLoaded", function () {
           // 用户选择取消添加
           return;
         }
-        // 用户选择继续添加
+
+        // 用户选择继续添加，重新显示加载状态
+        setFormLoading(true, "正在保存修改...");
       }
 
       // 发送修改请求到服务器
@@ -305,6 +349,9 @@ document.addEventListener("DOMContentLoaded", function () {
     } catch (error) {
       console.error("修改链接出错:", error);
       showToast("修改链接时发生错误，请重试", "error");
+    } finally {
+      // 隐藏加载状态
+      setFormLoading(false);
     }
   });
 
@@ -321,7 +368,10 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    // 显示加载状态
+    // 显示全局加载状态
+    setFormLoading(true, "正在获取网站信息...");
+
+    // 显示按钮加载状态
     this.classList.add("loading");
 
     // 请求网站信息
@@ -391,8 +441,10 @@ document.addEventListener("DOMContentLoaded", function () {
         showToast("获取网站信息失败，请手动填写", "warning");
       })
       .finally(() => {
-        // 移除加载状态
+        // 移除按钮加载状态
         this.classList.remove("loading");
+        // 移除全局加载状态
+        setFormLoading(false);
       });
   });
 });
