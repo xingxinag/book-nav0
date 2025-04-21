@@ -230,6 +230,9 @@ document.addEventListener("DOMContentLoaded", function () {
   editLinkForm.addEventListener("submit", async function (e) {
     e.preventDefault();
 
+    // 检查是否支持详细进度显示
+    const supportsDetailedProgress = isDetailedProgressSupported();
+
     const siteId = document.getElementById("editLinkId").value;
     const title = document.getElementById("editTitle").value;
     const url = document.getElementById("editUrl").value;
@@ -249,7 +252,15 @@ document.addEventListener("DOMContentLoaded", function () {
       // 显示加载状态
       setFormLoading(true, "正在保存修改...");
 
+      if (supportsDetailedProgress) {
+        updateProgress("正在验证数据...", 10);
+      }
+
       // 检查URL是否已存在（排除当前编辑的链接）
+      if (supportsDetailedProgress) {
+        updateProgress("正在检查URL是否存在...", 30);
+      }
+
       const checkResponse = await fetch(
         `/api/check_url_exists?url=${encodeURIComponent(
           url
@@ -278,6 +289,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       // 发送修改请求到服务器
+      if (supportsDetailedProgress) {
+        updateProgress("正在发送数据到服务器...", 60);
+      }
+
       const response = await fetch(`/api/website/update/${siteId}`, {
         method: "POST",
         headers: {
@@ -295,6 +310,10 @@ document.addEventListener("DOMContentLoaded", function () {
           sort_order: sortOrder,
         }),
       });
+
+      if (supportsDetailedProgress) {
+        updateProgress("正在处理服务器响应...", 80);
+      }
 
       const data = await response.json();
       if (data.success) {
@@ -339,6 +358,10 @@ document.addEventListener("DOMContentLoaded", function () {
           );
         }
 
+        if (supportsDetailedProgress) {
+          updateProgress("修改成功！", 100);
+        }
+
         showToast("网站信息修改成功!");
 
         // 关闭模态框而不刷新页面
@@ -374,9 +397,166 @@ document.addEventListener("DOMContentLoaded", function () {
     // 显示按钮加载状态
     this.classList.add("loading");
 
+    // 检查是否支持流式响应
+    const supportsStreaming =
+      "ReadableStream" in window &&
+      "getReader" in window.ReadableStream.prototype;
+
+    if (supportsStreaming) {
+      // 使用新的流式API获取网站信息
+      fetchWithProgress(url, titleInput, descInput, iconInput, this);
+    } else {
+      // 使用传统方式获取网站信息
+      fetchWebsiteInfoTraditional(url, titleInput, descInput, iconInput, this);
+    }
+  });
+
+  // 使用流式响应获取网站信息（带进度）
+  function fetchWithProgress(url, titleInput, descInput, iconInput, button) {
+    // 创建AbortController用于可能的请求取消
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+
+    fetch(
+      `/api/fetch_website_info_with_progress?url=${encodeURIComponent(url)}`,
+      {
+        signal: controller.signal,
+        headers: {
+          Accept: "text/event-stream",
+        },
+      }
+    )
+      .then((response) => {
+        // 检查响应是否成功
+        if (!response.ok) {
+          throw new Error(`HTTP错误: ${response.status}`);
+        }
+
+        // 获取响应体的reader
+        const reader = response.body.getReader();
+        let decoder = new TextDecoder();
+        let buffer = "";
+
+        // 递归读取流数据
+        function readChunk() {
+          return reader.read().then(({ value, done }) => {
+            if (done) {
+              // 流读取完毕，处理可能的剩余数据
+              if (buffer) {
+                try {
+                  const lastEvent = JSON.parse(buffer);
+                  processProgressEvent(
+                    lastEvent,
+                    titleInput,
+                    descInput,
+                    iconInput
+                  );
+                } catch (e) {
+                  console.error("解析最终数据出错:", e);
+                }
+              }
+
+              // 隐藏加载状态
+              button.classList.remove("loading");
+              setFormLoading(false);
+              clearTimeout(timeoutId);
+              return;
+            }
+
+            // 解码收到的数据并添加到缓冲区
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+
+            // 处理缓冲区中的所有完整行
+            let newlineIndex;
+            while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+              const line = buffer.slice(0, newlineIndex);
+              buffer = buffer.slice(newlineIndex + 1);
+
+              if (line.trim() === "") continue; // 跳过空行
+
+              try {
+                const event = JSON.parse(line);
+                processProgressEvent(event, titleInput, descInput, iconInput);
+              } catch (e) {
+                console.error("解析进度数据出错:", e, line);
+              }
+            }
+
+            // 继续读取下一块数据
+            return readChunk();
+          });
+        }
+
+        return readChunk();
+      })
+      .catch((error) => {
+        console.error("流式获取网站信息出错:", error);
+
+        if (error.name === "AbortError") {
+          showToast("获取网站信息超时，请手动填写", "warning");
+        } else {
+          showToast("获取网站信息失败，请手动填写", "warning");
+        }
+
+        // 隐藏加载状态
+        button.classList.remove("loading");
+        setFormLoading(false);
+        clearTimeout(timeoutId);
+      });
+  }
+
+  // 处理进度事件
+  function processProgressEvent(event, titleInput, descInput, iconInput) {
+    // 更新进度显示
+    updateProgress(event.message, event.progress);
+
+    // 如果是最终结果，填充表单
+    if (event.stage === "complete" && event.success) {
+      // 更新标题
+      if (event.title) {
+        titleInput.value = event.title;
+      }
+
+      // 更新描述
+      if (event.description) {
+        descInput.value = event.description;
+      }
+
+      // 设置图标URL
+      if (event.icon_url) {
+        iconInput.value = event.icon_url;
+      }
+
+      showToast("网站信息获取成功!");
+    } else if (event.stage === "error") {
+      // 显示错误信息
+      showToast("获取网站信息失败: " + event.message, "error");
+    }
+  }
+
+  // 传统方式获取网站信息
+  function fetchWebsiteInfoTraditional(
+    url,
+    titleInput,
+    descInput,
+    iconInput,
+    button
+  ) {
+    const supportsDetailedProgress = isDetailedProgressSupported();
+
+    if (supportsDetailedProgress) {
+      updateProgress("正在准备获取网站信息...", 10);
+    }
+
     // 请求网站信息
     fetch(`/api/fetch_website_info?url=${encodeURIComponent(url)}`)
-      .then((response) => response.json())
+      .then((response) => {
+        if (supportsDetailedProgress) {
+          updateProgress("正在获取网站基本信息...", 40);
+        }
+        return response.json();
+      })
       .then((data) => {
         if (data.success) {
           // 直接更新标题和描述，无论是否为空
@@ -386,6 +566,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
           if (data.description) {
             descInput.value = data.description;
+          }
+
+          if (supportsDetailedProgress) {
+            updateProgress("正在获取网站图标...", 60);
           }
 
           // 解析域名获取图标
@@ -408,7 +592,12 @@ document.addEventListener("DOMContentLoaded", function () {
               `/api/get_website_icon?url=${encodeURIComponent(url)}`,
               requestOptions
             )
-              .then((response) => response.json())
+              .then((response) => {
+                if (supportsDetailedProgress) {
+                  updateProgress("正在处理图标数据...", 80);
+                }
+                return response.json();
+              })
               .then((iconData) => {
                 if (iconData.success && iconData.icon_url) {
                   iconInput.value = iconData.icon_url;
@@ -419,13 +608,24 @@ document.addEventListener("DOMContentLoaded", function () {
                   // 如果API获取失败，使用备用服务
                   iconInput.value = `https://favicon.cccyun.cc/${domain}`;
                 }
+
+                if (supportsDetailedProgress) {
+                  updateProgress("网站信息获取完成!", 100);
+                }
               })
               .catch(() => {
                 // 如果请求出错，使用备用服务
                 iconInput.value = `https://favicon.cccyun.cc/${domain}`;
+
+                if (supportsDetailedProgress) {
+                  updateProgress("图标获取失败，使用备用服务", 95);
+                }
               });
           } catch (error) {
             console.error("解析域名出错:", error);
+            if (supportsDetailedProgress) {
+              updateProgress("解析域名出错，使用备用服务", 90);
+            }
           }
 
           showToast("网站信息获取成功!");
@@ -442,9 +642,32 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .finally(() => {
         // 移除按钮加载状态
-        this.classList.remove("loading");
+        button.classList.remove("loading");
         // 移除全局加载状态
         setFormLoading(false);
       });
-  });
+  }
+
+  // 检查是否支持详细进度展示
+  function isDetailedProgressSupported() {
+    // 在这里添加逻辑来确定是否应该显示详细进度
+    // 例如，根据浏览器或设备类型，或者用户偏好设置
+    return true; // 默认支持
+  }
+
+  // 更新进度显示的函数
+  function updateProgress(message, percent) {
+    // 如果存在进度元素则更新
+    const progressText = document.querySelector(".form-loading-text");
+    if (progressText) {
+      progressText.textContent = message;
+    }
+
+    // 如果有进度条元素，更新它的宽度
+    const progressBar = document.querySelector(".progress-bar");
+    if (progressBar) {
+      progressBar.style.width = `${percent}%`;
+      progressBar.setAttribute("aria-valuenow", percent);
+    }
+  }
 });

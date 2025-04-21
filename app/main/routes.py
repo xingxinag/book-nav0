@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify, abort
+from flask import render_template, redirect, url_for, flash, request, jsonify, abort, Response, stream_with_context
 from flask_login import current_user, login_required
 from app import db, csrf
 from app.main import bp
@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import time
 from sqlalchemy import or_
+import json
 
 @bp.route('/')
 def index():
@@ -292,7 +293,7 @@ def parse_website_info(url):
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
             'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         }
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(request_url, headers=headers, timeout=10)
         response.raise_for_status()  # 确保请求成功
         
         # 检测网页编码
@@ -399,7 +400,7 @@ def get_website_icon(url):
                 error_msg = result.get('msg', '无法获取图标')
                 print(f"小小API返回错误: {error_msg}")
                 # 备用方案：使用cccyun的favicon服务
-                parsed_url = urlparse(url)
+                parsed_url = urlparse(request_url)
                 domain = parsed_url.netloc
                 return {
                     "success": False,
@@ -418,7 +419,7 @@ def get_website_icon(url):
                     }
         
         # 如果以上都失败，使用备用图标
-        parsed_url = urlparse(url)
+        parsed_url = urlparse(request_url)
         domain = parsed_url.netloc
         return {
             "success": False,
@@ -428,7 +429,7 @@ def get_website_icon(url):
     except Exception as e:
         print(f"获取网站图标出错: {str(e)}")
         try:
-            parsed_url = urlparse(url)
+            parsed_url = urlparse(request_url)
             domain = parsed_url.netloc
             return {
                 "success": False,
@@ -452,7 +453,7 @@ def fetch_website_info():
     result = parse_website_info(url)
     
     # 添加图标信息
-    icon_result = get_website_icon(url)
+    icon_result = get_website_icon(request_url)
     if icon_result["success"]:
         result["icon_url"] = icon_result["icon_url"]
     elif "fallback_url" in icon_result:
@@ -553,7 +554,6 @@ def api_update_website(id):
     
     # 如果有变化，才记录修改操作
     if changes:
-        import json
         operation_log = OperationLog(
             user_id=current_user.id,
             operation_type='MODIFY',
@@ -599,7 +599,6 @@ def api_delete_website(id):
         website_title = website.title
         
         # 记录删除操作
-        import json
         details = {
             'description': website.description,
             'is_private': website.is_private,
@@ -682,7 +681,6 @@ def api_modify_link():
         
         # 如果有变化，才记录修改操作
         if changes:
-            import json
             operation_log = OperationLog(
                 user_id=current_user.id,
                 operation_type='MODIFY',
@@ -1009,7 +1007,6 @@ def edit(id):
         
         # 如果有变化，才记录修改操作
         if changes:
-            import json
             operation_log = OperationLog(
                 user_id=current_user.id,
                 operation_type='MODIFY',
@@ -1044,7 +1041,6 @@ def delete(id):
         return redirect(url_for('main.index'))
     
     # 记录删除操作
-    import json
     details = {
         'description': website.description,
         'is_private': website.is_private,
@@ -1108,4 +1104,140 @@ def record_visit(website_id):
         
         return jsonify({"success": True, "message": "访问记录成功", "views": website.views})
     except Exception as e:
-        return jsonify({"success": False, "message": f"记录失败: {str(e)}"}), 500 
+        return jsonify({"success": False, "message": f"记录失败: {str(e)}"}), 500
+
+@bp.route('/api/fetch_website_info_with_progress')
+def fetch_website_info_with_progress():
+    """获取网站信息的流式API（带进度）"""
+    url = request.args.get('url', '')
+    if not url:
+        return jsonify({"success": False, "message": "未提供URL参数"})
+    
+    def generate():
+        try:
+            # 开始连接
+            yield json.dumps({"stage": "init", "progress": 10, "message": "正在连接网站..."}) + "\n"
+            
+            # 准备请求头
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            }
+            
+            # 确保URL有协议前缀
+            request_url = url
+            if not request_url.startswith(('http://', 'https://')):
+                request_url = 'https://' + request_url
+                
+            # 发送请求
+            yield json.dumps({"stage": "connecting", "progress": 20, "message": "正在下载网页内容..."}) + "\n"
+            response = requests.get(request_url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            # 检测编码
+            yield json.dumps({"stage": "analyzing", "progress": 30, "message": "正在分析网页编码..."}) + "\n"
+            content_type = response.headers.get('content-type', '').lower()
+            if 'charset=' in content_type:
+                charset = content_type.split('charset=')[-1]
+                response.encoding = charset
+            else:
+                # 尝试从网页内容中检测编码
+                content = response.content
+                soup = BeautifulSoup(content, 'html.parser')
+                meta_charset = soup.find('meta', charset=True)
+                if meta_charset:
+                    response.encoding = meta_charset.get('charset')
+                else:
+                    meta_content_type = soup.find('meta', {'http-equiv': lambda x: x and x.lower() == 'content-type'})
+                    if meta_content_type and 'charset=' in meta_content_type.get('content', '').lower():
+                        charset = meta_content_type.get('content').lower().split('charset=')[-1]
+                        response.encoding = charset
+                    elif 'charset=gb' in response.text.lower() or 'charset="gb' in response.text.lower():
+                        response.encoding = 'gb18030'
+                    else:
+                        # 如果没有明确指定编码，尝试用 apparent_encoding
+                        response.encoding = response.apparent_encoding
+            
+            # 解析网页
+            yield json.dumps({"stage": "parsing", "progress": 40, "message": "正在解析网页内容..."}) + "\n"
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # 提取网站标题
+            yield json.dumps({"stage": "extracting_title", "progress": 50, "message": "正在提取网站标题..."}) + "\n"
+            title = ""
+            if soup.title:
+                title = soup.title.string.strip() if soup.title.string else ""
+            if not title:
+                h1 = soup.find('h1')
+                if h1:
+                    title = h1.get_text().strip()
+            
+            # 提取描述信息
+            yield json.dumps({"stage": "extracting_description", "progress": 60, "message": "正在提取网站描述..."}) + "\n"
+            description = ""
+            meta_desc = soup.find('meta', attrs={'name': ['description', 'Description']})
+            if meta_desc and meta_desc.get('content'):
+                description = meta_desc.get('content').strip()
+            
+            # 如果没有描述标签，提取页面的第一段有意义的文字作为描述
+            if not description:
+                # 尝试查找第一个非空的p标签
+                for p in soup.find_all('p'):
+                    text = p.get_text().strip()
+                    if text and len(text) > 20:  # 确保文本有一定长度
+                        description = text
+                        break
+            
+            # 如果描述太长，截断
+            if description and len(description) > 200:
+                description = description[:197] + "..."
+            
+            # 获取网站图标
+            yield json.dumps({"stage": "extracting_icon", "progress": 70, "message": "正在获取网站图标..."}) + "\n"
+            
+            # 解析域名
+            parsed_url = urlparse(request_url)
+            domain = parsed_url.netloc
+            
+            # 使用备用图标服务
+            icon_url = f"https://favicon.cccyun.cc/{domain}"
+            
+            # 尝试使用API获取更好的图标
+            yield json.dumps({"stage": "fetching_icon", "progress": 80, "message": "正在获取高质量图标..."}) + "\n"
+            try:
+                icon_result = get_website_icon(request_url)
+                if icon_result["success"]:
+                    icon_url = icon_result["icon_url"]
+                elif "fallback_url" in icon_result:
+                    icon_url = icon_result["fallback_url"]
+            except Exception as e:
+                print(f"获取图标时出错: {str(e)}")
+                # 使用默认的图标URL，不影响整体流程
+            
+            # 最后，返回完整结果
+            yield json.dumps({
+                "stage": "complete", 
+                "progress": 100, 
+                "message": "网站信息获取完成",
+                "success": True,
+                "title": title,
+                "description": description,
+                "domain": domain,
+                "icon_url": icon_url
+            }) + "\n"
+            
+        except Exception as e:
+            error_message = str(e)
+            print(f"获取网站信息出错: {error_message}")
+            yield json.dumps({
+                "stage": "error",
+                "progress": 0,
+                "message": f"错误: {error_message}",
+                "success": False
+            }) + "\n"
+    
+    return Response(stream_with_context(generate()), 
+                   mimetype='text/event-stream',
+                   headers={'Cache-Control': 'no-cache', 
+                            'X-Accel-Buffering': 'no'}) 

@@ -257,7 +257,13 @@ head %}
           onclick="closeQuickAddModal()"
         ></button>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="position: relative">
+        <!-- 加载状态覆盖层 -->
+        <div class="form-loading-overlay" id="quickAddLoadingOverlay">
+          <div class="form-loading-spinner"></div>
+          <div class="form-loading-text">正在加载...</div>
+        </div>
+
         <div class="row g-3">
           <div class="col-md-12">
             <label class="form-label">网站标题</label>

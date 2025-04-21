@@ -21,10 +21,12 @@ document.addEventListener("paste", async function (e) {
 
   // 显示加载中状态
   showQuickAddModal();
-  setQuickAddLoading(true);
+  setQuickAddLoading(true, "正在解析粘贴的链接...");
 
   try {
     // 检查URL是否已存在
+    updateQuickAddProgress("正在检查URL是否已存在...", 10);
+
     const checkResponse = await fetch(
       `/api/check_url_exists?url=${encodeURIComponent(pastedData)}`
     );
@@ -47,76 +49,20 @@ document.addEventListener("paste", async function (e) {
       }
       // 用户选择继续添加，重新打开快速添加对话框
       showQuickAddModal();
+      setQuickAddLoading(true, "继续添加链接...");
     }
 
-    // 获取网站信息和图标
-    const requestOptions = {
-      method: "GET",
-      redirect: "follow",
-    };
+    // 检查是否支持流式响应
+    const supportsStreaming =
+      "ReadableStream" in window &&
+      "getReader" in window.ReadableStream.prototype;
 
-    const websiteInfo = await fetch(
-      `/api/fetch_website_info?url=${encodeURIComponent(pastedData)}`,
-      requestOptions
-    ).then((r) => r.json());
-
-    // 填充表单
-    document.getElementById("quickAddTitle").value = websiteInfo.title || "";
-    document.getElementById("quickAddUrl").value = pastedData;
-    document.getElementById("quickAddDescription").value =
-      websiteInfo.description || "";
-
-    // 详细分析获取情况
-    const hasTitleSuccess =
-      websiteInfo.title && websiteInfo.title.trim() !== "";
-    const hasDescSuccess =
-      websiteInfo.description && websiteInfo.description.trim() !== "";
-    const hasIconSuccess =
-      websiteInfo.icon_url && websiteInfo.icon_url.trim() !== "";
-
-    // 设置图标
-    if (hasIconSuccess) {
-      const iconInput = document.getElementById("quickAddIcon");
-      const iconPreview = document.getElementById("quickAddIconPreview");
-      iconInput.value = websiteInfo.icon_url;
-      iconPreview.src = websiteInfo.icon_url;
-      iconPreview.style.display = "block";
-    }
-
-    // 根据获取结果提供精确的反馈
-    if (hasTitleSuccess && hasDescSuccess && hasIconSuccess) {
-      // 全部成功
-      showTemporaryNotification("网站信息获取成功", "success");
-    } else if (!websiteInfo.success) {
-      // API返回失败
-      let failReason = "";
-      if (websiteInfo.message) {
-        // 有错误信息
-        if (websiteInfo.message.includes("timeout")) {
-          failReason = "请求超时";
-        } else if (
-          websiteInfo.message.includes("403") ||
-          websiteInfo.message.includes("forbidden")
-        ) {
-          failReason = "网站禁止访问";
-        } else {
-          failReason = websiteInfo.message;
-        }
-      } else {
-        failReason = "未知原因";
-      }
-      showTemporaryNotification(`获取失败(${failReason})，请手动填写`, "error");
+    if (supportsStreaming) {
+      // 使用流式API获取网站信息
+      await fetchWithProgress(pastedData);
     } else {
-      // 部分失败
-      let missingParts = [];
-      if (!hasTitleSuccess) missingParts.push("标题");
-      if (!hasDescSuccess) missingParts.push("描述");
-      if (!hasIconSuccess) missingParts.push("图标");
-
-      showTemporaryNotification(
-        `${missingParts.join("、")}获取失败，请手动补充`,
-        "warning"
-      );
+      // 使用传统方式获取网站信息
+      await fetchWebsiteInfoTraditional(pastedData);
     }
   } catch (error) {
     console.error("获取网站信息失败:", error);
@@ -141,6 +87,230 @@ document.addEventListener("paste", async function (e) {
     setQuickAddLoading(false);
   }
 });
+
+/**
+ * 使用流式响应获取网站信息（带进度）
+ * @param {string} url - 网站URL
+ */
+async function fetchWithProgress(url) {
+  updateQuickAddProgress("正在获取网站详细信息...", 20);
+
+  // 创建AbortController用于可能的请求取消
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30秒超时
+
+  try {
+    const response = await fetch(
+      `/api/fetch_website_info_with_progress?url=${encodeURIComponent(url)}`,
+      {
+        signal: controller.signal,
+        headers: {
+          Accept: "text/event-stream",
+        },
+      }
+    );
+
+    // 检查响应是否成功
+    if (!response.ok) {
+      throw new Error(`HTTP错误: ${response.status}`);
+    }
+
+    // 获取响应体的reader
+    const reader = response.body.getReader();
+    let decoder = new TextDecoder();
+    let buffer = "";
+    let result = null;
+
+    // 循环读取直到数据完成
+    while (true) {
+      const { value, done } = await reader.read();
+
+      if (done) break;
+
+      // 解码收到的数据并添加到缓冲区
+      const chunk = decoder.decode(value, { stream: true });
+      buffer += chunk;
+
+      // 处理缓冲区中的所有完整行
+      let newlineIndex;
+      while ((newlineIndex = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, newlineIndex);
+        buffer = buffer.slice(newlineIndex + 1);
+
+        if (line.trim() === "") continue; // 跳过空行
+
+        try {
+          const event = JSON.parse(line);
+
+          // 更新进度显示
+          updateQuickAddProgress(event.message, event.progress);
+
+          // 如果是最终结果，保存结果
+          if (event.stage === "complete" && event.success) {
+            result = event;
+          } else if (event.stage === "error") {
+            throw new Error(event.message);
+          }
+        } catch (e) {
+          console.error("解析进度数据出错:", e, line);
+        }
+      }
+    }
+
+    // 如果有剩余数据，尝试解析
+    if (buffer && !result) {
+      try {
+        const lastEvent = JSON.parse(buffer);
+
+        // 如果是最终结果，保存结果
+        if (lastEvent.stage === "complete" && lastEvent.success) {
+          result = lastEvent;
+        } else if (lastEvent.stage === "error") {
+          throw new Error(lastEvent.message);
+        }
+      } catch (e) {
+        console.error("解析最终数据出错:", e);
+      }
+    }
+
+    // 如果没有获取到结果
+    if (!result) {
+      throw new Error("未收到完整的网站信息");
+    }
+
+    // 填充表单
+    document.getElementById("quickAddTitle").value = result.title || "";
+    document.getElementById("quickAddUrl").value = url;
+    document.getElementById("quickAddDescription").value =
+      result.description || "";
+
+    // 设置图标
+    if (result.icon_url) {
+      const iconInput = document.getElementById("quickAddIcon");
+      const iconPreview = document.getElementById("quickAddIconPreview");
+
+      iconInput.value = result.icon_url;
+      iconPreview.src = result.icon_url;
+      iconPreview.style.display = "block";
+    }
+
+    // 详细分析获取情况
+    const hasTitleSuccess = result.title && result.title.trim() !== "";
+    const hasDescSuccess =
+      result.description && result.description.trim() !== "";
+    const hasIconSuccess = result.icon_url && result.icon_url.trim() !== "";
+
+    // 根据获取结果提供精确的反馈
+    if (hasTitleSuccess && hasDescSuccess && hasIconSuccess) {
+      // 全部成功
+      showTemporaryNotification("网站信息获取成功", "success");
+    } else {
+      // 部分失败
+      let missingParts = [];
+      if (!hasTitleSuccess) missingParts.push("标题");
+      if (!hasDescSuccess) missingParts.push("描述");
+      if (!hasIconSuccess) missingParts.push("图标");
+
+      showTemporaryNotification(
+        `${missingParts.join("、")}获取失败，请手动补充`,
+        "warning"
+      );
+    }
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * 使用传统方式获取网站信息
+ * @param {string} url - 网站URL
+ */
+async function fetchWebsiteInfoTraditional(url) {
+  const supportsDetailedProgress = isDetailedProgressSupported();
+
+  updateQuickAddProgress("正在获取网站信息...", 30);
+
+  // 获取网站信息和图标
+  const requestOptions = {
+    method: "GET",
+    redirect: "follow",
+  };
+
+  const websiteInfo = await fetch(
+    `/api/fetch_website_info?url=${encodeURIComponent(url)}`,
+    requestOptions
+  ).then((r) => r.json());
+
+  if (supportsDetailedProgress) {
+    updateQuickAddProgress("正在解析网站标题和描述...", 60);
+  }
+
+  // 填充表单
+  document.getElementById("quickAddTitle").value = websiteInfo.title || "";
+  document.getElementById("quickAddUrl").value = url;
+  document.getElementById("quickAddDescription").value =
+    websiteInfo.description || "";
+
+  // 详细分析获取情况
+  const hasTitleSuccess = websiteInfo.title && websiteInfo.title.trim() !== "";
+  const hasDescSuccess =
+    websiteInfo.description && websiteInfo.description.trim() !== "";
+  const hasIconSuccess =
+    websiteInfo.icon_url && websiteInfo.icon_url.trim() !== "";
+
+  if (supportsDetailedProgress) {
+    updateQuickAddProgress("正在获取网站图标...", 80);
+  }
+
+  // 设置图标
+  if (hasIconSuccess) {
+    const iconInput = document.getElementById("quickAddIcon");
+    const iconPreview = document.getElementById("quickAddIconPreview");
+    iconInput.value = websiteInfo.icon_url;
+    iconPreview.src = websiteInfo.icon_url;
+    iconPreview.style.display = "block";
+  }
+
+  if (supportsDetailedProgress) {
+    updateQuickAddProgress("网站信息获取完成", 100);
+  }
+
+  // 根据获取结果提供精确的反馈
+  if (hasTitleSuccess && hasDescSuccess && hasIconSuccess) {
+    // 全部成功
+    showTemporaryNotification("网站信息获取成功", "success");
+  } else if (!websiteInfo.success) {
+    // API返回失败
+    let failReason = "";
+    if (websiteInfo.message) {
+      // 有错误信息
+      if (websiteInfo.message.includes("timeout")) {
+        failReason = "请求超时";
+      } else if (
+        websiteInfo.message.includes("403") ||
+        websiteInfo.message.includes("forbidden")
+      ) {
+        failReason = "网站禁止访问";
+      } else {
+        failReason = websiteInfo.message;
+      }
+    } else {
+      failReason = "未知原因";
+    }
+    showTemporaryNotification(`获取失败(${failReason})，请手动填写`, "error");
+  } else {
+    // 部分失败
+    let missingParts = [];
+    if (!hasTitleSuccess) missingParts.push("标题");
+    if (!hasDescSuccess) missingParts.push("描述");
+    if (!hasIconSuccess) missingParts.push("图标");
+
+    showTemporaryNotification(
+      `${missingParts.join("、")}获取失败，请手动补充`,
+      "warning"
+    );
+  }
+}
 
 // 验证URL是否合法
 function isValidUrl(url) {
@@ -205,15 +375,30 @@ function closeQuickAddModal() {
   document.getElementById("quickAddWeight").value = "0"; // 重置权重为默认值
 }
 
-function setQuickAddLoading(isLoading) {
+function setQuickAddLoading(isLoading, message = "加载中...") {
   const submitBtn = document.querySelector("#quickAddModal .btn-primary");
   if (isLoading) {
     submitBtn.disabled = true;
-    submitBtn.innerHTML =
-      '<span class="spinner-border spinner-border-sm me-1"></span>加载中...';
+    submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${message}`;
+
+    // 显示加载覆盖层
+    const loadingOverlay = document.getElementById("quickAddLoadingOverlay");
+    if (loadingOverlay) {
+      const textElement = loadingOverlay.querySelector(".form-loading-text");
+      if (textElement) {
+        textElement.textContent = message;
+      }
+      loadingOverlay.classList.add("show");
+    }
   } else {
     submitBtn.disabled = false;
-    submitBtn.innerHTML = "添加";
+    submitBtn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>添加';
+
+    // 隐藏加载覆盖层
+    const loadingOverlay = document.getElementById("quickAddLoadingOverlay");
+    if (loadingOverlay) {
+      loadingOverlay.classList.remove("show");
+    }
   }
 }
 
@@ -292,5 +477,40 @@ async function submitQuickAdd() {
     const submitBtn = document.querySelector("#quickAddModal .btn-primary");
     submitBtn.disabled = false;
     submitBtn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>添加';
+  }
+}
+
+/**
+ * 检查是否支持详细进度展示
+ * @returns {boolean}
+ */
+function isDetailedProgressSupported() {
+  // 这里可以根据需要添加更多检查，例如浏览器版本等
+  return true;
+}
+
+/**
+ * 更新快速添加对话框的加载进度信息
+ * @param {string} message - 进度信息文本
+ * @param {number} percent - 进度百分比(0-100)
+ */
+function updateQuickAddProgress(message, percent = null) {
+  const submitBtn = document.querySelector("#quickAddModal .btn-primary");
+  let loadingText = message;
+
+  // 如果提供了百分比，则显示百分比
+  if (percent !== null) {
+    loadingText += ` (${percent}%)`;
+  }
+
+  submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>${loadingText}`;
+
+  // 同时更新覆盖层文本，如果存在的话
+  const loadingOverlay = document.getElementById("quickAddLoadingOverlay");
+  if (loadingOverlay) {
+    const textElement = loadingOverlay.querySelector(".form-loading-text");
+    if (textElement) {
+      textElement.textContent = loadingText;
+    }
   }
 }
