@@ -10,6 +10,24 @@ document.addEventListener("paste", async function (e) {
     return;
   }
 
+  // 检查当前是否有输入框正在获取焦点
+  const activeElement = document.activeElement;
+  const isInputElement =
+    activeElement.tagName === "INPUT" ||
+    activeElement.tagName === "TEXTAREA" ||
+    activeElement.isContentEditable;
+
+  // 如果当前焦点在输入框，不触发快速添加功能
+  if (isInputElement) {
+    return;
+  }
+
+  // 如果快速添加窗口打开中，也不再触发新的快速添加
+  const quickAddModal = document.getElementById("quickAddModal");
+  if (quickAddModal && quickAddModal.style.display === "flex") {
+    return;
+  }
+
   // 获取剪贴板内容
   const clipboardData = e.clipboardData || window.clipboardData;
   const pastedData = clipboardData.getData("text");

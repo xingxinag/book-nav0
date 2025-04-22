@@ -8,8 +8,6 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
-  console.log("过渡页功能已启用，开始处理链接...");
-
   // 获取所有链接元素
   var links = document.querySelectorAll("a");
 
@@ -54,13 +52,10 @@ document.addEventListener("DOMContentLoaded", function () {
     var sitePageMatch = link.href.match(/\/site\/(\d+)$/);
     if (sitePageMatch && sitePageMatch[1]) {
       websiteId = sitePageMatch[1];
-      console.log("检测到网站详情页链接，ID:", websiteId);
     }
 
     // 如果有网站ID，修改链接指向过渡页
     if (websiteId) {
-      console.log("处理链接: ", link.href, " -> /goto/" + websiteId);
-
       // 保存原始链接
       link.setAttribute("data-original-url", link.href);
 
