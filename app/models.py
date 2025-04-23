@@ -141,6 +141,10 @@ class Website(db.Model):
     views_today = db.Column(db.Integer, default=0)
     last_view = db.Column(db.DateTime, nullable=True)
     
+    # 死链检测相关字段
+    is_valid = db.Column(db.Boolean, default=True)  # 链接是否有效
+    last_check = db.Column(db.DateTime, nullable=True)  # 最后检测时间
+    
     def __repr__(self):
         return f'<Website {self.title}>'
         
@@ -238,4 +242,24 @@ class OperationLog(db.Model):
     user = db.relationship('User', backref='operations')
     
     def __repr__(self):
-        return f'<OperationLog {self.operation_type} {self.website_title}>'
+        return f'<OperationLog {self.operation_type} - {self.website_title}>'
+
+
+class DeadlinkCheck(db.Model):
+    """死链检测记录模型"""
+    id = db.Column(db.Integer, primary_key=True)
+    check_id = db.Column(db.String(36), index=True)  # 检测批次ID，使用UUID
+    website_id = db.Column(db.Integer, db.ForeignKey('website.id'), nullable=False)
+    url = db.Column(db.String(256), nullable=False)
+    is_valid = db.Column(db.Boolean, default=True)  # True: 有效链接, False: 无效链接
+    status_code = db.Column(db.Integer, nullable=True)  # HTTP状态码
+    error_type = db.Column(db.String(50), nullable=True)  # 错误类型: timeout, connection_error, etc.
+    error_message = db.Column(db.Text, nullable=True)  # 详细错误信息
+    response_time = db.Column(db.Float, nullable=True)  # 响应时间(秒)
+    checked_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # 关系定义
+    website = db.relationship('Website', backref='deadlink_checks')
+    
+    def __repr__(self):
+        return f'<DeadlinkCheck {self.url} - {"Valid" if self.is_valid else "Invalid"}>'

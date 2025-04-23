@@ -7,6 +7,10 @@ from config import Config
 import datetime
 import json
 from werkzeug.middleware.proxy_fix import ProxyFix
+import sqlite3
+
+# 设置SQLite允许多线程访问
+sqlite3.threadsafety = 3  # 设置为最高等级的线程安全
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -19,6 +23,13 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     
+    # 配置SQLAlchemy以支持多线程
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'connect_args': {
+            'check_same_thread': False  # 允许SQLite在多线程中使用
+        }
+    }
+    
     # 应用 ProxyFix 中间件 (信任直接连接的 Nginx 代理)
     app.wsgi_app = ProxyFix(
         app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1
@@ -29,7 +40,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     csrf.init_app(app)
     
-    from app.models import User, InvitationCode, Category, Website, SiteSettings
+    from app.models import User, InvitationCode, Category, Website, SiteSettings, DeadlinkCheck
     
     from app.auth import bp as auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -71,6 +82,14 @@ def create_app(config_class=Config):
     @app.before_first_request
     def create_admin():
         try:
+            # 确保DeadlinkCheck表存在
+            with app.app_context():
+                inspector = db.inspect(db.engine)
+                if not inspector.has_table('deadlink_check'):
+                    print("创建DeadlinkCheck表...")
+                    DeadlinkCheck.__table__.create(db.engine)
+                    print("DeadlinkCheck表创建成功！")
+            
             admin = User.query.filter_by(username=app.config['ADMIN_USERNAME']).first()
             if not admin:
                 # 尝试查找邮箱，防止email冲突
