@@ -1622,7 +1622,7 @@ def batch_fetch_icons_status():
         minutes, seconds = divmod(elapsed_seconds, 60)
         elapsed_time = f"{minutes}分{seconds}秒"
     
-    return jsonify({
+    response = jsonify({
         'is_running': icon_fetch_status['is_running'],
         'total': icon_fetch_status['total'],
         'processed': icon_fetch_status['processed'],
@@ -1631,6 +1631,12 @@ def batch_fetch_icons_status():
         'elapsed_time': elapsed_time,
         'percent': 0 if icon_fetch_status['total'] == 0 else int((icon_fetch_status['processed'] / icon_fetch_status['total']) * 100)
     })
+    
+    # 添加禁用缓冲的头部，解决Docker环境中显示问题
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['X-Accel-Buffering'] = 'no'
+    
+    return response
 
 @bp.route('/api/batch-fetch-icons/stop', methods=['POST'])
 @login_required
@@ -2164,7 +2170,7 @@ def batch_check_deadlinks_status():
     # 格式化时间
     elapsed_time_str = format_elapsed_time(elapsed_time)
     
-    return jsonify({
+    response = jsonify({
         'is_running': deadlink_check_task['is_running'],
         'processed': deadlink_check_task['processed'],
         'valid': deadlink_check_task['valid'],
@@ -2174,6 +2180,12 @@ def batch_check_deadlinks_status():
         'check_id': deadlink_check_task.get('check_id', ''),  # 添加check_id
         'percent': percent  # 确保百分比存在
     })
+    
+    # 添加禁用缓冲的头部，解决Docker环境中显示问题
+    response.headers['Cache-Control'] = 'no-cache'
+    response.headers['X-Accel-Buffering'] = 'no'
+    
+    return response
 
 @bp.route('/batch-check-deadlinks/stop', methods=['POST'])
 @login_required
