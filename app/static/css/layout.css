@@ -14,6 +14,16 @@ body {
 
 body:not(.sidebar-active) .main-content {
   padding-left: var(--spacing-lg);
+  padding-right: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+body:not(.sidebar-active) .content-container {
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .category-heading {
