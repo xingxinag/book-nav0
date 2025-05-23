@@ -432,7 +432,8 @@ DEBUG - Settings信息:
     <!-- 搜索状态提示 -->
     <div id="searchStatus" class="search-status">
       <div class="search-status-text">
-        显示 "<span id="searchKeyword"></span>" 的搜索结果
+        找到 <span id="searchCount"></span> 个与
+        <span id="searchKeyword"></span> 相关的网站
       </div>
       <button
         type="button"
@@ -856,7 +857,13 @@ DEBUG - Settings信息:
     // 显示搜索结果
     function displaySearchResults(data) {
       // 更新搜索状态提示
-      searchKeyword.textContent = data.keyword;
+      if (searchKeyword) {
+        searchKeyword.textContent = data.keyword;
+      }
+      const searchCount = document.getElementById("searchCount");
+      if (searchCount) {
+        searchCount.textContent = data.count;
+      }
       searchStatus.style.display = "flex";
 
       if (data.count === 0) {

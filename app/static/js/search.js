@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
       // 显示加载状态
       resultsContent.innerHTML =
         '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3">正在搜索...</p></div>';
-      searchKeyword.textContent = `"${query}"`;
+      // searchKeyword.textContent = `"${query}"`; // 删除对 searchKeyword 的依赖
 
       // 显示搜索结果区域，隐藏分类容器
       categoriesContainer.style.display = "none";
@@ -32,13 +32,13 @@ document.addEventListener("DOMContentLoaded", function () {
           // 清空之前的搜索结果
           resultsContent.innerHTML = "";
 
-          if (data.websites && data.websites.length > 0) {
-            // 显示搜索结果统计
-            const searchCount = document.createElement("div");
-            searchCount.className = "search-count mt-2 mb-4 text-muted";
-            searchCount.innerHTML = `找到 <strong>${data.count}</strong> 个与 "<strong>${data.keyword}</strong>" 相关的网站`;
-            resultsContent.appendChild(searchCount);
+          // 设置数量提示到毛玻璃卡片内
+          const searchSummary = document.getElementById("searchSummary");
+          if (searchSummary) {
+            searchSummary.innerHTML = `找到 <strong>${data.count}</strong> 个与 <span class="search-keyword">"${data.keyword}"</span> 相关的网站`;
+          }
 
+          if (data.websites && data.websites.length > 0) {
             // 创建卡片容器
             const cardContainer = document.createElement("div");
             cardContainer.className = "card-container";

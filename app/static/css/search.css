@@ -162,3 +162,9 @@ input[type="search"]::-ms-clear {
 input[type="search"]::-ms-reveal {
   display: none;
 }
+
+.search-summary {
+  color: var(--text-primary);
+  font-size: 1.08rem;
+  font-weight: 500;
+}

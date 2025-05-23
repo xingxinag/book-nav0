@@ -179,8 +179,21 @@ body:not(.bg-none) .site-card:hover {
 }
 
 @media (max-width: 576px) {
+  .card-container {
+    gap: 0.5rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
   .site-card {
-    width: calc(100% - 1rem);
+    width: calc(50% - 0.5rem);
+    min-width: 0;
+    margin: 0;
+  }
+  .site-title,
+  .site-description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

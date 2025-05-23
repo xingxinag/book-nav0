@@ -158,12 +158,14 @@ head %}
     {# 搜索结果区域 #}
     <div id="searchResults" class="mb-5" style="display: none">
       <div id="resultsContainer">
-        <h3 class="category-heading">
+        <div class="category-heading search-header-with-summary">
           <span class="category-icon">
             <i class="bi bi-search"></i>
           </span>
-          搜索结果 <span id="searchKeyword" class="search-keyword"></span>
-        </h3>
+          <div class="search-header-content">
+            <div id="searchSummary" class="search-summary"></div>
+          </div>
+        </div>
         <div id="resultsContent">{# 搜索结果将通过JavaScript动态填充 #}</div>
         <div
           id="noResults"
@@ -181,18 +183,43 @@ head %}
     <div id="categoriesContainer">
       {% for category in categories %} {% if category.parent_id is none %}
       <div id="{{ category.name }}" class="mb-5">
-        <h3 class="category-heading">
-          <span
-            class="category-icon"
-            style="background-color: {{ category.color or '#3498db' }}"
+        {% if category.children.count() == 0 %}
+        <div class="category-card">
+          <a
+            href="{{ url_for('main.category', id=category.id) }}"
+            class="category-heading-link"
           >
-            <i class="bi bi-{{ category.icon or 'folder' }}"></i>
-          </span>
-          {{ category.name }}
-        </h3>
-
-        {# 子分类标签导航 #} {% if category.children.count() > 0 %}
+            <h3 class="category-heading">
+              <span
+                class="category-icon"
+                style="background-color: {{ category.color or '#3498db' }}"
+              >
+                <i class="bi bi-{{ category.icon or 'folder' }}"></i>
+              </span>
+              {{ category.name }}
+              <span class="category-count"
+                >（{{ category.website_list|length }}）</span
+              >
+            </h3>
+          </a>
+        </div>
+        {% endif %} {# 子分类标签导航 #} {% if category.children.count() > 0 %}
         <div class="subcategory-tags">
+          <a
+            href="{{ url_for('main.category', id=category.id) }}"
+            class="subcategory-tag"
+          >
+            <span
+              class="tag-icon"
+              style="background-color: {{ category.color or '#3498db' }}"
+            >
+              <i class="bi bi-folder"></i>
+            </span>
+            全部
+            <span class="subcategory-count"
+              >({{ category.website_list|length }})</span
+            >
+          </a>
           {% for child in category.children %}
           <a
             href="{{ url_for('main.category', id=child.id) }}"
@@ -205,6 +232,9 @@ head %}
               <i class="bi bi-{{ child.icon or 'tag' }}"></i>
             </span>
             {{ child.name }}
+            <span class="subcategory-count"
+              >({{ child.website_list|length }})</span
+            >
           </a>
           {% endfor %}
         </div>
@@ -251,17 +281,7 @@ head %}
           </a>
           {% endfor %}
         </div>
-
-        {% if websites|length > (category.display_limit or 10) %}
-        <div class="text-center mt-2">
-          <a
-            href="{{ url_for('main.category', id=category.id) }}"
-            class="btn btn-sm btn-outline-primary"
-          >
-            查看全部 ({{ websites|length }})
-          </a>
-        </div>
-        {% endif %} {% else %}
+        {% else %}
         <div class="text-center text-muted py-4">
           <i class="bi bi-emoji-neutral fs-4"></i>
           <p>暂无网站</p>

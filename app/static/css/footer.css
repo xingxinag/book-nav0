@@ -76,3 +76,15 @@ body.sidebar-active .footer {
 .admin-footer .text-muted {
   opacity: 0.7;
 }
+
+body:not(.bg-none) .footer {
+  background: rgba(0, 0, 0, 0.4);
+  color: #f3f3f3;
+  border: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+body:not(.bg-none) .footer .text-muted,
+body:not(.bg-none) .footer p.small {
+  color: #b0b8c9 !important;
+}

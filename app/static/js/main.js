@@ -106,4 +106,20 @@ document.addEventListener("DOMContentLoaded", function () {
       animateValue(numberElement, 0, finalValue, 1000);
     });
   }
+
+  // 用户头像下拉菜单点击切换
+  var userDropdownToggle = document.querySelector(".user-dropdown-toggle");
+  var userDropdownMenu = document.querySelector(".user-dropdown-menu");
+  if (userDropdownToggle && userDropdownMenu) {
+    userDropdownToggle.addEventListener("click", function (e) {
+      e.stopPropagation();
+      userDropdownMenu.classList.toggle("show");
+    });
+    document.addEventListener("click", function () {
+      userDropdownMenu.classList.remove("show");
+    });
+    userDropdownMenu.addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
+  }
 });

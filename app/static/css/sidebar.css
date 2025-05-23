@@ -327,9 +327,38 @@ body:not(.bg-none) .sidebar-menu-item a:hover {
 
 /* 使侧边栏更加明显以避免背景干扰 */
 body:not(.bg-none) .sidebar {
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(0, 0, 0, 0.4); /* 黑色毛玻璃 */
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+body:not(.bg-none) .sidebar,
+body:not(.bg-none) .sidebar-menu-link,
+body:not(.bg-none) .sidebar-group-title,
+body:not(.bg-none) .sidebar-menu-icon {
+  color: #f3f3f3;
+}
+
+body:not(.bg-none) .sidebar-menu-link:hover {
+  color: #ffd86b;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body:not(.bg-none) .sidebar-menu-link.active {
+  color: #ffd86b;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+body:not(.bg-none) .sidebar-submenu-link {
+  color: #e0e0e0;
+}
+body:not(.bg-none) .sidebar-submenu-link:hover {
+  color: #ffd86b;
+  background: rgba(255, 255, 255, 0.08);
+}
+body:not(.bg-none) .sidebar-submenu-link.active {
+  color: #ffd86b;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .sidebar-drag-handle {

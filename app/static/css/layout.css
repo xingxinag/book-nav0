@@ -26,6 +26,11 @@ body:not(.sidebar-active) .content-container {
   margin: 0 auto;
 }
 
+body:not(.bg-none) .main-content,
+body:not(.bg-none) .content-container {
+  color: #f3f3f3;
+}
+
 .category-heading {
   font-size: var(--font-size-xl);
   display: flex;
@@ -127,32 +132,120 @@ body:not(.sidebar-active) .content-container {
   margin-right: var(--spacing-sm);
 }
 
-/* 分类标题的半透明背景 */
+/* 父分类卡片精简：只居中、适当间距、圆角，无渐变、无阴影、无动画 */
+.category-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: none;
+  border-radius: 12px;
+  box-shadow: none;
+  border: none;
+  position: relative;
+  transition: none;
+}
+
 body:not(.bg-none) .category-heading {
-  background-color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 0 !important;
-  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 8px 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  border: none;
+  box-shadow: none;
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  margin: 0 auto;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  animation: none;
 }
 
-/* 修改原来的.category-heading::after样式，使其跟随新的背景 */
-body:not(.bg-none) .category-heading::after {
-  bottom: 8px;
-  left: 12px;
+.category-icon {
+  margin-right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  font-size: 1.2rem;
+  background: var(--primary-gradient);
+  box-shadow: none;
+  transition: none;
 }
 
-/* 子分类标签半透明背景 */
-body:not(.bg-none) .subcategory-tags {
-  background-color: rgba(255, 255, 255, 0.7);
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-top: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+/* 子分类标签美化：主色渐变描边、悬浮放大发光、动效 */
+.subcategory-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+body:not(.bg-none) .subcategory-tag {
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid;
+  border-image: linear-gradient(90deg, #7049f0 0%, #4a88fc 100%) 1;
+  color: #7049f0;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(112, 73, 240, 0.07);
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+  padding: 0.32rem 1.1rem;
+  border-radius: 1.3rem;
+  font-size: 1rem;
+}
+body:not(.bg-none) .subcategory-tag:hover {
+  background: rgba(255, 255, 255, 0.99);
+  color: #4a88fc;
+  transform: scale(1.09) translateY(-2px);
+  box-shadow: 0 4px 16px rgba(112, 73, 240, 0.13);
+  border-color: #4a88fc;
+}
+body:not(.bg-none) .subcategory-tag.active {
+  background: linear-gradient(90deg, #e6e6ff 0%, #f0f7ff 100%);
+  color: #7049f0;
+  border-color: #7049f0;
+}
+
+@media (max-width: 768px) {
+  .category-card {
+    padding: 18px 0 12px 0;
+    border-radius: 12px;
+  }
+  body:not(.bg-none) .category-heading {
+    padding: 8px 16px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+  }
+  .category-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    margin-right: 10px;
+  }
+  .subcategory-tags {
+    gap: 0.4rem;
+  }
+  body:not(.bg-none) .subcategory-tag {
+    font-size: 0.92rem;
+    padding: 0.22rem 0.7rem;
+    border-radius: 1rem;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* 使背景类叠加正确 */
@@ -165,4 +258,85 @@ body.bg-color {
 body.bg-none {
   /* 无背景状态 */
   background: var(--bg-primary);
+}
+
+/* 已彻底删除 .subcategory-tags 的毛玻璃、背景、阴影等样式，确保只保留前面清空和居中布局的部分 */
+
+/* 父分类标题整体可点击，数量高亮 */
+.category-heading-link {
+  text-decoration: none;
+  color: inherit;
+  display: inline-block;
+  transition: color 0.18s;
+}
+.category-heading-link:hover .category-heading {
+  color: #7049f0;
+}
+.category-heading {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 8px 20px;
+  border-radius: 8px;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: color 0.18s;
+}
+.category-count {
+  margin-left: 10px;
+  font-size: 1rem;
+  color: #7049f0;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.subcategory-count {
+  margin-left: 4px;
+  color: #7049f0;
+  font-weight: 500;
+  font-size: 0.98em;
+}
+
+.search-header-with-summary {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.78);
+  padding: 12px 28px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(112, 73, 240, 0.07);
+}
+.search-header-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.search-summary {
+  color: var(--text-primary);
+  font-size: 1.08rem;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.search-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(112, 73, 240, 0.07);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 12px 28px;
+  margin-bottom: 24px;
+  min-height: 48px;
+}
+
+.search-status-text {
+  font-size: 1.08rem;
+  font-weight: 500;
+  color: var(--text-primary);
 }

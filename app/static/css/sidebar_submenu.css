@@ -78,7 +78,7 @@
 }
 
 .sidebar-submenu-item:first-child {
-  margin-top: -10px;
+  margin-top: 0;
 }
 
 .sidebar-submenu-item:last-child {
@@ -107,7 +107,7 @@
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 0.5rem 1.5rem 0.5rem 2.2rem;
+  padding: 0.4rem 1.5rem 0.4rem 2.2rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -119,7 +119,6 @@
     box-shadow 0.2s;
   font-size: 0.9rem;
   font-weight: 500;
-  height: 24px;
 }
 
 .sidebar-submenu-link:hover {
@@ -149,4 +148,15 @@
   margin-right: 0.5rem;
   border-radius: 50%;
   background-color: rgba(255, 255, 255, 0.3);
+}
+
+body:not(.bg-none) .sidebar-submenu-item::before {
+  display: none;
+}
+
+body:not(.bg-none) .sidebar-menu-item.has-submenu .submenu-toggle:hover svg {
+  stroke: #ffd86b;
+}
+body:not(.bg-none) .sidebar-menu-item.has-submenu .submenu-toggle:hover {
+  background: rgba(255, 216, 107, 0.08);
 }

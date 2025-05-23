@@ -95,8 +95,10 @@
   <div class="search-header animate__animated animate__fadeIn text-center">
     <div style="position: relative; z-index: 1">
       <h1><i class="bi bi-search"></i> 搜索结果</h1>
-      <p class="lead">关键词: "{{ query }}"</p>
-
+      <p class="search-summary">
+        找到 {{ websites|length }} 个与
+        <span class="search-keyword">"{{ query }}"</span> 相关的网站
+      </p>
       <form
         class="search-form"
         action="{{ url_for('main.search') }}"
@@ -116,7 +118,7 @@
   {% if websites %}
   <div class="row">
     <div class="col-12 mb-3">
-      <p class="text-muted">找到 {{ websites|length }} 个结果</p>
+      <p class="search-summary">找到 {{ websites|length }} 个结果</p>
     </div>
 
     {% for website in websites %}
