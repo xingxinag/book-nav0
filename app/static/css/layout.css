@@ -65,6 +65,33 @@ body:not(.bg-none) .content-container {
   }
 }
 
+@media (max-width: 576px) {
+  .categoriesContainer {
+    justify-content: center;
+  }
+  .main-content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    display: block !important;
+  }
+  .content-container {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+    box-sizing: border-box;
+    max-width: 100vw;
+  }
+  .card-container {
+    margin: 0;
+    padding: 0;
+    justify-content: center;
+  }
+  .site-card {
+    width: 100%;
+    margin: 0 0 20px 0;
+    box-sizing: border-box;
+  }
+}
+
 /* 卡片容器 */
 .card-container {
   margin: 0 calc(-1 * var(--spacing-sm));
