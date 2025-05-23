@@ -2058,21 +2058,16 @@ def clear_background():
     try:
         # 获取站点设置
         settings = SiteSettings.get_settings()
-        
         # 清除背景相关设置
         settings.background_type = 'none'
         settings.background_url = None
-        
         # 保存更改
         db.session.commit()
-        
-        flash('背景设置已清除', 'success')
+        return jsonify({'success': True, 'message': '背景设置已清除'})
     except Exception as e:
         current_app.logger.error(f"清除背景设置失败: {str(e)}")
         db.session.rollback()
-        flash(f'操作失败: {str(e)}', 'danger')
-    
-    return redirect(url_for('admin.wallpaper'))
+        return jsonify({'success': False, 'message': f'操作失败: {str(e)}'})
 
 # ---------------- 死链检测相关功能 ----------------
 

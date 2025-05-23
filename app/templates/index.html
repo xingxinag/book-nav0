@@ -81,7 +81,9 @@ head %}
     <div class="sidebar-group">
       <ul class="sidebar-menu">
         {% for category in categories %} {% if category.parent_id is none %}
-        <li class="sidebar-menu-item">
+        <li
+          class="sidebar-menu-item {% if category.children.count() > 0 %}has-submenu{% endif %}"
+        >
           <a href="#{{ category.name }}" class="sidebar-menu-link">
             <span class="sidebar-menu-icon">
               {{ render_icon(category.icon or 'folder', category.color or
@@ -91,8 +93,31 @@ head %}
             <span class="category-children-count"
               >{{ category.children.count() }}</span
             >
+            <button class="submenu-toggle" tabindex="-1" aria-label="展开/收起">
+              <svg viewBox="0 0 24 24">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
             {% endif %}
           </a>
+          {% if category.children.count() > 0 %}
+          <ul class="sidebar-submenu">
+            {% for child in category.children %}
+            <li class="sidebar-submenu-item">
+              <a
+                href="{{ url_for('main.category', id=child.id) }}"
+                class="sidebar-submenu-link"
+              >
+                <span class="sidebar-menu-icon">
+                  {{ render_icon(child.icon or 'folder', child.color or
+                  '#3498db') }}
+                </span>
+                {{ child.name }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
         </li>
         {% endif %} {% endfor %}
       </ul>

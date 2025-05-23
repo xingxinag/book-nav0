@@ -45,6 +45,21 @@
             document.documentElement.classList.add("sidebar-active-preload");
           }
         }
+
+        // 预渲染子菜单状态
+        var submenuStates = {};
+        for (var i = 0; i < localStorage.length; i++) {
+          var key = localStorage.key(i);
+          if (key.startsWith("submenu_")) {
+            submenuStates[key] = localStorage.getItem(key);
+          }
+        }
+        if (Object.keys(submenuStates).length > 0) {
+          document.documentElement.setAttribute(
+            "data-submenu-states",
+            JSON.stringify(submenuStates)
+          );
+        }
       })();
     </script>
     <style>
@@ -54,6 +69,19 @@
       }
       .sidebar-active-preload .main-content {
         padding-left: calc(var(--sidebar-width) + var(--spacing-lg)) !important;
+        transition: none !important;
+      }
+      /* 预渲染子菜单状态 */
+      [data-submenu-states]
+        .sidebar-menu-item.has-submenu.active
+        .sidebar-submenu {
+        max-height: 500px !important;
+        transition: none !important;
+      }
+      [data-submenu-states]
+        .sidebar-menu-item.has-submenu.active
+        .submenu-toggle {
+        transform: rotate(180deg) !important;
         transition: none !important;
       }
 

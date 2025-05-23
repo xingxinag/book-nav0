@@ -75,21 +75,6 @@ function enableSidebarCategorySorting() {
     item.setAttribute("data-id", categoryId);
     item.setAttribute("draggable", "true");
 
-    // 添加拖拽手柄
-    if (!item.querySelector(".drag-handle")) {
-      const dragHandle = document.createElement("span");
-      dragHandle.className = "drag-handle sidebar-drag-handle";
-      dragHandle.innerHTML = '<i class="bi bi-grip-vertical"></i>';
-      dragHandle.style.cssText =
-        "cursor: grab; opacity: 0.7; display: inline-block;";
-
-      link.style.display = "flex";
-      link.style.alignItems = "center";
-
-      // 将拖拽手柄添加到链接末尾而不是开头
-      link.appendChild(dragHandle);
-    }
-
     // 添加拖拽事件监听器
     item.addEventListener("dragstart", handleDragStart);
     item.addEventListener("dragend", handleDragEnd);
