@@ -129,8 +129,6 @@ BookNav 基于 Flask Web 框架打造，提供了以下核心功能：
     docker-compose up -d
     ```
 
-    > 注意：无需预先创建任何配置文件！容器首次启动时会自动将默认的 Nginx 配置文件复制到宿主机映射目录，实现真正的一键部署体验。
-
 4.  **访问**:
 
     - 在浏览器中打开 `http://<您的服务器IP>:8988`
@@ -176,11 +174,12 @@ ADMIN_PASSWORD=admin123
 INVITATION_CODE_LENGTH=8
 ```
 
+```txt
 SECRET_KEY=
-
 ADMIN_USERNAME=
 ADMIN_EMAIL=
 ADMIN_PASSWORD=
+```
 
 这些参数自定义填写，执行
 
