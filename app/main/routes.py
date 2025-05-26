@@ -1084,27 +1084,16 @@ def delete(id):
 
 @bp.route('/goto/<int:website_id>')
 def goto_website(website_id):
-    """显示过渡页并跳转到指定网站"""
     website = Website.query.get_or_404(website_id)
-    
-    # 检查是否启用过渡页
     settings = SiteSettings.get_settings()
     if not settings.enable_transition:
-        # 如果未启用过渡页，直接跳转
+        # 关闭过渡页时，后端直接加1
+        website.views += 1
+        website.last_view = datetime.utcnow()
+        db.session.commit()
         return redirect(website.url)
-    
-    # 根据用户类型决定等待时间
+    # 开启过渡页时，后端不加1，只渲染页面
     countdown = settings.admin_transition_time if current_user.is_authenticated and current_user.is_admin else settings.transition_time
-    
-    # 记录访问（这里也增加一次计数）
-    website.views += 1
-    website.last_view = datetime.utcnow()
-    db.session.commit()
-    
-    # 如果倒计时设置为0，直接跳转
-    if countdown == 0:
-        return redirect(website.url)
-    
     return render_template('transition.html', website=website, countdown=countdown)
 
 @bp.route('/api/record-visit/<int:website_id>', methods=['POST'])

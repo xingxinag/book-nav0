@@ -582,7 +582,7 @@
         <!-- 底部选项 -->
         <div class="redirect-footer">
           <div class="redirect-stats">
-            <i class="bi bi-eye eye-icon"></i>访问次数: {{ website.views }}
+            <i class="bi bi-eye eye-icon"></i>访问次数: {{ website.views + 1 }}
           </div>
 
           {% if settings.transition_remember_choice %}
@@ -627,6 +627,22 @@
               return;
           }
 
+          // 跳转并计数
+          function recordAndJump() {
+              try {
+                  fetch('/api/record-visit/{{ website.id }}', {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                          'X-CSRFToken': '{{ csrf_token() }}'
+                      }
+                  }).catch(e => console.log('访问记录API不存在或出错'));
+              } catch (e) {
+                  console.log('访问记录功能不可用');
+              }
+              window.location.href = targetUrl;
+          }
+
           // 设置倒计时
           const timer = setInterval(function() {
               count--;
@@ -635,7 +651,7 @@
 
               if (count <= 0) {
                   clearInterval(timer);
-                  window.location.href = targetUrl;
+                  recordAndJump();
               }
           }, 1000);
 
@@ -643,10 +659,10 @@
           if (redirectNow) {
               redirectNow.addEventListener('click', function() {
                   clearInterval(timer);
-                  // 保存用户的选择
                   if (disableRedirect && disableRedirect.checked) {
                       localStorage.setItem('disableRedirect', 'true');
                   }
+                  recordAndJump();
               });
           }
 
@@ -662,19 +678,6 @@
               });
           }
           {% endif %}
-
-          // 尝试记录访问（如果API存在）
-          try {
-              fetch('/api/record-visit/{{ website.id }}', {
-                  method: 'POST',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'X-CSRFToken': '{{ csrf_token() }}'
-                  }
-              }).catch(e => console.log('访问记录API不存在或出错'));
-          } catch (e) {
-              console.log('访问记录功能不可用');
-          }
       });
     </script>
   </body>
