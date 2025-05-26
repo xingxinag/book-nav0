@@ -1086,14 +1086,12 @@ def delete(id):
 def goto_website(website_id):
     website = Website.query.get_or_404(website_id)
     settings = SiteSettings.get_settings()
-    if not settings.enable_transition:
-        # 关闭过渡页时，后端直接加1
+    countdown = settings.admin_transition_time if current_user.is_authenticated and current_user.is_admin else settings.transition_time
+    if countdown == 0:
         website.views += 1
         website.last_view = datetime.utcnow()
         db.session.commit()
         return redirect(website.url)
-    # 开启过渡页时，后端不加1，只渲染页面
-    countdown = settings.admin_transition_time if current_user.is_authenticated and current_user.is_admin else settings.transition_time
     return render_template('transition.html', website=website, countdown=countdown)
 
 @bp.route('/api/record-visit/<int:website_id>', methods=['POST'])

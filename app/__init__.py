@@ -82,6 +82,26 @@ def create_app(config_class=Config):
     # 数据库和管理员初始化逻辑
     with app.app_context():
         db.create_all()
+        # 管理员自动创建（合并邮箱冲突检测和升级逻辑）
+        admin = User.query.filter_by(username=app.config['ADMIN_USERNAME']).first()
+        admin_by_email = User.query.filter_by(email=app.config['ADMIN_EMAIL']).first()
+        if not admin and not admin_by_email:
+            admin = User(
+                username=app.config['ADMIN_USERNAME'],
+                email=app.config['ADMIN_EMAIL'],
+                is_admin=True,
+                is_superadmin=True
+            )
+            admin.set_password(app.config['ADMIN_PASSWORD'])
+            db.session.add(admin)
+            db.session.commit()
+            print("默认管理员账户创建成功")
+        elif admin_by_email and (not admin or admin.username != app.config['ADMIN_USERNAME']):
+            print(f"已存在邮箱为 {app.config['ADMIN_EMAIL']} 的用户，跳过创建默认管理员")
+        elif admin and not admin.is_superadmin:
+            admin.is_superadmin = True
+            db.session.commit()
+            print("已将现有管理员升级为超级管理员")
         # 你原本 before_first_request 里的其他初始化逻辑可以放在这里
     
     # 注册模板过滤器
