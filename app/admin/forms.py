@@ -105,6 +105,26 @@ class SiteSettingsForm(FlaskForm):
     ], validators=[Optional()])
     transition_color = StringField('主色调', validators=[Optional(), Length(max=32)])
     
+    # PC端背景设置
+    pc_background_type = SelectField('PC端背景类型', choices=[
+        ('none', '无背景'),
+        ('image', '图片背景'),
+        ('gradient', '渐变色背景'),
+        ('color', '纯色背景')
+    ], validators=[Optional()])
+    pc_background_url = StringField('PC端背景URL', validators=[Optional(), Length(max=512)])
+    pc_background_file = FileField('上传PC端背景图片', validators=[FileAllowed(['jpg', 'png', 'gif', 'webp'], '只允许上传图片!')])
+
+    # 移动端背景设置
+    mobile_background_type = SelectField('移动端背景类型', choices=[
+        ('none', '无背景'),
+        ('image', '图片背景'),
+        ('gradient', '渐变色背景'),
+        ('color', '纯色背景')
+    ], validators=[Optional()])
+    mobile_background_url = StringField('移动端背景URL', validators=[Optional(), Length(max=512)])
+    mobile_background_file = FileField('上传移动端背景图片', validators=[FileAllowed(['jpg', 'png', 'gif', 'webp'], '只允许上传图片!')])
+    
     submit_btn = SubmitField('保存设置')
 
 class BackgroundForm(FlaskForm):

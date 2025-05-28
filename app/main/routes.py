@@ -48,10 +48,14 @@ def index():
             Website.views.desc()
         ).all()
     
+    # 获取站点设置
+    settings = SiteSettings.get_settings()
+    
     return render_template('index.html', 
                            title='首页', 
                            categories=categories, 
-                           featured_sites=featured_sites)
+                           featured_sites=featured_sites,
+                           settings=settings)
 
 @bp.route('/category/<int:id>')
 def category(id):

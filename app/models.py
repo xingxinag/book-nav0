@@ -183,6 +183,15 @@ class SiteSettings(db.Model):
     enable_background = db.Column(db.Boolean, default=False)  # 旧字段，保留以确保兼容性
     background_type = db.Column(db.String(32), default='none')  # 背景类型：none, image, gradient, color
     background_url = db.Column(db.String(512), nullable=True)  # 背景图片URL或颜色值
+    
+    # PC端背景设置
+    pc_background_type = db.Column(db.String(32), default='none')  # PC端背景类型
+    pc_background_url = db.Column(db.String(512), nullable=True)  # PC端背景URL
+    
+    # 移动端背景设置
+    mobile_background_type = db.Column(db.String(32), default='none')  # 移动端背景类型
+    mobile_background_url = db.Column(db.String(512), nullable=True)  # 移动端背景URL
+    
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # 过渡页设置
@@ -194,7 +203,7 @@ class SiteSettings(db.Model):
     transition_remember_choice = db.Column(db.Boolean, default=True)  # 是否允许用户选择不再显示
     transition_show_description = db.Column(db.Boolean, default=True)  # 是否显示网站描述
     transition_theme = db.Column(db.String(32), default='default')  # 过渡页主题
-    transition_color = db.Column(db.String(32), default='#6e8efb')  # 过渡页主色调
+    transition_color = db.Column(db.String(32), default='#6e8efb')
     
     # 单例模式：确保只有一条记录
     @classmethod

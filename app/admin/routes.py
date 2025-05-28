@@ -684,6 +684,24 @@ def site_settings():
             settings.footer_content = form.footer_content.data
             settings.background_type = form.background_type.data
             
+            # 更新PC端背景设置
+            if form.pc_background_file.data and form.pc_background_type.data == 'image':
+                pc_bg_filename = save_image(form.pc_background_file.data, 'backgrounds')
+                if pc_bg_filename:
+                    settings.pc_background_url = url_for('static', filename=f'uploads/backgrounds/{pc_bg_filename}')
+            elif form.pc_background_url.data:
+                settings.pc_background_url = form.pc_background_url.data
+            settings.pc_background_type = form.pc_background_type.data
+            
+            # 更新移动端背景设置
+            if form.mobile_background_file.data and form.mobile_background_type.data == 'image':
+                mobile_bg_filename = save_image(form.mobile_background_file.data, 'backgrounds')
+                if mobile_bg_filename:
+                    settings.mobile_background_url = url_for('static', filename=f'uploads/backgrounds/{mobile_bg_filename}')
+            elif form.mobile_background_url.data:
+                settings.mobile_background_url = form.mobile_background_url.data
+            settings.mobile_background_type = form.mobile_background_type.data
+            
             # 更新过渡页设置
             settings.enable_transition = form.enable_transition.data
             settings.transition_time = form.transition_time.data

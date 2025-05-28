@@ -3,19 +3,30 @@ body.bg-image {
   background-image: var(--bg-image);
   background-size: cover;
   background-position: center;
-  background-attachment: fixed;
   background-repeat: no-repeat;
+  min-height: 100vh;
+}
+
+/* 移动端背景样式 */
+@media (max-width: 768px) {
+  body.bg-image {
+    background-attachment: fixed; /* 固定背景 */
+    background-size: cover; /* 保持cover以确保图片填满屏幕 */
+    background-position: center;
+    background-repeat: no-repeat;
+  }
 }
 
 body.bg-gradient {
   background-image: var(--bg-gradient) !important;
-  background-attachment: fixed !important;
   background-repeat: no-repeat !important;
   background-size: 100% 100% !important;
+  min-height: 100vh;
 }
 
 body.bg-color {
   background-color: var(--bg-color);
+  min-height: 100vh;
 }
 
 /* 背景浅色覆盖层，当背景较暗时使内容可见 */
@@ -54,4 +65,28 @@ body.bg-overlay::before {
 .color-item:hover {
   transform: scale(1.05);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* 移动端专用壁纸背景 */
+.mobile-bg {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #f8f9fa;
+    display: block;
+  }
+  body {
+    background: none !important; /* 移动端禁用body背景 */
+  }
 }
