@@ -2009,14 +2009,26 @@ def apply_background():
     bg_id = data.get('id')
     bg_type = data.get('type')
     bg_url = data.get('url')
+    device_type = data.get('device_type')
     
-    if not all([bg_type, bg_url]):
+    if not all([bg_type, bg_url, device_type]):
         return jsonify({'success': False, 'message': '缺少必要参数'})
     
     try:
         settings = SiteSettings.get_settings()
-        settings.background_type = bg_type
-        settings.background_url = bg_url
+        if device_type == 'pc':
+            settings.pc_background_type = bg_type
+            settings.pc_background_url = bg_url
+        elif device_type == 'mobile':
+            settings.mobile_background_type = bg_type
+            settings.mobile_background_url = bg_url
+        elif device_type == 'both':
+            settings.pc_background_type = bg_type
+            settings.pc_background_url = bg_url
+            settings.mobile_background_type = bg_type
+            settings.mobile_background_url = bg_url
+        else:
+            return jsonify({'success': False, 'message': '未知的设备类型'})
         db.session.commit()
         return jsonify({'success': True})
     except Exception as e:

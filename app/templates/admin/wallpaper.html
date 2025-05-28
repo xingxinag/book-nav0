@@ -124,6 +124,7 @@
                           data-id="{{ bg.id }}"
                           data-url="{{ bg.url }}"
                           data-type="{{ bg.type }}"
+                          data-device-type="{{ bg.device_type }}"
                         >
                           应用
                         </button>
@@ -190,6 +191,7 @@
                           data-id="{{ bg.id }}"
                           data-url="{{ bg.url }}"
                           data-type="{{ bg.type }}"
+                          data-device-type="{{ bg.device_type }}"
                         >
                           应用
                         </button>
@@ -249,6 +251,7 @@
                           data-id="{{ bg.id }}"
                           data-url="{{ bg.url }}"
                           data-type="{{ bg.type }}"
+                          data-device-type="{{ bg.device_type }}"
                         >
                           应用
                         </button>
@@ -655,9 +658,9 @@
     document.querySelectorAll(".apply-bg").forEach((btn) => {
       btn.addEventListener("click", function () {
         const bgId = this.getAttribute("data-id");
-        const bgUrl = this.getAttribute("data-url");
         const bgType = this.getAttribute("data-type");
-
+        const bgUrl = this.getAttribute("data-url");
+        const deviceType = this.getAttribute("data-device-type");
         // 发送AJAX请求应用背景
         fetch("{{ url_for('admin.apply_background') }}", {
           method: "POST",
@@ -669,43 +672,14 @@
             id: bgId,
             type: bgType,
             url: bgUrl,
+            device_type: deviceType,
           }),
         })
           .then((response) => response.json())
           .then((data) => {
             if (data.success) {
-              // 显示成功消息
               alert("背景已应用成功！");
-
-              // 更新页面背景（如果需要立即看到效果）
-              if (bgType === "image") {
-                document.body.style.backgroundImage = `url(${bgUrl})`;
-                document.body.style.backgroundColor = "";
-                document.body.style.backgroundAttachment = "fixed";
-                document.body.style.backgroundRepeat = "no-repeat";
-                document.body.style.backgroundSize = "cover";
-                // 同时更新类名
-                document.body.classList.remove("bg-gradient", "bg-color");
-                document.body.classList.add("bg-image");
-              } else if (bgType === "gradient") {
-                document.body.style.backgroundImage = bgUrl;
-                document.body.style.backgroundColor = "";
-                document.body.style.backgroundAttachment = "fixed";
-                document.body.style.backgroundRepeat = "no-repeat";
-                document.body.style.backgroundSize = "100% 100%";
-                // 同时更新类名
-                document.body.classList.remove("bg-image", "bg-color");
-                document.body.classList.add("bg-gradient");
-              } else if (bgType === "color") {
-                document.body.style.backgroundImage = "";
-                document.body.style.backgroundColor = bgUrl;
-                document.body.style.backgroundAttachment = "";
-                document.body.style.backgroundRepeat = "";
-                document.body.style.backgroundSize = "";
-                // 同时更新类名
-                document.body.classList.remove("bg-image", "bg-gradient");
-                document.body.classList.add("bg-color");
-              }
+              location.reload();
             } else {
               alert("应用背景失败：" + data.message);
             }

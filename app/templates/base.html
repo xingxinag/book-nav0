@@ -200,39 +200,42 @@
       document.addEventListener("DOMContentLoaded", function () {
         const html = document.documentElement;
         const body = document.body;
-        const bgType = html.getAttribute("data-bg-type");
-        const bgUrl = html.getAttribute("data-bg-url");
+        const isMobile =
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          );
 
-        if (bgType && bgUrl) {
-          // 确保body类名包含正确的背景类型
-          if (!body.classList.contains("bg-" + bgType)) {
-            // 移除现有的背景类型
-            body.classList.remove("bg-image", "bg-gradient", "bg-color");
-            // 添加当前背景类型
-            body.classList.add("bg-" + bgType);
-          }
+        // 获取背景设置
+        const pcBgType = body.getAttribute("data-pc-bg-type");
+        const pcBgUrl = body.getAttribute("data-pc-bg-url");
+        const mobileBgType = body.getAttribute("data-mobile-bg-type");
+        const mobileBgUrl = body.getAttribute("data-mobile-bg-url");
 
-          if (bgType === "image") {
-            html.style.setProperty("--bg-image", `url("${bgUrl}")`);
-            // 直接设置body背景，以防CSS变量未生效
-            body.style.backgroundImage = `url("${bgUrl}")`;
-            body.style.backgroundSize = "cover";
-            body.style.backgroundPosition = "center";
-            body.style.backgroundAttachment = "fixed";
-            body.style.backgroundRepeat = "no-repeat";
-          } else if (bgType === "gradient") {
-            html.style.setProperty("--bg-gradient", bgUrl);
-            // 直接设置body背景，以防CSS变量未生效
-            body.style.backgroundImage = bgUrl;
-            body.style.backgroundAttachment = "fixed";
-            body.style.backgroundRepeat = "no-repeat";
-            body.style.backgroundSize = "100% 100%";
-          } else if (bgType === "color") {
-            html.style.setProperty("--bg-color", bgUrl);
-            // 直接设置body背景，以防CSS变量未生效
-            body.style.backgroundColor = bgUrl;
-            body.style.backgroundImage = "";
+        // 移除所有背景相关的类
+        body.classList.remove("bg-none", "bg-image", "bg-gradient", "bg-color");
+
+        // 根据设备类型选择背景
+        if (isMobile && mobileBgType && mobileBgUrl) {
+          // 移动端背景
+          body.classList.add("bg-" + mobileBgType);
+          if (mobileBgType === "image") {
+            document.querySelector(
+              ".mobile-bg"
+            ).style.backgroundImage = `url("${mobileBgUrl}")`;
           }
+        } else if (pcBgType && pcBgUrl) {
+          // PC端背景
+          body.classList.add("bg-" + pcBgType);
+          if (pcBgType === "image") {
+            html.style.setProperty("--bg-image", `url("${pcBgUrl}")`);
+          } else if (pcBgType === "gradient") {
+            html.style.setProperty("--bg-gradient", pcBgUrl);
+          } else if (pcBgType === "color") {
+            html.style.setProperty("--bg-color", pcBgUrl);
+          }
+        } else {
+          // 无背景
+          body.classList.add("bg-none");
         }
       });
     </script>
