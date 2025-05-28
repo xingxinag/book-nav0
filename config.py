@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from datetime import datetime, timedelta
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
@@ -20,4 +21,7 @@ class Config:
     ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME') or 'admin'
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'admin@example.com'
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin123'
-    INVITATION_CODE_LENGTH = 8 
+    INVITATION_CODE_LENGTH = 8
+    
+    # 设置 session 有效期为 30 天
+    PERMANENT_SESSION_LIFETIME = timedelta(days=30) 

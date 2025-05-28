@@ -11,6 +11,8 @@ from urllib.parse import urlparse
 import time
 from sqlalchemy import or_
 import json
+import threading
+from flask import current_app
 
 @bp.route('/')
 def index():
@@ -1082,32 +1084,37 @@ def delete(id):
     flash('链接删除成功！', 'success')
     return redirect(url_for('main.index'))
 
-@bp.route('/goto/<int:website_id>')
-def goto_website(website_id):
-    website = Website.query.get_or_404(website_id)
-    settings = SiteSettings.get_settings()
-    countdown = settings.admin_transition_time if current_user.is_authenticated and current_user.is_admin else settings.transition_time
+@bp.route('/goto/<int:id>')
+def goto_website(id):
+    website = Website.query.get_or_404(id)
+    
+    # 检查网站是否私有
+    if website.is_private and not current_user.is_authenticated:
+        flash('该网站需要登录后才能访问', 'warning')
+        return redirect(url_for('auth.login'))
+    
+    # 获取网站设置
+    settings = SiteSettings.query.first()
+    
+    # 记录访问（无论是否登录都记录）
+    website.views += 1
+    website.last_view = datetime.utcnow()
+    db.session.commit()
+    
+    # 根据用户类型设置等待时间
+    if current_user.is_authenticated and current_user.is_admin:
+        countdown = 0  # 管理员直接跳转
+    else:
+        countdown = settings.transition_time if settings.enable_transition else 0
+    
+    # 如果倒计时为0，直接跳转
     if countdown == 0:
-        website.views += 1
-        website.last_view = datetime.utcnow()
-        db.session.commit()
         return redirect(website.url)
-    return render_template('transition.html', website=website, countdown=countdown)
-
-@bp.route('/api/record-visit/<int:website_id>', methods=['POST'])
-def record_visit(website_id):
-    """记录网站访问次数的API"""
-    try:
-        website = Website.query.get_or_404(website_id)
-        
-        # 增加访问计数
-        website.views += 1
-        website.last_view = datetime.utcnow()
-        db.session.commit()
-        
-        return jsonify({"success": True, "message": "访问记录成功", "views": website.views})
-    except Exception as e:
-        return jsonify({"success": False, "message": f"记录失败: {str(e)}"}), 500
+    
+    # 否则显示过渡页
+    return render_template('transition.html',
+                         website=website,
+                         countdown=countdown)
 
 @bp.route('/api/fetch_website_info_with_progress')
 def fetch_website_info_with_progress():

@@ -821,3 +821,8 @@ textarea.modal-input {
     transform: rotate(360deg);
   }
 }
+
+/* 修复快速添加链接弹窗访问权限字体颜色 */
+.quick-add-modal .form-check-label {
+  color: var(--text-primary) !important;
+}

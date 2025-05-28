@@ -1,10 +1,11 @@
 from datetime import datetime
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, session
 from flask_login import current_user, login_user, logout_user, login_required
 from app import db
 from app.auth import bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.models import User, InvitationCode
+from werkzeug.urls import url_parse
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -17,8 +18,9 @@ def login():
             flash('用户名或密码错误，如果没有账户请先注册', 'danger')
             return redirect(url_for('auth.login'))
         login_user(user, remember=form.remember_me.data)
+        session.permanent = True
         next_page = request.args.get('next')
-        if not next_page or not next_page.startswith('/'):
+        if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('main.index')
         return redirect(next_page)
     return render_template('auth/login.html', title='登录', form=form)
