@@ -543,7 +543,7 @@
         transition_color: "{{ settings.transition_color or '#6e8efb' }}",
         announcement_enabled: {% if settings.announcement_enabled %}true{% else %}false{% endif %},
         announcement_title: "{{ settings.announcement_title or '' }}",
-        announcement_content: "{{ settings.announcement_content or '' }}",
+        announcement_content: {{ settings.announcement_content|tojson|safe }},
         announcement_link: "{{ settings.announcement_link or '' }}",
         announcement_start: "{{ settings.announcement_start or '' }}",
         announcement_end: "{{ settings.announcement_end or '' }}",
@@ -611,8 +611,14 @@
           // 设置公告内容
           document.getElementById("announcementTitle").textContent =
             window.settings.announcement_title;
-          document.getElementById("announcementContent").innerHTML =
-            window.settings.announcement_content;
+
+          // 处理公告内容，直接使用innerHTML显示HTML内容
+          const content = window.settings.announcement_content;
+          if (content) {
+            document.getElementById("announcementContent").innerHTML = content;
+          } else {
+            document.getElementById("announcementContent").innerHTML = "";
+          }
 
           // 设置链接（如果有）
           if (window.settings.announcement_link) {
