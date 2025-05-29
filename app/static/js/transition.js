@@ -8,6 +8,38 @@ document.addEventListener("DOMContentLoaded", function () {
     return;
   }
 
+  // 检查是否已经选择了不再显示
+  if (
+    window.settings.transition_remember_choice &&
+    localStorage.getItem("disableRedirect") === "true"
+  ) {
+    // 如果选择了不再显示，将所有外部链接直接跳转
+    var links = document.querySelectorAll("a");
+    links.forEach(function (link) {
+      if (!link.href) return;
+
+      // 检查是否是内部链接
+      var isInternalLink =
+        link.href.startsWith(window.location.origin) ||
+        link.href.startsWith("#") ||
+        link.href.startsWith("javascript:") ||
+        link.getAttribute("href") === "#" ||
+        link.classList.contains("no-transition");
+
+      if (!isInternalLink) {
+        // 保存原始链接
+        link.setAttribute("data-original-url", link.href);
+        // 直接跳转到目标URL
+        link.setAttribute("href", link.href);
+        // 确保链接在新窗口打开
+        if (!link.getAttribute("target")) {
+          link.setAttribute("target", "_blank");
+        }
+      }
+    });
+    return;
+  }
+
   // 获取所有链接元素
   var links = document.querySelectorAll("a");
 

@@ -245,7 +245,7 @@ head %}
         >
           {% for website in websites[:category.display_limit] %}
           <a
-            href="{% if settings.enable_transition %}{{ url_for('main.goto_website', id=website.id) }}{% else %}{{ url_for('main.site', id=website.id) }}{% endif %}"
+            href="{% if settings.enable_transition %}{{ url_for('main.goto', website_id=website.id) }}{% else %}{{ url_for('main.site', id=website.id) }}{% endif %}"
             class="site-card {% if current_user.is_authenticated and current_user.is_admin %}draggable{% endif %}"
             data-id="{{ website.id }}"
             data-website-id="{{ website.id }}"

@@ -1088,14 +1088,26 @@ def delete(id):
     flash('链接删除成功！', 'success')
     return redirect(url_for('main.index'))
 
-@bp.route('/goto/<int:id>')
-def goto_website(id):
-    website = Website.query.get_or_404(id)
+@bp.route('/goto/<int:website_id>')
+def goto(website_id):
+    website = Website.query.get_or_404(website_id)
     
     # 检查网站是否私有
     if website.is_private and not current_user.is_authenticated:
         flash('该网站需要登录后才能访问', 'warning')
         return redirect(url_for('auth.login'))
+    
+    # 检查cookie中是否设置了不再显示
+    if request.cookies.get('disableRedirect') == 'true':
+        # 记录访问（无论是否登录都记录）
+        website.views += 1
+        website.last_view = datetime.utcnow()
+        db.session.commit()
+        # 直接重定向到目标网站
+        return redirect(website.url)
+    
+    # 获取倒计时时间
+    countdown = current_app.config.get('TRANSITION_COUNTDOWN', 5)
     
     # 获取网站设置
     settings = SiteSettings.query.first()
@@ -1105,20 +1117,10 @@ def goto_website(id):
     website.last_view = datetime.utcnow()
     db.session.commit()
     
-    # 根据用户类型设置等待时间
-    if current_user.is_authenticated and current_user.is_admin:
-        countdown = 0  # 管理员直接跳转
-    else:
-        countdown = settings.transition_time if settings.enable_transition else 0
-    
-    # 如果倒计时为0，直接跳转
-    if countdown == 0:
-        return redirect(website.url)
-    
-    # 否则显示过渡页
     return render_template('transition.html',
                          website=website,
-                         countdown=countdown)
+                         countdown=countdown,
+                         settings=settings)
 
 @bp.route('/api/fetch_website_info_with_progress')
 def fetch_website_info_with_progress():
