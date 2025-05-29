@@ -719,7 +719,6 @@ def site_settings():
             # 直接保存原始HTML内容，不做bleach过滤
             content = form.announcement_content.data
             settings.announcement_content = content
-            settings.announcement_link = form.announcement_link.data
             settings.announcement_start = form.announcement_start.data
             settings.announcement_end = form.announcement_end.data
             settings.announcement_remember_days = form.announcement_remember_days.data

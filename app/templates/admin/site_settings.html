@@ -244,6 +244,62 @@
                   支持HTML，可自定义页脚内容，如版权信息、备案号、友情链接等
                 </div>
               </div>
+
+              <!-- 弹窗公告设置区域 -->
+              <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                  <h5 class="mb-0">
+                    <i class="bi bi-megaphone me-2"></i>弹窗公告设置
+                  </h5>
+                  <p class="text-muted small mb-0">
+                    可用于重要通知（如更换域名、维护公告等），开启后将在首页以弹窗形式展示。
+                  </p>
+                </div>
+                <div class="card-body">
+                  <div class="form-check form-switch mb-3">
+                    {{ form.announcement_enabled(class="form-check-input") }}
+                    <label class="form-check-label" for="announcement_enabled">
+                      {% if settings.announcement_enabled %}已启用{% else
+                      %}未启用{% endif %}
+                    </label>
+                  </div>
+                  <div class="mb-3">
+                    {{ form.announcement_title.label(class="form-label fw-bold")
+                    }} {{ form.announcement_title(class="form-control") }}
+                    <div class="form-text">可选，显示在弹窗顶部</div>
+                  </div>
+                  <div class="mb-3">
+                    {{ form.announcement_content.label(class="form-label
+                    fw-bold") }} {{
+                    form.announcement_content(class="form-control", rows=3) }}
+                    <div class="form-text">必填，支持换行</div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      {{ form.announcement_start.label(class="form-label
+                      fw-bold") }} {{
+                      form.announcement_start(class="form-control",
+                      type="datetime-local") }}
+                      <div class="form-text">可选，公告开始时间</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      {{ form.announcement_end.label(class="form-label fw-bold")
+                      }} {{ form.announcement_end(class="form-control",
+                      type="datetime-local") }}
+                      <div class="form-text">可选，公告结束时间</div>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    {{ form.announcement_remember_days.label(class="form-label
+                    fw-bold") }} {{
+                    form.announcement_remember_days(class="form-control",
+                    type="number", min="1", max="365") }}
+                    <div class="form-text">
+                      用户点击"不再显示"后，多少天内不再显示公告（1-365天）
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -490,67 +546,6 @@
                 <label class="form-label fw-bold">广告2</label>
                 {{ form.transition_ad2(class="form-control", rows=4) }}
                 <div class="form-text">支持HTML代码，显示在过渡页底部</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 弹窗公告设置区域 -->
-        <div class="card shadow-sm border-0 mb-4">
-          <div class="card-header bg-light">
-            <h5 class="mb-0">
-              <i class="bi bi-megaphone me-2"></i>弹窗公告设置
-            </h5>
-            <p class="text-muted small mb-0">
-              可用于重要通知（如更换域名、维护公告等），开启后将在首页以弹窗形式展示。
-            </p>
-          </div>
-          <div class="card-body">
-            <div class="form-check form-switch mb-3">
-              {{ form.announcement_enabled(class="form-check-input") }}
-              <label class="form-check-label" for="announcement_enabled">
-                {% if settings.announcement_enabled %}已启用{% else %}未启用{%
-                endif %}
-              </label>
-            </div>
-            <div class="mb-3">
-              {{ form.announcement_title.label(class="form-label fw-bold") }} {{
-              form.announcement_title(class="form-control") }}
-              <div class="form-text">可选，显示在弹窗顶部</div>
-            </div>
-            <div class="mb-3">
-              {{ form.announcement_content.label(class="form-label fw-bold") }}
-              {{ form.announcement_content(class="form-control", rows=3) }}
-              <div class="form-text">必填，支持换行</div>
-            </div>
-            <div class="mb-3">
-              {{ form.announcement_link.label(class="form-label fw-bold") }} {{
-              form.announcement_link(class="form-control") }}
-              <div class="form-text">
-                可选，用户可点击跳转（如新域名、详情页等）
-              </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                {{ form.announcement_start.label(class="form-label fw-bold") }}
-                {{ form.announcement_start(class="form-control",
-                type="datetime-local") }}
-                <div class="form-text">可选，公告开始时间</div>
-              </div>
-              <div class="col-md-6 mb-3">
-                {{ form.announcement_end.label(class="form-label fw-bold") }} {{
-                form.announcement_end(class="form-control",
-                type="datetime-local") }}
-                <div class="form-text">可选，公告结束时间</div>
-              </div>
-            </div>
-            <div class="mb-3">
-              {{ form.announcement_remember_days.label(class="form-label
-              fw-bold") }} {{
-              form.announcement_remember_days(class="form-control",
-              type="number", min="1", max="365") }}
-              <div class="form-text">
-                用户点击"不再显示"后，多少天内不再显示公告（1-365天）
               </div>
             </div>
           </div>

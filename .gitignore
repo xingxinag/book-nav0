@@ -1,10 +1,9 @@
-# Python编译文件
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -21,34 +20,63 @@ wheels/
 .installed.cfg
 *.egg
 
-# Flask相关
-instance/
-.webassets-cache
-
-# 数据库文件
-*.db
-*.sqlite
-*.sqlite3
-*.db3
-
-# 日志文件
-*.log
-
-# 环境变量文件
-.env
-.venv
-env/
+# Virtual Environment
 venv/
 ENV/
+env/
+.env
 
-# IDE相关文件
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
+.DS_Store
 
-# 本地配置
-*.local.py
+# Flask
+instance/
+.webassets-cache
+flask_session/
 
-# 临时文件
-temp_*.py 
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Uploads
+app/static/uploads/
+app/static/uploads/avatars/
+app/static/uploads/backgrounds/
+app/static/uploads/favicons/
+app/static/uploads/logos/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Translations
+*.mo
+*.pot
+
+# Local development settings
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

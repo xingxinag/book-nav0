@@ -209,7 +209,6 @@ class SiteSettings(db.Model):
     announcement_enabled = db.Column(db.Boolean, default=False)  # 是否启用公告
     announcement_title = db.Column(db.String(128), nullable=True)  # 公告标题
     announcement_content = db.Column(db.Text, nullable=True)  # 公告内容
-    announcement_link = db.Column(db.String(256), nullable=True)  # 公告链接
     announcement_start = db.Column(db.DateTime, nullable=True)  # 公告开始时间
     announcement_end = db.Column(db.DateTime, nullable=True)  # 公告结束时间
     announcement_remember_days = db.Column(db.Integer, default=7)  # 不再提示的天数

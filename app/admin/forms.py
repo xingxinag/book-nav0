@@ -129,7 +129,6 @@ class SiteSettingsForm(FlaskForm):
     announcement_enabled = BooleanField('启用公告')
     announcement_title = StringField('公告标题', validators=[Optional(), Length(max=128)])
     announcement_content = TextAreaField('公告内容', validators=[Optional()])
-    announcement_link = StringField('公告链接', validators=[Optional(), Length(max=256)])
     announcement_start = DateTimeField('开始时间', validators=[Optional()], format='%Y-%m-%dT%H:%M')
     announcement_end = DateTimeField('结束时间', validators=[Optional()], format='%Y-%m-%dT%H:%M')
     announcement_remember_days = IntegerField('不再提示天数', validators=[Optional(), NumberRange(min=1, max=365)], default=7)
