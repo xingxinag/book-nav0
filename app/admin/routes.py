@@ -717,14 +717,8 @@ def site_settings():
             # 更新公告设置
             settings.announcement_enabled = form.announcement_enabled.data
             settings.announcement_title = form.announcement_title.data
-            # 处理公告内容，保留HTML标签和换行
+            # 直接保存原始HTML内容，不做bleach过滤
             content = form.announcement_content.data
-            if content:
-                # 确保换行符被正确保留
-                content = content.replace('\r\n', '\n').replace('\r', '\n')
-                # 保留HTML标签，但进行基本的安全过滤
-                content = clean(content, tags=['p', 'br', 'b', 'i', 'u', 'a', 'ul', 'ol', 'li', 'strong', 'em', 'span'], 
-                              attributes={'a': ['href', 'target'], 'span': ['style']})
             settings.announcement_content = content
             settings.announcement_link = form.announcement_link.data
             settings.announcement_start = form.announcement_start.data

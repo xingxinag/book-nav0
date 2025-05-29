@@ -193,12 +193,11 @@
       .announcement-content {
         position: relative;
         width: 90%;
-        max-width: 600px;
         margin: auto;
         background: white;
         border-radius: 15px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        padding: 2rem;
+        padding: 1.8rem 1.8rem 1.2rem 1.8rem;
         transform: translateY(-20px);
         transition: transform 0.3s ease;
       }
@@ -207,11 +206,17 @@
         transform: translateY(0);
       }
 
+      .announcement-gradient-bar {
+        height: 4px;
+        background: linear-gradient(to right, #6a11cb, #2575fc);
+        border-radius: 2px;
+        margin-bottom: 1rem;
+      }
+
       .announcement-header {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
         align-items: center;
-        margin-bottom: 1rem;
         padding-bottom: 1rem;
         border-bottom: 1px solid #eee;
       }
@@ -241,7 +246,7 @@
       .announcement-body {
         color: #666;
         line-height: 1.6;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.1rem;
       }
 
       .announcement-footer {
@@ -412,30 +417,17 @@
     <!-- 公告弹窗 -->
     <div id="announcementModal" class="announcement-modal">
       <div class="announcement-content">
+        <!-- <div class="announcement-gradient-bar"></div> -->
         <div class="announcement-header">
-          <h3 class="announcement-title" id="announcementTitle"></h3>
-          <button
-            type="button"
-            class="announcement-close"
-            id="announcementClose"
-          >
-            <i class="bi bi-x-lg"></i>
-          </button>
+          <h3 class="announcement-title">{{ settings.announcement_title }}</h3>
         </div>
-        <div class="announcement-body" id="announcementContent"></div>
-        <div class="announcement-footer">
-          <a
-            href="#"
-            class="announcement-link"
-            id="announcementLink"
-            target="_blank"
-            style="display: none"
-            >查看详情</a
-          >
-          <div class="announcement-remember">
-            <input type="checkbox" id="announcementRemember" />
-            <label for="announcementRemember">不再显示</label>
-          </div>
+        <div class="announcement-body">
+          {{ settings.announcement_content|safe }}
+        </div>
+        <div class="announcement-footer" style="justify-content: center">
+          <button class="announcement-confirm-btn" id="announcementConfirmBtn">
+            我知道啦
+          </button>
         </div>
       </div>
     </div>
@@ -555,41 +547,26 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         const modal = document.getElementById("announcementModal");
-        const closeBtn = document.getElementById("announcementClose");
-        const rememberCheckbox = document.getElementById(
-          "announcementRemember"
-        );
-        const linkBtn = document.getElementById("announcementLink");
+        const confirmBtn = document.getElementById("announcementConfirmBtn");
 
-        // 检查是否应该显示公告
         function shouldShowAnnouncement() {
           if (!window.settings.announcement_enabled) return false;
-
-          // 检查是否已经记住不再显示
           const rememberedData = localStorage.getItem(
             "announcement_remembered"
           );
           if (rememberedData) {
             try {
               const { timestamp } = JSON.parse(rememberedData);
-              // 使用后台设置的天数
               const now = new Date().getTime();
               const rememberDays =
                 window.settings.announcement_remember_days || 7;
-              const rememberMs = rememberDays * 24 * 60 * 60 * 1000; // 转换为毫秒
-              if (now - timestamp < rememberMs) {
-                return false;
-              } else {
-                // 超过设置天数，清除存储
-                localStorage.removeItem("announcement_remembered");
-              }
+              const rememberMs = rememberDays * 24 * 60 * 60 * 1000;
+              if (now - timestamp < rememberMs) return false;
+              else localStorage.removeItem("announcement_remembered");
             } catch (e) {
-              // 如果数据格式不正确，清除存储
               localStorage.removeItem("announcement_remembered");
             }
           }
-
-          // 检查时间范围
           const now = new Date();
           const start = window.settings.announcement_start
             ? new Date(window.settings.announcement_start)
@@ -597,67 +574,26 @@
           const end = window.settings.announcement_end
             ? new Date(window.settings.announcement_end)
             : null;
-
           if (start && now < start) return false;
           if (end && now > end) return false;
-
           return true;
         }
 
-        // 显示公告
-        function showAnnouncement() {
-          if (!shouldShowAnnouncement()) return;
-
-          // 设置公告内容
-          document.getElementById("announcementTitle").textContent =
-            window.settings.announcement_title;
-
-          // 处理公告内容，直接使用innerHTML显示HTML内容
-          const content = window.settings.announcement_content;
-          if (content) {
-            document.getElementById("announcementContent").innerHTML = content;
-          } else {
-            document.getElementById("announcementContent").innerHTML = "";
-          }
-
-          // 设置链接（如果有）
-          if (window.settings.announcement_link) {
-            linkBtn.href = window.settings.announcement_link;
-            linkBtn.style.display = "inline-block";
-          } else {
-            linkBtn.style.display = "none";
-          }
-
-          // 显示弹窗
-          modal.classList.add("show");
-        }
-
-        // 关闭公告
         function closeAnnouncement() {
           modal.classList.remove("show");
-
-          // 如果勾选了"不再显示"，保存到localStorage，包含时间戳
-          if (rememberCheckbox.checked) {
-            const data = {
-              timestamp: new Date().getTime(),
-            };
-            localStorage.setItem(
-              "announcement_remembered",
-              JSON.stringify(data)
-            );
-          }
+          const data = { timestamp: new Date().getTime() };
+          localStorage.setItem("announcement_remembered", JSON.stringify(data));
         }
 
-        // 绑定事件
-        closeBtn.addEventListener("click", closeAnnouncement);
+        confirmBtn.addEventListener("click", closeAnnouncement);
         modal.addEventListener("click", function (e) {
-          if (e.target === modal) {
-            closeAnnouncement();
-          }
+          if (e.target === modal) closeAnnouncement();
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") closeAnnouncement();
         });
 
-        // 初始化显示
-        showAnnouncement();
+        if (shouldShowAnnouncement()) modal.classList.add("show");
       });
     </script>
 
