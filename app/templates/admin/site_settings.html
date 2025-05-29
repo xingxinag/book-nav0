@@ -28,20 +28,6 @@
       <li class="nav-item" role="presentation">
         <button
           class="nav-link"
-          id="appearance-tab"
-          data-bs-toggle="tab"
-          data-bs-target="#appearance"
-          type="button"
-          role="tab"
-          aria-controls="appearance"
-          aria-selected="false"
-        >
-          <i class="bi bi-image me-1"></i> 外观设置
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button
-          class="nav-link"
           id="background-tab"
           data-bs-toggle="tab"
           data-bs-target="#background"
@@ -95,7 +81,7 @@
                 <i class="bi bi-info-circle me-2"></i>网站基本信息设置
               </h5>
               <p class="text-muted small mb-0">
-                设置网站的基本信息，如名称、副标题和SEO相关内容
+                设置网站的基本信息，如名称、副标题、Logo、Favicon和SEO相关内容
               </p>
             </div>
             <div class="card-body">
@@ -112,14 +98,12 @@
                       网站标题将显示在浏览器标签和导航栏
                     </div>
                   </div>
-
                   <div class="mb-3">
                     {{ form.site_subtitle.label(class="form-label fw-bold") }}
                     {{ form.site_subtitle(class="form-control") }}
                     <div class="form-text">副标题可显示在网站首页或页脚</div>
                   </div>
                 </div>
-
                 <div class="col-md-6">
                   <div class="mb-3">
                     {{ form.site_keywords.label(class="form-label fw-bold") }}
@@ -128,12 +112,126 @@
                       用于SEO，多个关键词之间用英文逗号分隔
                     </div>
                   </div>
-
                   <div class="mb-3">
                     {{ form.site_description.label(class="form-label fw-bold")
-                    }} {{ form.site_description(class="form-control", rows=3) }}
+                    }} {{ form.site_description(class="form-control", rows=1,
+                    style="resize:none;") }}
                     <div class="form-text">网站描述用于SEO和社交媒体分享</div>
                   </div>
+                </div>
+              </div>
+              <!-- Logo和Favicon并排布局，宽度与上方两列对齐 -->
+              <div class="row mb-3">
+                <div class="col-md-6 col-12">
+                  <label class="form-label fw-bold">网站Logo</label>
+                  <div
+                    class="d-flex align-items-center mb-2"
+                    style="height: 50px"
+                  >
+                    <div class="site-logo-preview me-3">
+                      {% if settings.site_logo and settings.site_logo != "" %}
+                      <img
+                        src="{{ settings.site_logo }}"
+                        alt="网站Logo"
+                        style="max-height: 50px"
+                        onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\'><i class=\'bi bi-collection\'></i> 默认Logo</div>';"
+                      />
+                      {% else %}
+                      <div class="text-center p-3 bg-light rounded">
+                        <i class="bi bi-collection"></i> 默认Logo
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="input-group mb-2">
+                    <span class="input-group-text"
+                      ><i class="bi bi-link-45deg"></i
+                    ></span>
+                    {% set logo_placeholder = "Logo URL" %} {{
+                    form.site_logo(class="form-control",
+                    placeholder=logo_placeholder) }}
+                    <button
+                      class="btn btn-outline-secondary clear-input"
+                      type="button"
+                      data-target="site_logo"
+                      data-preview="site-logo-preview"
+                    >
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  <div class="form-text mb-2">外部图床URL或相对路径</div>
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-upload"></i
+                    ></span>
+                    {{ form.logo_file(class="form-control") }}
+                    <button
+                      class="btn btn-outline-secondary clear-input"
+                      type="button"
+                      data-target="logo_file"
+                      data-preview="site-logo-preview"
+                    >
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  <div class="form-text">或直接上传图片（优先使用上传）</div>
+                </div>
+                <div class="col-md-6 col-12">
+                  <label class="form-label fw-bold">网站图标</label>
+                  <div
+                    class="d-flex align-items-center mb-2"
+                    style="height: 50px"
+                  >
+                    <div class="favicon-preview me-3">
+                      {% if settings.site_favicon and settings.site_favicon !=
+                      "" %}
+                      <img
+                        src="{{ settings.site_favicon }}"
+                        alt="网站图标"
+                        style="max-height: 32px"
+                        onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\' style=\'width: 32px; height: 32px\'><i class=\'bi bi-globe\' style=\'font-size: 16px\'></i></div>';"
+                      />
+                      {% else %}
+                      <div
+                        class="text-center p-3 bg-light rounded"
+                        style="width: 32px; height: 32px"
+                      >
+                        <i class="bi bi-globe" style="font-size: 16px"></i>
+                      </div>
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="input-group mb-2">
+                    <span class="input-group-text"
+                      ><i class="bi bi-link-45deg"></i
+                    ></span>
+                    {{ form.site_favicon(class="form-control",
+                    placeholder="Favicon URL") }}
+                    <button
+                      class="btn btn-outline-secondary clear-input"
+                      type="button"
+                      data-target="site_favicon"
+                      data-preview="favicon-preview"
+                    >
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  <div class="form-text mb-2">外部图床URL或相对路径</div>
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-upload"></i
+                    ></span>
+                    {{ form.favicon_file(class="form-control") }}
+                    <button
+                      class="btn btn-outline-secondary clear-input"
+                      type="button"
+                      data-target="favicon_file"
+                      data-preview="favicon-preview"
+                    >
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  <div class="form-text">或直接上传图片（优先使用上传）</div>
                 </div>
               </div>
 
@@ -144,126 +242,6 @@
                 {{ form.footer_content(class="form-control", rows=4) }}
                 <div class="form-text">
                   支持HTML，可自定义页脚内容，如版权信息、备案号、友情链接等
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 外观设置标签页 -->
-        <div
-          class="tab-pane fade"
-          id="appearance"
-          role="tabpanel"
-          aria-labelledby="appearance-tab"
-        >
-          <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-light">
-              <h5 class="mb-0"><i class="bi bi-image me-2"></i>网站标识设置</h5>
-              <p class="text-muted small mb-0">自定义网站Logo和Favicon图标</p>
-            </div>
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">网站Logo</label>
-                    <div
-                      class="d-flex align-items-center mb-2"
-                      style="height: 50px"
-                    >
-                      <div class="site-logo-preview me-3">
-                        {% if settings.site_logo and settings.site_logo != "" %}
-                        <img
-                          src="{{ settings.site_logo }}"
-                          alt="网站Logo"
-                          style="max-height: 50px"
-                          onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\'><i class=\'bi bi-collection\'></i> 默认Logo</div>';"
-                        />
-                        {% else %}
-                        <div class="text-center p-3 bg-light rounded">
-                          <i class="bi bi-collection"></i> 默认Logo
-                        </div>
-                        {% endif %}
-                      </div>
-                    </div>
-                    <div class="input-group mb-2">
-                      <span class="input-group-text"
-                        ><i class="bi bi-link-45deg"></i
-                      ></span>
-                      {{ form.site_logo(class="form-control", placeholder="Logo
-                      URL") }}
-                      <button
-                        class="btn btn-outline-secondary clear-input"
-                        type="button"
-                        data-target="site_logo"
-                        data-preview="site-logo-preview"
-                      >
-                        <i class="bi bi-x-lg"></i>
-                      </button>
-                    </div>
-                    <div class="form-text mb-2">外部图床URL或相对路径</div>
-                    <div class="input-group">
-                      <span class="input-group-text"
-                        ><i class="bi bi-upload"></i
-                      ></span>
-                      {{ form.logo_file(class="form-control") }}
-                    </div>
-                    <div class="form-text">或直接上传图片（优先使用上传）</div>
-                  </div>
-                </div>
-
-                <div class="col-md-6">
-                  <div class="mb-3">
-                    <label class="form-label fw-bold">网站图标</label>
-                    <div
-                      class="d-flex align-items-center mb-2"
-                      style="height: 50px"
-                    >
-                      <div class="favicon-preview me-3">
-                        {% if settings.site_favicon and settings.site_favicon !=
-                        "" %}
-                        <img
-                          src="{{ settings.site_favicon }}"
-                          alt="网站图标"
-                          style="max-height: 32px"
-                          onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'text-center p-3 bg-light rounded\' style=\'width: 32px; height: 32px\'><i class=\'bi bi-globe\' style=\'font-size: 16px\'></i></div>';"
-                        />
-                        {% else %}
-                        <div
-                          class="text-center p-3 bg-light rounded"
-                          style="width: 32px; height: 32px"
-                        >
-                          <i class="bi bi-globe" style="font-size: 16px"></i>
-                        </div>
-                        {% endif %}
-                      </div>
-                    </div>
-                    <div class="input-group mb-2">
-                      <span class="input-group-text"
-                        ><i class="bi bi-link-45deg"></i
-                      ></span>
-                      {{ form.site_favicon(class="form-control",
-                      placeholder="Favicon URL") }}
-                      <button
-                        class="btn btn-outline-secondary clear-input"
-                        type="button"
-                        data-target="site_favicon"
-                        data-preview="favicon-preview"
-                      >
-                        <i class="bi bi-x-lg"></i>
-                      </button>
-                    </div>
-                    <div class="form-text mb-2">外部图床URL或相对路径</div>
-                    <div class="input-group">
-                      <span class="input-group-text"
-                        ><i class="bi bi-upload"></i
-                      ></span>
-                      {{ form.favicon_file(class="form-control") }}
-                    </div>
-                    <div class="form-text">
-                      推荐使用.ico、.png格式，建议尺寸为64x64像素
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
