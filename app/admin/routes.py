@@ -712,7 +712,16 @@ def site_settings():
             settings.transition_show_description = form.transition_show_description.data
             settings.transition_theme = form.transition_theme.data
             settings.transition_color = form.transition_color.data
-            
+
+            # 更新公告设置
+            settings.announcement_enabled = form.announcement_enabled.data
+            settings.announcement_title = form.announcement_title.data
+            settings.announcement_content = form.announcement_content.data
+            settings.announcement_link = form.announcement_link.data
+            settings.announcement_start = form.announcement_start.data
+            settings.announcement_end = form.announcement_end.data
+            settings.announcement_remember_days = form.announcement_remember_days.data
+
             # 确认设置值已更新
             current_app.logger.info(f"更新后的设置: enable_transition={settings.enable_transition}, theme={settings.transition_theme}")
             

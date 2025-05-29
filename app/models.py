@@ -198,12 +198,21 @@ class SiteSettings(db.Model):
     enable_transition = db.Column(db.Boolean, default=False)  # 是否启用过渡页
     transition_time = db.Column(db.Integer, default=5)  # 访客停留时间（秒），设为0表示不显示过渡页直接跳转
     admin_transition_time = db.Column(db.Integer, default=3)  # 管理员停留时间（秒），设为0表示不显示过渡页直接跳转
-    transition_ad1 = db.Column(db.Text, nullable=True)  # 过渡页广告位1
+    transition_ad1 = db.Column(db.Text, nullable=True)
     transition_ad2 = db.Column(db.Text, nullable=True)  # 过渡页广告位2
     transition_remember_choice = db.Column(db.Boolean, default=True)  # 是否允许用户选择不再显示
     transition_show_description = db.Column(db.Boolean, default=True)  # 是否显示网站描述
     transition_theme = db.Column(db.String(32), default='default')  # 过渡页主题
     transition_color = db.Column(db.String(32), default='#6e8efb')
+    
+    # 公告设置
+    announcement_enabled = db.Column(db.Boolean, default=False)  # 是否启用公告
+    announcement_title = db.Column(db.String(128), nullable=True)  # 公告标题
+    announcement_content = db.Column(db.Text, nullable=True)  # 公告内容
+    announcement_link = db.Column(db.String(256), nullable=True)  # 公告链接
+    announcement_start = db.Column(db.DateTime, nullable=True)  # 公告开始时间
+    announcement_end = db.Column(db.DateTime, nullable=True)  # 公告结束时间
+    announcement_remember_days = db.Column(db.Integer, default=7)  # 不再提示的天数
     
     # 单例模式：确保只有一条记录
     @classmethod
