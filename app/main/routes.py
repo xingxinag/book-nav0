@@ -1106,11 +1106,14 @@ def goto(website_id):
         # 直接重定向到目标网站
         return redirect(website.url)
     
-    # 获取倒计时时间
-    countdown = current_app.config.get('TRANSITION_COUNTDOWN', 5)
-    
     # 获取网站设置
     settings = SiteSettings.query.first()
+    
+    # 根据用户身份获取倒计时时间
+    if current_user.is_authenticated and current_user.is_admin:
+        countdown = settings.admin_transition_time
+    else:
+        countdown = settings.transition_time
     
     # 记录访问（无论是否登录都记录）
     website.views += 1

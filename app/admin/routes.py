@@ -28,7 +28,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import csv
 import io
 import queue
-from bleach import clean
 
 def admin_required(f):
     @wraps(f)
