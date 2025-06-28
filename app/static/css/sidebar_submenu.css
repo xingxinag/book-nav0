@@ -141,16 +141,6 @@
 
 /* 子项标记样式 */
 .sidebar-submenu-item::before {
-  content: "";
-  display: inline-block;
-  width: 0.4rem;
-  height: 0.4rem;
-  margin-right: 0.5rem;
-  border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-body:not(.bg-none) .sidebar-submenu-item::before {
   display: none;
 }
 

@@ -600,7 +600,18 @@
     {% if settings.enable_transition %}
     <!-- 过渡页处理脚本 -->
     <script src="{{ url_for('static', filename='js/transition.js') }}"></script>
-    {% endif %} {% block scripts %}{% endblock %}
+    {% endif %}
+
+    <!-- 移动端Tooltip处理脚本 -->
+    <script src="{{ url_for('static', filename='js/tooltip-handler.js') }}"></script>
+
+    <!-- 引入CSRF令牌处理脚本 -->
+    <script src="{{ url_for('static', filename='js/csrf-handler.js') }}"></script>
+
+    <!-- 引入Bootstrap JS -->
+    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+
+    {% block scripts %}{% endblock %}
 
     <!-- 设备检测与壁纸应用 -->
     <script>

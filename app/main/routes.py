@@ -43,7 +43,7 @@ def index():
                 (Website.visible_to.contains(str(current_user.id)))
             )
         category.website_list = websites_query.order_by(
-            Website.sort_order.desc(), 
+            Website.sort_order.desc(),  # 改为降序，权重大的排在前面
             Website.created_at.asc(),
             Website.views.desc()
         ).all()
@@ -78,7 +78,7 @@ def category(id):
         )
     
     websites = websites_query.order_by(
-        Website.sort_order.desc(),
+        Website.sort_order.desc(),  # 改为降序，权重大的排在前面
         Website.created_at.asc(), 
         Website.views.desc()
     ).all()
@@ -737,11 +737,49 @@ def update_website_order():
         return jsonify({'success': False, 'message': '无效的请求数据'}), 400
     
     items = data['items']
-    print(f"收到排序请求: {items}") # 记录排序数据
+    category_id = data.get('category_id')
+    print(f"收到排序请求: 分类ID={category_id}, 项目数={len(items)}")
     
     try:
-        # 更新每个网站的排序顺序
+        # 验证所有网站是否属于指定分类
+        if category_id:
+            website_ids = [item.get('id') for item in items if item.get('id')]
+            websites_in_category = Website.query.filter(
+                Website.id.in_(website_ids),
+                Website.category_id == category_id
+            ).count()
+            
+            if websites_in_category != len(website_ids):
+                return jsonify({'success': False, 'message': '部分网站不属于指定分类'}), 400
+        
+        # 获取分类下的所有网站
+        all_websites_query = Website.query.filter_by(category_id=category_id)
+        
+        # 根据用户权限过滤私有链接
+        if not current_user.is_authenticated:
+            all_websites_query = all_websites_query.filter_by(is_private=False)
+        elif not current_user.is_admin:
+            all_websites_query = all_websites_query.filter(
+                (Website.is_private == False) |
+                (Website.created_by_id == current_user.id) |
+                (Website.visible_to.contains(str(current_user.id)))
+            )
+        
+        all_websites = all_websites_query.all()
+        total_websites = len(all_websites)
+        
+        # 创建前端发送的网站ID到新权重的映射
+        frontend_weights = {}
+        for item in items:
+            website_id = item.get('id')
+            sort_order = item.get('sort_order')
+            if website_id is not None and sort_order is not None:
+                frontend_weights[website_id] = sort_order
+        
+        # 更新所有网站的排序顺序
         updated_count = 0
+        
+        # 首先更新前端发送的网站
         for item in items:
             website_id = item.get('id')
             sort_order = item.get('sort_order')
@@ -753,6 +791,20 @@ def update_website_order():
                     website.sort_order = sort_order
                     updated_count += 1
                     print(f"更新站点ID {website_id} 排序: {old_sort} -> {sort_order}")
+        
+        # 然后处理分类下的其他网站（未在前端显示的）
+        other_websites = [w for w in all_websites if w.id not in frontend_weights]
+        
+        # 为其他网站分配剩余权重（从1开始，跳过前端已使用的权重）
+        used_weights = set(frontend_weights.values())
+        available_weights = [i for i in range(1, total_websites + 1) if i not in used_weights]
+        
+        for i, website in enumerate(other_websites):
+            if i < len(available_weights):
+                old_sort = website.sort_order
+                website.sort_order = available_weights[i]
+                updated_count += 1
+                print(f"更新其他站点ID {website.id} 排序: {old_sort} -> {website.sort_order}")
         
         # 保存更改
         db.session.commit()
@@ -1264,3 +1316,43 @@ def fetch_website_info_with_progress():
                    mimetype='text/event-stream',
                    headers={'Cache-Control': 'no-cache', 
                             'X-Accel-Buffering': 'no'}) 
+
+@bp.route('/api/category/<int:category_id>/count')
+def get_category_website_count(category_id):
+    """获取分类下网站总数的API接口"""
+    try:
+        # 验证分类是否存在
+        category = Category.query.get(category_id)
+        if not category:
+            return jsonify({
+                'success': False,
+                'message': '分类不存在'
+            }), 404
+        
+        # 构建查询：直接查询该分类下的网站总数
+        websites_query = Website.query.filter_by(category_id=category_id)
+        
+        # 根据用户权限过滤私有链接
+        if not current_user.is_authenticated:
+            websites_query = websites_query.filter_by(is_private=False)
+        elif not current_user.is_admin:
+            websites_query = websites_query.filter(
+                (Website.is_private == False) |
+                (Website.created_by_id == current_user.id) |
+                (Website.visible_to.contains(str(current_user.id)))
+            )
+        
+        total_count = websites_query.count()
+        
+        return jsonify({
+            'success': True,
+            'category_id': category_id,
+            'category_name': category.name,
+            'total_count': total_count
+        })
+    except Exception as e:
+        print(f"获取分类网站总数失败: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': f'获取网站总数失败: {str(e)}'
+        }), 500 

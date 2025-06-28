@@ -1,7 +1,7 @@
 from datetime import datetime
-from flask import render_template, redirect, url_for, flash, request, session
+from flask import render_template, redirect, url_for, flash, request, session, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
-from app import db
+from app import db, csrf
 from app.auth import bp
 from app.auth.forms import LoginForm, RegistrationForm
 from app.models import User, InvitationCode
@@ -54,4 +54,44 @@ def register():
             return redirect(url_for('auth.login'))
         
         flash('注册失败，邀请码无效', 'danger')
-    return render_template('auth/register.html', title='注册', form=form) 
+    return render_template('auth/register.html', title='注册', form=form)
+
+@bp.route('/refresh-csrf')
+@login_required
+def refresh_csrf():
+    """刷新CSRF令牌的API接口"""
+    try:
+        # 生成新的CSRF令牌
+        new_token = csrf._get_token()
+        return jsonify({
+            'success': True,
+            'csrf_token': new_token
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'刷新CSRF令牌失败: {str(e)}'
+        }), 500
+
+@bp.route('/check-csrf')
+@login_required
+def check_csrf():
+    """检查CSRF令牌有效性的API接口"""
+    try:
+        # 验证当前CSRF令牌是否有效
+        token = request.args.get('token') or request.headers.get('X-CSRFToken')
+        if token and csrf._validate_csrf(token):
+            return jsonify({
+                'success': True,
+                'valid': True
+            })
+        else:
+            return jsonify({
+                'success': True,
+                'valid': False
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'检查CSRF令牌失败: {str(e)}'
+        }), 500 

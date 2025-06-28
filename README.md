@@ -141,7 +141,7 @@ version: "3"
 
 services:
   nav:
-    image: yilan666/booknav-nav:1.9.3
+    image: yilan666/booknav-nav:1.9.4
     container_name: nav
     restart: always
     ports:

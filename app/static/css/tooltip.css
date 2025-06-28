@@ -60,6 +60,27 @@
   }
 }
 
+/* 移动端tooltip处理 */
+@media (max-width: 768px) {
+  /* 在移动端隐藏所有tooltip */
+  .tooltip {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  /* 禁用移动端的tooltip触发 */
+  [data-bs-toggle="tooltip"] {
+    pointer-events: auto;
+  }
+
+  /* 确保移动端点击时不会显示tooltip */
+  .site-card[data-bs-toggle="tooltip"]:hover::after,
+  .site-card[data-bs-toggle="tooltip"]:focus::after {
+    display: none !important;
+  }
+}
+
 /* 添加统一的箭头样式 */
 .custom-tooltip::after {
   content: "";

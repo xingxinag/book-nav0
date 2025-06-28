@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", function () {
   let dragStartTime = 0;
   let longPressTimer;
   let draggedCard = null;
+  let touchStartTime = 0;
+  let touchMoved = false;
 
   function enableDragSort(container) {
     const cards = container.querySelectorAll(".site-card.draggable");
@@ -17,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
     cards.forEach((card, index) => {
       // 长按开始拖拽
       card.addEventListener("mousedown", handleMouseDown);
-      card.addEventListener("touchstart", handleTouchStart, { passive: false });
+      card.addEventListener("touchstart", handleTouchStart, { passive: true });
 
       function handleMouseDown(e) {
         // 只响应左键点击
@@ -28,9 +30,54 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       function handleTouchStart(e) {
-        e.preventDefault(); // 阻止触摸时的默认行为
+        // 记录触摸开始时间
+        touchStartTime = Date.now();
+        touchMoved = false;
+
         const touch = e.touches[0];
-        startLongPress(card, touch.clientX, touch.clientY);
+        const initialX = touch.clientX;
+        const initialY = touch.clientY;
+
+        // 监听触摸移动，如果移动距离过大则取消长按
+        const handleTouchMove = (moveEvent) => {
+          const moveTouch = moveEvent.touches[0];
+          const deltaX = Math.abs(moveTouch.clientX - initialX);
+          const deltaY = Math.abs(moveTouch.clientY - initialY);
+
+          if (deltaX > 10 || deltaY > 10) {
+            touchMoved = true;
+            clearTimeout(longPressTimer);
+            document.removeEventListener("touchmove", handleTouchMove);
+            document.removeEventListener("touchend", handleTouchEnd);
+          }
+        };
+
+        const handleTouchEnd = (endEvent) => {
+          const touchDuration = Date.now() - touchStartTime;
+
+          // 如果触摸时间超过300ms且没有移动，则开始拖拽
+          if (touchDuration >= 300 && !touchMoved) {
+            endEvent.preventDefault();
+            startDragging(card, card.parentNode, initialX, initialY);
+          }
+
+          document.removeEventListener("touchmove", handleTouchMove);
+          document.removeEventListener("touchend", handleTouchEnd);
+        };
+
+        // 延迟设置长按定时器，给普通点击留出时间
+        longPressTimer = setTimeout(() => {
+          if (!touchMoved) {
+            startLongPress(card, initialX, initialY);
+          }
+        }, 300);
+
+        document.addEventListener("touchmove", handleTouchMove, {
+          passive: true,
+        });
+        document.addEventListener("touchend", handleTouchEnd, {
+          passive: false,
+        });
       }
 
       // 拖动句柄点击直接激活拖拽
@@ -213,48 +260,63 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const categoryId = container.dataset.categoryId;
     const items = [];
-    const totalCards = cards.length; // 获取当前分类下的总链接数
 
-    // 按新顺序分配权重，权重范围从1到totalCards
-    cards.forEach((card, index) => {
-      const websiteId = parseInt(card.dataset.id);
-      if (isNaN(websiteId)) {
-        return;
-      }
-
-      // 从前到后分配权重，靠前的权重大（totalCards），靠后的权重小（1）
-      const newSortOrder = totalCards - index;
-
-      // 修改data-sort属性
-      card.dataset.sort = newSortOrder;
-
-      // 同时更新DOM元素，方便右键菜单修改时显示正确的权重值
-      card.setAttribute("data-sort-order", newSortOrder);
-
-      items.push({
-        id: websiteId,
-        sort_order: newSortOrder,
-      });
-    });
-
-    // 发送排序数据到服务器
-    fetch("/api/website/update_order", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        category_id: categoryId,
-        items: items,
-      }),
-      credentials: "same-origin",
-    })
+    // 获取分类下的实际网站总数（首页和分类页面都使用这个逻辑）
+    fetch(`/api/category/${categoryId}/count`)
       .then((response) => response.json())
       .then((data) => {
-        // 处理响应，但不输出日志
+        const totalWebsites = data.total_count || cards.length;
+
+        // 按新顺序分配权重，权重大的排在前面
+        // 第一个位置权重最大，最后一个位置权重最小
+        cards.forEach((card, index) => {
+          const websiteId = parseInt(card.dataset.id);
+          if (isNaN(websiteId)) {
+            return;
+          }
+
+          // 从前到后分配权重，靠前的权重大，靠后的权重小
+          // 使用 totalWebsites - index 的公式，确保第一个位置权重最大
+          const newSortOrder = totalWebsites - index;
+
+          // 修改data-sort属性
+          card.dataset.sort = newSortOrder;
+
+          // 同时更新DOM元素，方便右键菜单修改时显示正确的权重值
+          card.setAttribute("data-sort-order", newSortOrder);
+
+          items.push({
+            id: websiteId,
+            sort_order: newSortOrder,
+          });
+        });
+
+        // 发送排序数据到服务器
+        fetch("/api/website/update_order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            category_id: categoryId,
+            items: items,
+          }),
+          credentials: "same-origin",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // 处理响应，但不输出日志
+          })
+          .catch((error) => {
+            // 处理错误，但不输出日志
+          });
       })
       .catch((error) => {
-        // 处理错误，但不输出日志
+        // 如果获取总数失败，强制刷新页面以确保排序正确
+        console.error("获取分类网站总数失败，需要刷新页面:", error);
+        if (confirm("排序操作需要刷新页面以确保准确性，是否立即刷新？")) {
+          window.location.reload();
+        }
       });
   }
 });
