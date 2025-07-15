@@ -180,12 +180,15 @@ body:not(.bg-none) .site-card:hover {
 
 @media (max-width: 576px) {
   .card-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
     padding-left: 0;
     padding-right: 0;
+    justify-content: center;
   }
   .site-card {
-    width: calc(50% - 0.5rem);
+    width: 100%;
     min-width: 0;
     margin: 0;
   }
