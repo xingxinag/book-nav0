@@ -254,8 +254,29 @@ body:not(.bg-none) .subcategory-tag.active {
     border-radius: 8px;
     margin-right: 10px;
   }
+  /* 提升优先级，强制横滑 */
+  .content-container > .subcategory-tags,
+  .page-container .subcategory-tags,
   .subcategory-tags {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
     gap: 0.4rem;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #7049f0 #f1f1f1;
+  }
+  .subcategory-tags::-webkit-scrollbar {
+    height: 4px;
+  }
+  .subcategory-tags::-webkit-scrollbar-thumb {
+    background: #7049f0;
+    border-radius: 2px;
+  }
+  .subcategory-tag {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
   }
   body:not(.bg-none) .subcategory-tag {
     font-size: 0.92rem;
