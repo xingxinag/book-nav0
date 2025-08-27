@@ -86,12 +86,16 @@ def category(id):
     # 获取所有分类用于修改链接表单
     all_categories = Category.query.order_by(Category.order.desc()).all()
     
+    # 获取所有顶级分类用于侧边栏
+    categories = Category.query.filter_by(parent_id=None).order_by(Category.order.desc()).all()
+    
     # 相关分类信息
     context = {
         'title': category.name,
         'category': category,
         'websites': websites,
         'all_categories': all_categories,
+        'categories': categories,  # 添加categories用于侧边栏
         'highlight_id': highlight_id  # 添加高亮ID到上下文
     }
     
