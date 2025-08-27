@@ -198,7 +198,7 @@ head %}
               </span>
               {{ category.name }}
               <span class="category-count"
-                >（{{ category.website_list|length }}）</span
+                >{{ category.website_list|length }}</span
               >
             </h3>
           </a>
@@ -217,7 +217,7 @@ head %}
             </span>
             全部
             <span class="subcategory-count"
-              >({{ category.website_list|length }})</span
+              >{{ category.website_list|length }}</span
             >
           </a>
           {% for child in category.children %}
@@ -233,7 +233,7 @@ head %}
             </span>
             {{ child.name }}
             <span class="subcategory-count"
-              >({{ child.website_list|length }})</span
+              >{{ child.website_list|length }}</span
             >
           </a>
           {% endfor %}
