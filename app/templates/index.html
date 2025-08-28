@@ -197,9 +197,7 @@ head %}
                 <i class="bi bi-{{ category.icon or 'folder' }}"></i>
               </span>
               {{ category.name }}
-              <span class="category-count"
-                >{{ category.website_list|length }}</span
-              >
+              <span class="category-count">{{ category.total_count }}</span>
             </h3>
           </a>
         </div>
@@ -216,9 +214,7 @@ head %}
               <i class="bi bi-folder"></i>
             </span>
             全部
-            <span class="subcategory-count"
-              >{{ category.website_list|length }}</span
-            >
+            <span class="subcategory-count">{{ category.total_count }}</span>
           </a>
           {% for child in category.children %}
           <a
@@ -232,9 +228,7 @@ head %}
               <i class="bi bi-{{ child.icon or 'tag' }}"></i>
             </span>
             {{ child.name }}
-            <span class="subcategory-count"
-              >{{ child.website_list|length }}</span
-            >
+            <span class="subcategory-count">{{ child.total_count }}</span>
           </a>
           {% endfor %}
         </div>
