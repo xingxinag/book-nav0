@@ -1,0 +1,210 @@
+{% extends "base.html" %} {% block head %}
+<link
+  rel="stylesheet"
+  href="{{ url_for('static', filename='css/admin.css') }}"
+/>
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+/>
+<style>
+  /* 自定义样式覆盖父模板的flash消息 */
+  .flash-messages {
+    display: none !important; /* 隐藏父模板的flash消息 */
+  }
+
+  /* 自定义通知样式 */
+  #custom-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 1rem;
+    display: none;
+    border-left: 4px solid #4299e1;
+  }
+
+  #custom-notification.success {
+    border-left-color: #48bb78;
+  }
+
+  #custom-notification.danger {
+    border-left-color: #f56565;
+  }
+
+  #custom-notification.warning {
+    border-left-color: #ed8936;
+  }
+
+  #custom-notification-content {
+    font-size: 0.95rem;
+    color: #4a5568;
+  }
+</style>
+{% block admin_head %}{% endblock %} {% endblock %} {% block content %}
+<!-- 覆盖base.html中的flash消息 -->
+{% with messages = get_flashed_messages(with_categories=true) %} {% if messages
+%}
+<!-- 故意留空，防止父模板中的flash消息显示 -->
+{% endif %} {% endwith %}
+
+<div class="admin-wrapper">
+  <!-- 导航栏 -->
+  <nav class="admin-navbar">
+    <div class="navbar-left">
+      <button class="menu-toggle" id="mobileMenuToggle">
+        <i class="bi bi-list"></i>
+      </button>
+      <a href="{{ url_for('admin.index') }}" class="navbar-brand">
+        <span>后台管理</span>
+      </a>
+    </div>
+
+    <div class="navbar-right">
+      <a
+        href="{{ url_for('main.index') }}"
+        class="navbar-link"
+        title="返回前台"
+      >
+        <i class="bi bi-house-door"></i>
+        <span class="d-none d-md-inline">返回前台</span>
+      </a>
+
+      <div class="dropdown">
+        <button class="navbar-user dropdown-toggle" id="userDropdown">
+          <div class="user-avatar">{{ current_user.username[0] | upper }}</div>
+          <span class="d-none d-md-inline">{{ current_user.username }}</span>
+        </button>
+        <ul class="dropdown-menu" id="userDropdownMenu">
+          <li>
+            <a href="{{ url_for('auth.logout') }}"
+              ><i class="bi bi-box-arrow-right"></i> 退出登录</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 包含侧边栏 -->
+  {% include 'admin/common/sidebar.html' %}
+
+  <!-- 自定义通知元素 -->
+  <div id="custom-notification" class="animate__animated animate__fadeIn">
+    <div id="custom-notification-content"></div>
+  </div>
+
+  <!-- 主内容区域 -->
+  <main class="admin-main">
+    <div class="admin-container">{% block admin_content %}{% endblock %}</div>
+  </main>
+</div>
+{% endblock %} {% block footer %} {# 引入模块化页脚 - 管理后台版本 #} {% with
+year = now.year, is_admin=true %} {% include 'common/footer.html' %} {% endwith
+%} {% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 自定义通知系统
+    function showNotification(message, type = "success", duration = 3000) {
+      const notification = document.getElementById("custom-notification");
+      const content = document.getElementById("custom-notification-content");
+
+      // 重置之前的样式
+      notification.className = "animate__animated animate__fadeIn";
+      notification.classList.add(type);
+
+      // 设置消息内容
+      content.textContent = message;
+
+      // 显示通知
+      notification.style.display = "block";
+
+      // 设置自动消失
+      setTimeout(() => {
+        notification.classList.remove("animate__fadeIn");
+        notification.classList.add("animate__fadeOut");
+
+        setTimeout(() => {
+          notification.style.display = "none";
+          notification.classList.remove("animate__fadeOut");
+          notification.classList.remove(type);
+        }, 500);
+      }, duration);
+    }
+
+    // 检查URL参数是否包含flash消息
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("flash_message") && urlParams.has("flash_category")) {
+      const message = urlParams.get("flash_message");
+      const category = urlParams.get("flash_category");
+      showNotification(message, category);
+
+      // 修改URL，移除参数但不刷新页面
+      const newUrl = window.location.pathname + window.location.hash;
+      history.replaceState(null, "", newUrl);
+    }
+
+    // 侧边栏切换功能
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const adminWrapper = document.querySelector(".admin-wrapper");
+    const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+    // 检查本地存储中的侧边栏状态
+    const sidebarCollapsed =
+      localStorage.getItem("sidebar-collapsed") === "true";
+    if (sidebarCollapsed) {
+      adminWrapper.classList.add("sidebar-collapsed");
+      updateToggleIcon(true);
+    }
+
+    // 侧边栏折叠/展开切换
+    sidebarToggle.addEventListener("click", function () {
+      adminWrapper.classList.toggle("sidebar-collapsed");
+      const isCollapsed = adminWrapper.classList.contains("sidebar-collapsed");
+      localStorage.setItem("sidebar-collapsed", isCollapsed);
+      updateToggleIcon(isCollapsed);
+    });
+
+    // 移动端菜单开关
+    mobileMenuToggle.addEventListener("click", function () {
+      adminWrapper.classList.toggle("sidebar-mobile-open");
+    });
+
+    // 点击遮罩层关闭侧边栏
+    sidebarOverlay.addEventListener("click", function () {
+      adminWrapper.classList.remove("sidebar-mobile-open");
+    });
+
+    // 更新切换图标方向
+    function updateToggleIcon(isCollapsed) {
+      const icon = sidebarToggle.querySelector("i");
+      if (isCollapsed) {
+        icon.classList.remove("bi-chevron-left");
+        icon.classList.add("bi-chevron-right");
+      } else {
+        icon.classList.remove("bi-chevron-right");
+        icon.classList.add("bi-chevron-left");
+      }
+    }
+
+    // 用户下拉菜单
+    const userDropdown = document.getElementById("userDropdown");
+    const userDropdownMenu = document.getElementById("userDropdownMenu");
+
+    userDropdown.addEventListener("click", function (e) {
+      e.stopPropagation();
+      userDropdownMenu.classList.toggle("show");
+    });
+
+    // 点击其他区域关闭下拉菜单
+    document.addEventListener("click", function () {
+      userDropdownMenu.classList.remove("show");
+    });
+  });
+</script>
+{% block admin_scripts %}{% endblock %} {% endblock %}

@@ -1,0 +1,210 @@
+/* 颜色选择器样式 */
+.color-picker-container {
+  position: relative;
+}
+
+.color-picker-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #ced4da;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #fff;
+  transition: border-color 0.2s;
+}
+
+.color-picker-preview:hover {
+  border-color: var(--primary-color);
+}
+
+.color-preview-swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.color-picker-preview-text {
+  flex: 1;
+  color: var(--text-secondary);
+}
+
+.color-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-width: 300px;
+  z-index: 1000;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+  margin-top: 0.5rem;
+  display: none;
+}
+
+.color-picker-dropdown.show {
+  display: block;
+  animation: fadeIn 0.2s ease;
+}
+
+.color-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.color-input-visual {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.color-input-visual input[type="color"] {
+  opacity: 0;
+  width: 150%;
+  height: 150%;
+  margin: -25%;
+  cursor: pointer;
+}
+
+.color-input-text {
+  flex: 1;
+}
+
+.color-input-text input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e1e5e9;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.color-picker-presets {
+  margin-bottom: 1rem;
+}
+
+.color-picker-presets-title {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.color-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+}
+
+.color-preset-item {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.color-preset-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.color-preset-item.selected {
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.theme-colors-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.theme-color-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.theme-color-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.theme-color-swatch {
+  width: 100%;
+  height: 40px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.theme-color-item.selected .theme-color-swatch {
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.theme-color-item span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.color-picker-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #eee;
+}
+
+.color-picker-footer .btn {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+
+.color-preview-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.color-preview-box i {
+  font-size: 1.8rem;
+  color: white;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 576px) {
+  .color-preset-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}

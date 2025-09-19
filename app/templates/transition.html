@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>正在跳转到 {{ website.title }} - {{ settings.site_name }}</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap.min.css') }}"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/bootstrap-icons.css') }}"
+    />
+    <style>
+      /* 基础变量定义 */
+      :root {
+          --transition-primary-color: {{ settings.transition_color or '#6e8efb' }};
+          --transition-light-color: {{ settings.transition_color or '#6e8efb' }}20;
+
+          /* 暗色主题预设变量 */
+          --dark-bg-color: #121212;
+          --dark-card-bg: #1e1e1e;
+          --dark-border-color: #333;
+          --dark-text-color: #eee;
+          --dark-secondary-color: #888;
+      }
+
+      /* 基础样式 */
+      body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          background-color: #f8f9fa;
+          margin: 0;
+          overflow-y: auto;
+          overflow-x: hidden;
+          transition: background-color 0.3s ease;
+      }
+
+      /* 卡片容器 */
+      .redirect-container {
+          width: 100%;
+          max-width: 580px;
+          padding: 15px;
+          margin-top: -5vh;
+          min-height: min-content;
+      }
+
+      .redirect-card {
+          border-radius: 12px;
+          overflow: hidden;
+          background-color: #fff;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          transition: box-shadow 0.3s ease, transform 0.3s ease;
+      }
+
+      /* 头部 */
+      .redirect-header {
+          background: linear-gradient(90deg, var(--transition-primary-color), rgba(110, 142, 251, 0.85));
+          color: white;
+          padding: 14px 20px;
+          font-size: 1rem;
+      }
+
+      /* 正文内容 */
+      .redirect-body {
+          padding: 24px;
+      }
+
+      /* 网站信息区域 */
+      .site-header-section {
+          display: flex;
+          align-items: center;
+          margin-bottom: 15px;
+          background-color: rgba(0, 0, 0, 0.02);
+          border-radius: 8px;
+          padding: 10px;
+          border: 1px solid rgba(0, 0, 0, 0.04);
+      }
+
+      .site-icon {
+          width: 48px;
+          height: 48px;
+          min-width: 48px;
+          border-radius: 8px;
+          position: relative;
+          margin-right: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #fff;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+          overflow: hidden;
+      }
+
+      .site-icon img {
+          max-width: 85%;
+          max-height: 85%;
+          object-fit: contain;
+      }
+
+      /* 图片加载失败的替代方案 */
+      .site-icon-fallback {
+          font-size: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          width: 100%;
+          background-color: #f8f9fa;
+          color: #aaa;
+      }
+
+      .site-info-text {
+          overflow: hidden;
+          min-width: 0;
+      }
+
+      .site-title {
+          font-size: 1.15rem;
+          font-weight: 600;
+          margin: 0 0 3px 0;
+          color: #333;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          line-height: 1.3;
+      }
+
+      .site-url {
+          color: #777;
+          font-size: 0.92rem;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          line-height: 1.3;
+      }
+
+      /* 网站描述 */
+      .site-description {
+          margin-bottom: 15px;
+          background-color: rgba(0, 0, 0, 0.02);
+          border-radius: 8px;
+          padding: 12px;
+          border: 1px solid rgba(0, 0, 0, 0.04);
+      }
+
+      .description-content {
+          color: #555;
+          font-size: 0.95rem;
+          line-height: 1.5;
+          max-height: 100px;
+          overflow-y: auto;
+      }
+
+      /* 广告区域 */
+      .redirect-ad {
+          margin-bottom: 15px;
+          padding: 10px;
+          background-color: rgba(0, 0, 0, 0.02);
+          border-radius: 8px;
+          font-size: 0.9rem;
+          border: 1px solid rgba(0, 0, 0, 0.04);
+      }
+
+      /* 进度条 */
+      .redirect-progress {
+          height: 5px;
+          background-color: rgba(0, 0, 0, 0.05);
+          border-radius: 5px;
+          overflow: hidden;
+          margin-bottom: 12px;
+      }
+
+      .redirect-progress .progress-bar {
+          height: 100%;
+          width: 0%;
+          background: var(--transition-primary-color);
+          border-radius: 5px;
+          transition: width 1s linear;
+      }
+
+      /* 倒计时和按钮区域 */
+      .redirect-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 5px;
+      }
+
+      .redirect-countdown {
+          color: #555;
+          font-size: 1rem;
+          margin: 0;
+          display: flex;
+          align-items: center;
+      }
+
+      #countdown {
+          color: var(--transition-primary-color);
+          font-weight: 600;
+          font-size: 1.15rem;
+          margin: 0 3px;
+      }
+
+      .btn-primary {
+          background: var(--transition-primary-color);
+          border: none;
+          border-radius: 6px;
+          padding: 9px 18px;
+          font-size: 1rem;
+          font-weight: 500;
+          color: white;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+          transition: all 0.2s ease;
+          text-decoration: none;
+      }
+
+      .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+          text-decoration: none;
+      }
+
+      /* 页脚 */
+      .redirect-footer {
+          background-color: rgba(0, 0, 0, 0.02);
+          border-top: 1px solid rgba(0, 0, 0, 0.05);
+          padding: 12px 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+
+      .redirect-stats {
+          color: #777;
+          font-size: 0.9rem;
+          display: flex;
+          align-items: center;
+      }
+
+      .eye-icon {
+          margin-right: 4px;
+          opacity: 0.8;
+      }
+
+      .form-check-input {
+          background-color: #fff;
+          border: 1px solid rgba(0, 0, 0, 0.15);
+          cursor: pointer;
+      }
+
+      .form-check-input:checked {
+          background-color: var(--transition-primary-color);
+          border-color: var(--transition-primary-color);
+      }
+
+      .form-check-label {
+          color: #666;
+          font-size: 0.9rem;
+          cursor: pointer;
+      }
+
+      /* 动画效果 */
+      @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+      }
+
+      .animate-fade-in {
+          animation: fadeIn 0.3s ease-out;
+      }
+
+      /* 响应式优化 */
+      @media (max-height: 700px) {
+          .redirect-container {
+              margin-top: max(-10vh, -80px);
+              padding-top: 20px;
+          }
+
+          .redirect-body {
+              padding: 18px;
+          }
+      }
+
+      @media (max-width: 576px) {
+          .redirect-body {
+              padding: 15px;
+          }
+
+          .redirect-actions {
+              flex-direction: column;
+              align-items: stretch;
+              gap: 10px;
+          }
+
+          .redirect-countdown {
+              text-align: center;
+              justify-content: center;
+              margin-bottom: 5px;
+          }
+
+          .btn-primary {
+              width: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+          }
+
+          .redirect-footer {
+              flex-direction: column;
+              gap: 10px;
+              align-items: flex-start;
+          }
+
+          .form-switch {
+              margin-left: 0;
+              width: 100%;
+          }
+      }
+
+      /* 主题样式 */
+
+      /* 默认主题（当前） */
+      .theme-default {
+          /* 默认主题已经在基础样式中定义 */
+      }
+
+      /* 极简主题 */
+      .theme-minimal {
+          background-color: #fff;
+      }
+
+      .theme-minimal .redirect-card {
+          box-shadow: none;
+          border: 1px solid #eaeaea;
+      }
+
+      .theme-minimal .redirect-header {
+          background: #f5f7fa;
+          color: #333;
+          border-bottom: 2px solid #eaeaea;
+      }
+
+      .theme-minimal .site-header-section,
+      .theme-minimal .site-description,
+      .theme-minimal .redirect-ad {
+          background-color: #fafafa;
+          border: 1px solid #eaeaea;
+      }
+
+      .theme-minimal .site-icon {
+          background-color: #f5f7fa;
+          box-shadow: none;
+      }
+
+      .theme-minimal .redirect-progress {
+          height: 3px;
+      }
+
+      .theme-minimal .btn-primary {
+          background-color: var(--transition-primary-color);
+          box-shadow: none;
+          border-radius: 4px;
+          text-decoration: none;
+      }
+
+      .theme-minimal .redirect-footer {
+          background-color: #fafafa;
+          border-top: 1px solid #eaeaea;
+      }
+
+      /* 卡片主题 */
+      .theme-card {
+          background-color: #f5f7fa;
+          background-image: url("data:image/svg+xml,%3Csvg width='52' height='26' viewBox='0 0 52 26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M10 10c0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6h2c0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4 3.314 0 6 2.686 6 6 0 2.21 1.79 4 4 4v2c-3.314 0-6-2.686-6-6 0-2.21-1.79-4-4-4-3.314 0-6-2.686-6-6zm25.464-1.95l8.486 8.486-1.414 1.414-8.486-8.486 1.414-1.414z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+
+      .theme-card .redirect-card {
+          border-radius: 16px;
+          box-shadow: 0 15px 35px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+      }
+
+      .theme-card .redirect-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 35px rgba(50, 50, 93, 0.15), 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .theme-card .redirect-header {
+          background: linear-gradient(135deg, var(--transition-primary-color), rgba(110, 142, 251, 0.8));
+          padding: 18px 25px;
+      }
+
+      .theme-card .site-icon {
+          width: 55px;
+          height: 55px;
+          border-radius: 12px;
+          box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .theme-card .site-title {
+          font-size: 1.25rem;
+      }
+
+      .theme-card .site-description {
+          background-color: rgba(0, 0, 0, 0.02);
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      }
+
+      .theme-card .redirect-progress {
+          height: 6px;
+          background-color: rgba(0, 0, 0, 0.03);
+      }
+
+      .theme-card .redirect-progress .progress-bar {
+          background: linear-gradient(90deg, var(--transition-primary-color), rgba(110, 142, 251, 0.7));
+          box-shadow: 0 0 10px rgba(110, 142, 251, 0.3);
+      }
+
+      .theme-card .btn-primary {
+          background: linear-gradient(90deg, var(--transition-primary-color), rgba(110, 142, 251, 0.9));
+          border-radius: 30px;
+          padding: 10px 24px;
+          font-weight: 600;
+          text-decoration: none;
+      }
+
+      /* 暗色主题 */
+      .theme-dark {
+          background-color: var(--dark-bg-color);
+          color: var(--dark-text-color);
+      }
+
+      .theme-dark .redirect-card {
+          background-color: var(--dark-card-bg);
+          border: 1px solid var(--dark-border-color);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+
+      .theme-dark .redirect-header {
+          background-color: #252525;
+          border-bottom: 1px solid #444;
+      }
+
+      .theme-dark .site-header-section,
+      .theme-dark .site-description,
+      .theme-dark .redirect-ad {
+          background-color: #252525;
+          border: 1px solid #333;
+      }
+
+      .theme-dark .site-icon {
+          background-color: #333;
+          border-color: #444;
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .theme-dark .site-icon-fallback {
+          background-color: #333;
+          color: #888;
+      }
+
+      .theme-dark .site-title {
+          color: #eee;
+      }
+
+      .theme-dark .site-url {
+          color: #888;
+      }
+
+      .theme-dark .description-content {
+          color: #aaa;
+      }
+
+      .theme-dark .redirect-progress {
+          background-color: #333;
+      }
+
+      .theme-dark .redirect-countdown {
+          color: #aaa;
+      }
+
+      .theme-dark .btn-primary {
+          background: linear-gradient(90deg, var(--transition-primary-color), rgba(110, 142, 251, 0.9));
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+          text-decoration: none;
+      }
+
+      .theme-dark .redirect-footer {
+          background-color: #252525;
+          border-top: 1px solid #444;
+      }
+
+      .theme-dark .redirect-stats {
+          color: #777;
+      }
+
+      .theme-dark .form-check-input {
+          background-color: #333;
+          border-color: #555;
+      }
+
+      .theme-dark .form-check-label {
+          color: #aaa;
+      }
+    </style>
+  </head>
+  <body class="theme-{{ settings.transition_theme or 'default' }}">
+    <div class="redirect-container animate-fade-in">
+      <div class="redirect-card">
+        <!-- 头部安全提示 -->
+        <div class="redirect-header">
+          <div class="d-flex align-items-center">
+            <i class="bi bi-box-arrow-up-right me-2"></i>
+            <span>您即将离开 {{ settings.site_name }}，前往外部网站</span>
+          </div>
+        </div>
+
+        <!-- 正文内容 -->
+        <div class="redirect-body">
+          <!-- 网站信息和URL显示 -->
+          <div class="site-header-section">
+            <div class="site-icon">
+              <img
+                src="{{ website.icon or url_for('static', filename='images/default-icon.png') }}"
+                alt="{{ website.title }}"
+                class="img-fluid"
+                onerror="this.style.display='none';this.parentNode.innerHTML='<div class=\'site-icon-fallback\'>🔗</div>';"
+              />
+            </div>
+            <div class="site-info-text">
+              <h4 class="site-title">{{ website.title }}</h4>
+              <p class="site-url">{{ website.url }}</p>
+            </div>
+          </div>
+
+          <!-- 网站描述 -->
+          {% if settings.transition_show_description and website.description %}
+          <div class="site-description">
+            <div class="description-content">{{ website.description }}</div>
+          </div>
+          {% endif %}
+
+          <!-- 广告区1 -->
+          {% if settings.transition_ad1 %}
+          <div class="redirect-ad">{{ settings.transition_ad1|safe }}</div>
+          {% endif %}
+
+          <!-- 进度和倒计时 -->
+          <div class="redirect-progress">
+            <div id="redirect-progress-bar" class="progress-bar"></div>
+          </div>
+
+          <div class="redirect-actions">
+            <p class="redirect-countdown">
+              将在<span id="countdown">{{ countdown }}</span>秒后自动跳转
+            </p>
+
+            <a
+              href="{{ website.url }}"
+              id="redirect-now"
+              class="btn btn-primary"
+            >
+              <i class="bi bi-arrow-right me-1"></i>立即前往
+            </a>
+          </div>
+
+          <!-- 广告区2 -->
+          {% if settings.transition_ad2 %}
+          <div class="redirect-ad">{{ settings.transition_ad2|safe }}</div>
+          {% endif %}
+        </div>
+
+        <!-- 底部选项 -->
+        <div class="redirect-footer">
+          <div class="redirect-stats">
+            <i class="bi bi-eye eye-icon"></i>访问次数: {{ website.views + 1 }}
+          </div>
+
+          {% if settings.transition_remember_choice %}
+          <div class="form-check form-switch">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="disableRedirect"
+            />
+            <label class="form-check-label" for="disableRedirect"
+              >不再显示过渡页</label
+            >
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const targetUrl = "{{ website.url }}";
+        const progressBar = document.getElementById('redirect-progress-bar');
+        const countdownEl = document.getElementById('countdown');
+        var disableRedirect = document.getElementById('disableRedirect');
+        const redirectNow = document.getElementById('redirect-now');
+        const rememberChoice = {{ 'true' if settings.transition_remember_choice else 'false' }};
+
+        // 预加载目标网站
+        function preloadTargetSite() {
+            try {
+                // DNS 预解析
+                const dnsLink = document.createElement('link');
+                dnsLink.rel = 'dns-prefetch';
+                dnsLink.href = new URL(targetUrl).origin;
+                document.head.appendChild(dnsLink);
+
+                // 预加载目标网站
+                const preloadLink = document.createElement('link');
+                preloadLink.rel = 'preload';
+                preloadLink.as = 'document';
+                preloadLink.href = targetUrl;
+                document.head.appendChild(preloadLink);
+            } catch (e) {
+                console.error('预加载失败:', e);
+            }
+        }
+
+        // 立即开始预加载
+        preloadTargetSite();
+
+        // 获取倒计时时间
+        var totalSeconds = {{ countdown|int }};
+        var start = Date.now();
+        var ended = false;
+
+        // 确保倒计时大于0，避免除以零错误
+        if (totalSeconds <= 0) {
+            console.error('倒计时时间设置为0，直接跳转');
+            window.location.replace(targetUrl);
+            return;
+        }
+
+        // 跳转
+        function recordAndJump() {
+            if (ended) return;
+            ended = true;
+            window.location.replace(targetUrl);
+        }
+
+        // 平滑进度条和倒计时
+        function animate() {
+            var elapsed = (Date.now() - start) / 1000;
+            var percent = Math.min((elapsed / totalSeconds) * 100, 100);
+            progressBar.style.width = percent + '%';
+            var remain = Math.ceil(totalSeconds - elapsed);
+            countdownEl.textContent = remain > 0 ? remain : 0;
+            if (elapsed < totalSeconds && !ended) {
+                requestAnimationFrame(animate);
+            } else if (!ended) {
+                recordAndJump();
+            }
+        }
+
+        // 开始动画
+        animate();
+
+        // 处理"不再显示"复选框
+        if (rememberChoice && disableRedirect) {
+            disableRedirect.addEventListener('change', function() {
+                if (this.checked) {
+                    // 设置cookie，有效期30天
+                    document.cookie = "disableRedirect=true; path=/; max-age=2592000";
+                } else {
+                    // 删除cookie
+                    document.cookie = "disableRedirect=; path=/; max-age=0";
+                }
+            });
+        }
+
+        // 立即跳转按钮事件
+        if (redirectNow) {
+            redirectNow.addEventListener('click', function(e) {
+                e.preventDefault(); // 阻止默认行为
+                ended = true;
+                if (rememberChoice && disableRedirect && disableRedirect.checked) {
+                    document.cookie = "disableRedirect=true; path=/; max-age=2592000";
+                }
+                window.location.replace(targetUrl);
+            });
+        }
+      });
+    </script>
+  </body>
+</html>

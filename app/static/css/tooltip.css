@@ -1,0 +1,110 @@
+/* 自定义tooltip样式 */
+.custom-tooltip {
+  position: fixed;
+  z-index: 9999;
+  display: none;
+  padding: 12px 18px;
+  background: linear-gradient(
+    135deg,
+    rgba(112, 73, 240, 0.95),
+    rgba(87, 50, 218, 0.98)
+  );
+  color: white;
+  border-radius: 12px;
+  min-width: 100px;
+  max-width: 320px;
+  width: auto;
+  box-shadow: 0 10px 30px rgba(112, 73, 240, 0.35);
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.6;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  white-space: normal;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transform: translateY(0);
+  opacity: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  word-break: break-word;
+}
+
+/* Bootstrap tooltip内容美化和排版 */
+.tooltip .tooltip-inner {
+  background: linear-gradient(
+    135deg,
+    rgba(112, 73, 240, 0.95),
+    rgba(87, 50, 218, 0.98)
+  );
+  color: white;
+  border-radius: 12px;
+  max-width: 320px;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.6;
+  white-space: normal !important;
+  word-break: break-all !important;
+  box-shadow: 0 10px 30px rgba(112, 73, 240, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 12px 18px;
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  -ms-hyphens: auto;
+}
+
+@media (max-width: 600px) {
+  .tooltip .tooltip-inner {
+    text-align: left !important;
+  }
+}
+
+/* 移动端tooltip处理 */
+@media (max-width: 768px) {
+  /* 在移动端隐藏所有tooltip */
+  .tooltip {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  /* 禁用移动端的tooltip触发 */
+  [data-bs-toggle="tooltip"] {
+    pointer-events: auto;
+  }
+
+  /* 确保移动端点击时不会显示tooltip */
+  .site-card[data-bs-toggle="tooltip"]:hover::after,
+  .site-card[data-bs-toggle="tooltip"]:focus::after {
+    display: none !important;
+  }
+}
+
+/* 添加统一的箭头样式 */
+.custom-tooltip::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid rgba(87, 50, 218, 0.98);
+  bottom: -8px;
+  left: 50%;
+  margin-left: -8px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* 当tooltip显示在卡片下方时的箭头 */
+.custom-tooltip.bottom-arrow::after {
+  border-top: none;
+  border-bottom: 8px solid rgba(112, 73, 240, 0.95);
+  top: -8px;
+  bottom: auto;
+}
+
+/* 添加多行显示样式 */
+.custom-tooltip.multiline {
+  width: 300px;
+}

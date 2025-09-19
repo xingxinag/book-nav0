@@ -1,0 +1,240 @@
+/* 卡片容器 */
+.card-container {
+  margin: 0.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+/* 网站卡片 */
+.site-card {
+  background: white;
+  border-radius: 15px;
+  padding: 0.8rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: hidden;
+  margin: 0.5rem;
+  width: calc(20% - 1rem);
+  min-height: 90px;
+  height: auto;
+  display: flex;
+}
+
+/* 有背景时增加卡片不透明度和模糊效果 */
+body:not(.bg-none) .site-card {
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 修改卡片悬停效果，增加厚重感 */
+body:not(.bg-none) .site-card:hover {
+  background-color: rgba(255, 255, 255, 0.95);
+  border-color: rgba(112, 73, 240, 0.2);
+}
+
+/* 卡片光效果 
+.site-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(112, 73, 240, 0.03) 30%,
+    rgba(74, 136, 252, 0.03) 70%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.8s ease;
+  z-index: 1;
+}
+
+.site-card:hover::before {
+  transform: translateX(100%);
+}
+*/
+.site-card:hover {
+  border-color: rgba(126, 37, 227, 0.5);
+  border-width: 1px;
+  border-style: solid;
+}
+
+/* 卡片头部 */
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 网站图标 */
+.site-icon {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.site-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.site-icon i {
+  font-size: 24px;
+  color: var(--primary-color);
+  transition: all 0.3s ease;
+}
+
+/* 网站文本 */
+.site-text {
+  flex: 1;
+  min-width: 0;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 0;
+}
+
+.site-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 550;
+  color: #2c3e50;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s ease;
+  line-height: 1.3;
+  max-width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+.site-card:hover .site-title {
+  color: #3742fa;
+}
+
+.site-description {
+  margin: 8px 0 0px 0;
+  font-size: 14px;
+  color: rgb(128, 128, 128);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+  transition: opacity 0.3s ease;
+  word-break: break-word;
+  max-width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+.site-card:hover .site-description {
+  color: #666;
+}
+
+/* 响应式布局 */
+@media (max-width: 1400px) {
+  .site-card {
+    width: calc(25% - 1rem);
+  }
+}
+
+@media (max-width: 1200px) {
+  .site-card {
+    width: calc(33.333% - 1rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .site-card {
+    width: calc(50% - 1rem);
+  }
+}
+
+@media (max-width: 576px) {
+  .card-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    padding-left: 0;
+    padding-right: 0;
+    justify-content: center;
+  }
+  .site-card {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+  .site-title,
+  .site-description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* 拖拽相关样式 */
+.site-card.draggable {
+  cursor: grab;
+}
+
+.site-card.dragging {
+  cursor: grabbing;
+  opacity: 0.9;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+}
+
+/* 私有标记 */
+.private-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--primary-color);
+  padding: 4px;
+  border-radius: 50%;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  z-index: 3;
+  transition: all 0.3s ease;
+}
+
+.site-card:hover .private-badge {
+  background: rgba(112, 73, 240, 0.1);
+}
+
+.private-badge i {
+  font-size: 14px;
+}

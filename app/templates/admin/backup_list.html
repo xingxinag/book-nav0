@@ -1,0 +1,235 @@
+{% extends "admin/base.html" %} {% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-archive"></i> 备份管理</h2>
+  <div>
+    {% if settings.webdav_enabled %}
+    <button type="button" class="btn btn-warning me-2" id="batch-webdav-upload-btn">
+      <i class="bi bi-cloud-arrow-up"></i> 批量WebDAV上传
+    </button>
+    {% endif %}
+    <a href="{{ url_for('admin.backup_data') }}" class="btn btn-primary">
+      <i class="bi bi-database-add"></i> 立即备份
+    </a>
+  </div>
+</div>
+
+<!-- 备份列表 -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-database-fill-check"></i> 备份列表
+  </div>
+  <div class="card-body">
+    {% if backups %}
+    <div class="table-responsive">
+      <table class="table table-hover table-striped">
+        <thead>
+          <tr>
+            <th>序号</th>
+            <th>数据库文件名</th>
+            <th>备份时间</th>
+            <th>数据库大小</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for backup in backups %}
+          <tr>
+            <td>{{ loop.index0 }}</td>
+            <td>{{ backup.filename }}</td>
+            <td>{{ backup.time_display }}</td>
+            <td>{{ backup.size_display }}</td>
+            <td>
+              <form
+                method="post"
+                action="{{ url_for('admin.restore_backup', filename=backup.filename) }}"
+                class="d-inline confirm-form"
+                data-message="确定要回滚到此备份？此操作会覆盖当前数据！"
+              >
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token() }}"
+                />
+                <button type="submit" class="btn btn-sm btn-info">
+                  <i class="bi bi-arrow-counterclockwise"></i> 回滚
+                </button>
+              </form>
+
+              <a
+                href="{{ url_for('admin.download_backup', filename=backup.filename) }}"
+                class="btn btn-sm btn-success"
+              >
+                <i class="bi bi-download"></i> 下载
+              </a>
+
+              <!-- WebDAV上传按钮 -->
+              {% if settings.webdav_enabled %}
+              <button
+                type="button"
+                class="btn btn-sm btn-warning webdav-upload-btn"
+                data-filename="{{ backup.filename }}"
+                title="上传到WebDAV"
+              >
+                <i class="bi bi-cloud-arrow-up"></i> WebDAV
+              </button>
+              {% endif %}
+
+              <form
+                method="post"
+                action="{{ url_for('admin.delete_backup', filename=backup.filename) }}"
+                class="d-inline confirm-form"
+                data-message="确定要删除此备份？"
+              >
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token() }}"
+                />
+                <button type="submit" class="btn btn-sm btn-danger">
+                  <i class="bi bi-trash"></i> 删除
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i>
+      暂无备份文件，点击"立即备份"创建新备份。
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 备份说明 -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-info-circle"></i> 备份说明</div>
+  <div class="card-body">
+    <ul>
+      <li>
+        <strong>立即备份</strong> - 创建当前数据库的完整备份，包括所有数据
+      </li>
+      <li>
+        <strong>回滚</strong> - 使用选中的备份替换当前数据库，会覆盖现有数据
+      </li>
+      <li><strong>下载</strong> - 下载备份文件到本地，可用于异地备份</li>
+      <li><strong>删除</strong> - 删除选中的备份文件</li>
+    </ul>
+    <div class="alert alert-warning">
+      <i class="bi bi-exclamation-triangle"></i> <strong>注意：</strong>
+      回滚操作会直接替换当前数据库，进行此操作前请确保已了解潜在风险。
+    </div>
+  </div>
+</div>
+{% endblock %} {% block admin_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 确认对话框
+    document.querySelectorAll(".confirm-form").forEach((form) => {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const message =
+          this.getAttribute("data-message") || "确定要执行此操作？";
+
+        if (confirm(message)) {
+          this.submit();
+        }
+      });
+    });
+
+    // WebDAV功能
+    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value ||
+                     document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    // 单个文件WebDAV上传
+    document.querySelectorAll('.webdav-upload-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const filename = this.getAttribute('data-filename');
+        const originalText = this.innerHTML;
+
+        this.disabled = true;
+        this.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>上传中...';
+
+        fetch(`/admin/backup-to-webdav/${filename}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          const alertClass = data.success ? 'alert-success' : 'alert-danger';
+          const message = data.message || '操作完成';
+
+          showAlert(alertClass, message);
+        })
+        .catch(error => {
+          showAlert('alert-danger', '上传失败: ' + error.message);
+        })
+        .finally(() => {
+          this.disabled = false;
+          this.innerHTML = originalText;
+        });
+      });
+    });
+
+    // 批量WebDAV上传
+    const batchBtn = document.getElementById('batch-webdav-upload-btn');
+    if (batchBtn) {
+      batchBtn.addEventListener('click', function() {
+        if (!confirm('确定要批量上传所有备份文件到WebDAV？')) {
+          return;
+        }
+
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>批量上传中...';
+
+        fetch('/admin/backup-all-to-webdav', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          const alertClass = data.success ? 'alert-success' : 'alert-danger';
+          showAlert(alertClass, data.message);
+        })
+        .catch(error => {
+          showAlert('alert-danger', '批量上传失败: ' + error.message);
+        })
+        .finally(() => {
+          this.disabled = false;
+          this.innerHTML = originalText;
+        });
+      });
+    }
+
+    // 显示提示消息
+    function showAlert(alertClass, message) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+      alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+
+      const container = document.querySelector('.container-fluid') || document.body;
+      container.insertBefore(alertDiv, container.firstChild);
+
+      // 自动关闭
+      setTimeout(() => {
+        if (alertDiv.parentNode) {
+          alertDiv.remove();
+        }
+      }, 5000);
+    }
+  });
+</script>
+{% endblock %}

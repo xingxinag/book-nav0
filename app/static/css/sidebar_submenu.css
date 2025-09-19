@@ -1,0 +1,152 @@
+/* 侧边栏子菜单样式 */
+.category-children-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.5rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  font-size: 0.75rem;
+  background-color: rgba(112, 73, 240, 0.8);
+  color: #ffffff;
+  border-radius: 1rem;
+  padding: 0 0.4rem;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-menu-link:hover .category-children-count {
+  background-color: rgba(120, 82, 245, 0.9);
+  transform: scale(1.05);
+}
+
+/* 全新展开按钮样式 */
+.sidebar-menu-item.has-submenu .submenu-toggle {
+  position: static;
+  margin-left: auto;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  transition: background 0.2s;
+  z-index: 2;
+  padding: 0;
+}
+
+.sidebar-menu-item.has-submenu .submenu-toggle:hover {
+  background: rgba(112, 73, 240, 0.1);
+}
+
+.sidebar-menu-item.has-submenu .submenu-toggle svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  display: block;
+  stroke: #7049f0;
+  stroke-width: 2.2;
+  fill: none;
+  transition: transform 0.3s;
+}
+
+.sidebar-menu-item.has-submenu.active .submenu-toggle svg {
+  transform: rotate(180deg);
+}
+
+.sidebar-menu-item.has-submenu.active .sidebar-submenu {
+  max-height: 500px; /* 足够大的高度以容纳所有子菜单项 */
+}
+
+.sidebar-submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding-left: 1rem;
+  list-style: none;
+  margin: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.sidebar-submenu-item {
+  margin-top: 0;
+  margin-bottom: 0;
+  line-height: 1;
+}
+
+.sidebar-submenu-item:first-child {
+  margin-top: 0;
+}
+
+.sidebar-submenu-item:last-child {
+  margin-bottom: 0;
+}
+
+.sidebar-menu-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.5rem 1.5rem;
+  position: relative;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: var(--transition-base);
+  font-size: 1rem;
+  font-weight: 600;
+  border-left: 3px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-submenu-link {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.4rem 1.5rem 0.4rem 2.2rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+  border-radius: 0.5rem;
+  color: rgba(0, 0, 0, 0.7);
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s, font-weight 0.2s,
+    box-shadow 0.2s;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.sidebar-submenu-link:hover {
+  background-color: rgba(112, 73, 240, 0.08);
+  color: #000;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(112, 73, 240, 0.08);
+}
+
+.sidebar-submenu-item .sidebar-menu-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+}
+
+/* 子项标记样式 */
+.sidebar-submenu-item::before {
+  display: none;
+}
+
+body:not(.bg-none) .sidebar-menu-item.has-submenu .submenu-toggle:hover svg {
+  stroke: #ffd86b;
+}
+body:not(.bg-none) .sidebar-menu-item.has-submenu .submenu-toggle:hover {
+  background: rgba(255, 216, 107, 0.08);
+}

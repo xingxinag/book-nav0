@@ -1,0 +1,295 @@
+/* 后台管理表格美化样式 */
+
+/* 表格整体样式 */
+.admin-table-container {
+  margin-bottom: 2rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  background-color: #ffffff;
+}
+
+/* 表头样式 */
+.admin-table thead {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.admin-table th {
+  padding: 16px 15px;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #dee2e6;
+  position: relative;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* 添加列分隔线 */
+.admin-table th:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 25%;
+  right: 0;
+  height: 50%;
+  width: 1px;
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* 表格内容样式 */
+.admin-table td {
+  padding: 14px 15px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f1f1;
+  color: #212529;
+  font-size: 0.95rem;
+  transition: background-color 0.2s;
+}
+
+/* 改进列对齐方式 */
+.admin-table th:nth-child(1),
+.admin-table td:nth-child(1) {
+  /* 排序列 */
+  text-align: center;
+  width: 80px;
+}
+
+.admin-table th:nth-child(4),
+.admin-table td:nth-child(4),
+.admin-table th:nth-child(5),
+.admin-table td:nth-child(5) {
+  /* 网站数和首页展示数量列 */
+  text-align: right;
+  width: 120px;
+}
+
+.admin-table th:last-child,
+.admin-table td:last-child {
+  /* 操作列 */
+  text-align: center;
+  width: 100px;
+}
+
+/* 增加列之间的视觉间隔 */
+.admin-table td:not(:first-child) {
+  border-left: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+/* 行样式和悬停效果 */
+.admin-table tbody tr {
+  transition: all 0.25s ease;
+}
+
+.admin-table tbody tr:hover {
+  background-color: #f8f9fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* 斑马纹效果 */
+.admin-table tbody tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+.admin-table tbody tr:nth-child(even):hover {
+  background-color: #f5f7f9;
+}
+
+/* 分类图标样式 */
+.category-icon {
+  width: 36px;
+  height: 36px;
+  text-align: center;
+  line-height: 36px;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  display: inline-block;
+  margin-right: 12px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+}
+
+.category-icon:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* 子分类样式 */
+.subcategory-row td:nth-child(2) {
+  padding-left: 2.5rem;
+}
+
+.subcategory-indicator {
+  margin-right: 10px;
+  color: #adb5bd;
+  position: relative;
+}
+
+.subcategory-indicator::after {
+  content: "";
+  position: absolute;
+  width: 15px;
+  height: 1px;
+  background-color: #dee2e6;
+  top: 50%;
+  left: -18px;
+}
+
+/* 操作按钮样式 */
+.admin-table .action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.admin-table .btn-action {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  border: none;
+}
+
+.admin-table .btn-edit {
+  background-color: #f1f8fe;
+  color: #0d6efd;
+}
+
+.admin-table .btn-edit:hover {
+  background-color: #e3f2fd;
+  color: #0d6efd;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(13, 110, 253, 0.15);
+}
+
+.admin-table .btn-delete {
+  background-color: #fff5f5;
+  color: #dc3545;
+}
+
+.admin-table .btn-delete:hover {
+  background-color: #ffebee;
+  color: #dc3545;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 5px rgba(220, 53, 69, 0.15);
+}
+
+/* 空状态样式 */
+.admin-table-empty {
+  padding: 4rem 2rem;
+  text-align: center;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.admin-table-empty i {
+  font-size: 3rem;
+  color: #dee2e6;
+  margin-bottom: 1rem;
+}
+
+.admin-table-empty p {
+  font-size: 1.1rem;
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .admin-table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 12px 10px;
+    font-size: 0.85rem;
+  }
+
+  .category-icon {
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 14px;
+    margin-right: 8px;
+  }
+}
+
+/* 暗黑模式样式 */
+.dark-mode .admin-table {
+  background-color: #2a2a3c;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.dark-mode .admin-table thead {
+  background: linear-gradient(135deg, #323342 0%, #272736 100%);
+}
+
+.dark-mode .admin-table th {
+  color: #e1e1e1;
+  border-bottom-color: #3f3f5f;
+}
+
+.dark-mode .admin-table td {
+  color: #e1e1e1;
+  border-bottom-color: #3f3f5f;
+}
+
+.dark-mode .admin-table tbody tr:hover {
+  background-color: #323342;
+}
+
+.dark-mode .admin-table tbody tr:nth-child(even) {
+  background-color: #2c2c3e;
+}
+
+.dark-mode .admin-table tbody tr:nth-child(even):hover {
+  background-color: #323342;
+}
+
+.dark-mode .admin-table .btn-edit {
+  background-color: #253952;
+  color: #5c9ce6;
+}
+
+.dark-mode .admin-table .btn-edit:hover {
+  background-color: #2c4a6b;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .admin-table .btn-delete {
+  background-color: #442a2d;
+  color: #e17a85;
+}
+
+.dark-mode .admin-table .btn-delete:hover {
+  background-color: #5a3236;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .admin-table-empty {
+  background-color: #2a2a3c;
+}
+
+.dark-mode .admin-table-empty i {
+  color: #4a4a5f;
+}
+
+.dark-mode .admin-table-empty p {
+  color: #9e9ea7;
+}

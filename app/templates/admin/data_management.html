@@ -1,0 +1,936 @@
+{% extends "admin/base.html" %} {% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-server"></i> 数据管理</h2>
+  <a href="{{ url_for('admin.backup_list') }}" class="btn btn-primary">
+    <i class="bi bi-database-fill"></i> 备份管理
+  </a>
+</div>
+
+<!-- CSRF令牌，用于AJAX请求 -->
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+<!-- 数据导入导出容器 -->
+<div class="card mb-4">
+  <div class="card-header">
+    <i class="bi bi-arrow-down-up"></i> 数据导入导出
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-lg-6">
+        <!-- 数据导出 -->
+        <div class="card bg-light h-100">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="bi bi-box-arrow-up"></i> 数据导出
+            </h5>
+            <p class="card-text">
+              导出数据库可以备份所有网站链接和分类数据，导出的数据库兼容OneNav格式。
+            </p>
+
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i>
+              导出的数据库可以在其他OneNav系统或本系统中导入使用。
+            </div>
+
+            <div class="mb-3">
+              <h6><i class="bi bi-list-check"></i> 导出内容包括：</h6>
+              <ul class="mb-3">
+                <li>所有网站链接数据</li>
+                <li>分类结构信息</li>
+                <li>图标、描述、排序信息</li>
+                <li>私有状态、访问统计</li>
+              </ul>
+            </div>
+
+            <div class="alert alert-light border mb-3">
+              <i class="bi bi-lightbulb"></i>
+              <strong>提示：</strong>
+              建议定期导出数据作为备份，可以防止数据丢失。
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">导出格式：</label>
+              <div class="form-check form-check-inline">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="exportFormat"
+                  id="formatNative"
+                  value="native"
+                  checked
+                />
+                <label class="form-check-label" for="formatNative"
+                  >本项目格式</label
+                >
+              </div>
+              <div class="form-check form-check-inline">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  name="exportFormat"
+                  id="formatOneNav"
+                  value="onenav"
+                />
+                <label class="form-check-label" for="formatOneNav"
+                  >OneNav兼容格式</label
+                >
+              </div>
+            </div>
+
+            <a href="#" id="exportBtn" class="btn btn-primary">
+              <i class="bi bi-download"></i> 导出数据库
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <!-- 数据导入 -->
+        <div class="card bg-light h-100">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="bi bi-box-arrow-in-down"></i> 数据导入
+            </h5>
+            <p class="card-text">
+              您可以导入本系统或OneNav格式的数据库。系统会自动检测数据库格式并进行转换。
+            </p>
+
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle"></i>
+              <strong>注意：</strong>
+              使用替换模式会先备份当前数据库，然后清空现有数据后导入新数据。合并模式会保留现有数据并添加新数据（避免URL重复）。
+            </div>
+
+            <form
+              method="post"
+              action="{{ url_for('admin.import_data') }}"
+              enctype="multipart/form-data"
+              id="import-form"
+            >
+              {{ import_form.hidden_tag() }}
+
+              <div class="mb-3">
+                <label for="db_file" class="form-label">数据库文件</label>
+                <input
+                  type="file"
+                  class="form-control"
+                  id="db_file"
+                  name="db_file"
+                  required
+                  accept=".db,.db3,.sqlite,.sqlite3"
+                />
+                <div class="form-text">
+                  支持.db、.db3、.sqlite、.sqlite3格式
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="import_type" class="form-label">导入类型</label>
+                <select class="form-select" name="import_type" id="import_type">
+                  <option value="merge">合并 - 保留现有数据</option>
+                  <option value="replace">替换 - 清空现有数据</option>
+                </select>
+                <div class="form-text">
+                  替换模式会先备份数据库，然后清空所有现有数据后再导入
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-upload"></i> 开始导入
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 数据批处理功能 -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-tools"></i> 数据批处理</div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-lg-6">
+        <!-- 一键抓取图标 -->
+        <div class="card bg-light">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="bi bi-image"></i> 一键抓取缺失图标
+            </h5>
+            <p class="card-text">
+              为所有缺失图标的网站自动获取图标。此过程可能需要较长时间，请耐心等待。
+            </p>
+
+            <div id="iconFetchControls">
+              <button id="startIconFetch" class="btn btn-primary">
+                <i class="bi bi-play-fill"></i> 开始抓取
+              </button>
+              <button
+                id="stopIconFetch"
+                class="btn btn-danger"
+                style="display: none"
+              >
+                <i class="bi bi-stop-fill"></i> 停止抓取
+              </button>
+            </div>
+
+            <!-- 进度显示区域 -->
+            <div id="iconFetchProgress" class="mt-3" style="display: none">
+              <div class="progress mb-2">
+                <div
+                  id="progressBar"
+                  class="progress-bar progress-bar-striped progress-bar-animated"
+                  role="progressbar"
+                  aria-valuenow="0"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  style="width: 0%"
+                ></div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <small id="progressText">准备中...</small>
+                <small id="progressPercent">0%</small>
+              </div>
+              <div class="mt-2">
+                <span class="badge bg-primary me-2" id="totalCount"
+                  >总计: 0</span
+                >
+                <span class="badge bg-info me-2" id="processedCount"
+                  >已处理: 0</span
+                >
+                <span class="badge bg-success me-2" id="successCount"
+                  >成功: 0</span
+                >
+                <span class="badge bg-danger me-2" id="failedCount"
+                  >失败: 0</span
+                >
+                <span class="badge bg-secondary" id="elapsedTime"
+                  >用时: 0秒</span
+                >
+              </div>
+            </div>
+
+            <!-- 完成提示 -->
+            <div
+              id="iconFetchComplete"
+              class="alert alert-success mt-3"
+              style="display: none"
+            >
+              <i class="bi bi-check-circle"></i> 抓取完成！
+              <span id="completeMessage"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <!-- 死链检测功能 -->
+        <div class="card bg-light h-100">
+          <div class="card-body">
+            <h5 class="card-title">
+              <i class="bi bi-link-45deg"></i> 死链检测
+            </h5>
+            <p class="card-text">
+              检测所有网站链接的有效性，识别无法访问的死链接。此过程可能需要较长时间。
+            </p>
+
+            <div id="deadlinkControls">
+              <button id="startDeadlinkCheck" class="btn btn-primary">
+                <i class="bi bi-play-fill"></i> 开始检测
+              </button>
+              <button
+                id="stopDeadlinkCheck"
+                class="btn btn-danger"
+                style="display: none"
+              >
+                <i class="bi bi-stop-fill"></i> 停止检测
+              </button>
+              <a
+                href="{{ url_for('admin.deadlink_results') }}"
+                id="viewDeadlinkResults"
+                class="btn btn-info"
+                style="display: none"
+              >
+                <i class="bi bi-eye"></i> 查看结果
+              </a>
+              <button id="clearDeadlinkRecords" class="btn btn-outline-danger">
+                <i class="bi bi-trash3"></i> 清空记录
+              </button>
+            </div>
+
+            <!-- 进度显示区域 -->
+            <div id="deadlinkProgress" class="mt-3" style="display: none">
+              <div class="progress mb-2">
+                <div
+                  id="deadlinkProgressBar"
+                  class="progress-bar progress-bar-striped progress-bar-animated"
+                  role="progressbar"
+                  aria-valuenow="0"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  style="width: 0%"
+                ></div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <small id="deadlinkProgressText">准备中...</small>
+                <small id="deadlinkProgressPercent">0%</small>
+              </div>
+              <div class="mt-2">
+                <span class="badge bg-primary me-2" id="totalLinks"
+                  >总计: 0</span
+                >
+                <span class="badge bg-info me-2" id="processedLinks"
+                  >已处理: 0</span
+                >
+                <span class="badge bg-success me-2" id="validLinks"
+                  >成功: 0</span
+                >
+                <span class="badge bg-danger me-2" id="invalidLinks"
+                  >失败: 0</span
+                >
+                <span class="badge bg-secondary" id="deadlinkElapsedTime"
+                  >用时: 0秒</span
+                >
+              </div>
+            </div>
+
+            <!-- 完成提示 -->
+            <div
+              id="deadlinkComplete"
+              class="alert alert-success mt-3"
+              style="display: none"
+            >
+              <i class="bi bi-check-circle"></i> 检测完成！
+              <span id="deadlinkCompleteMessage"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 数据清理功能 -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-trash"></i> 数据清理</div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card h-100 bg-light">
+          <div class="card-body">
+            <h5 class="card-title">清空网站链接</h5>
+            <p class="card-text">
+              删除系统中的所有网站链接，但保留分类结构。此操作不可恢复。
+            </p>
+
+            <button
+              type="button"
+              class="btn btn-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#clearLinksModal"
+            >
+              <i class="bi bi-trash"></i> 清空所有链接
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card h-100 bg-light">
+          <div class="card-body">
+            <h5 class="card-title">清空全部数据</h5>
+            <p class="card-text">
+              删除系统中的所有网站链接和分类数据。此操作不可恢复！
+            </p>
+
+            <button
+              type="button"
+              class="btn btn-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#clearAllModal"
+            >
+              <i class="bi bi-exclamation-triangle"></i> 清空所有数据
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 数据格式说明 -->
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-info-circle"></i> 兼容性说明</div>
+  <div class="card-body">
+    <h5>支持导入的数据库格式</h5>
+    <ul>
+      <li><strong>本系统格式</strong> - 直接导入本系统导出的数据库文件</li>
+      <li><strong>OneNav格式</strong> - 支持导入OneNav导航系统的数据库文件</li>
+    </ul>
+
+    <h5>OneNav兼容说明</h5>
+    <p>系统会自动识别OneNav数据库格式并转换以下数据：</p>
+    <ul>
+      <li>分类（包括层级结构）</li>
+      <li>链接数据（URL、标题、描述、图标等）</li>
+      <li>排序权重</li>
+      <li>私有状态</li>
+      <li>点击量统计</li>
+    </ul>
+
+    <div class="alert alert-info">
+      <i class="bi bi-lightbulb"></i>
+      <strong>提示：</strong>
+      导出的数据库同样可以导入到OneNav系统中，实现双向兼容。
+    </div>
+  </div>
+</div>
+
+<!-- 清空链接确认模态框 -->
+<div
+  class="modal fade"
+  id="clearLinksModal"
+  tabindex="-1"
+  aria-labelledby="clearLinksModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="clearLinksModalLabel">确认清空所有链接</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle"></i> <strong>警告：</strong>
+          此操作将永久删除系统中的所有网站链接数据，但保留分类结构。此操作不可恢复！
+        </div>
+        <p>请输入"<strong>确认删除</strong>"以继续：</p>
+        <input
+          type="text"
+          id="clearLinksConfirm"
+          class="form-control"
+          placeholder="确认删除"
+        />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          取消
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          id="clearLinksBtn"
+          disabled
+        >
+          确认清空
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 清空所有数据确认模态框 -->
+<div
+  class="modal fade"
+  id="clearAllModal"
+  tabindex="-1"
+  aria-labelledby="clearAllModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="clearAllModalLabel">确认清空所有数据</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger">
+          <i class="bi bi-exclamation-triangle"></i> <strong>严重警告：</strong>
+          此操作将永久删除系统中的所有网站链接和分类数据。此操作不可恢复！
+        </div>
+        <p>请输入"<strong>我确认清空所有数据</strong>"以继续：</p>
+        <input
+          type="text"
+          id="clearAllConfirm"
+          class="form-control"
+          placeholder="我确认清空所有数据"
+        />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          取消
+        </button>
+        <button type="button" class="btn btn-danger" id="clearAllBtn" disabled>
+          确认清空所有数据
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block admin_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // 导出按钮点击事件
+    const exportBtn = document.getElementById("exportBtn");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        const format = document.querySelector(
+          'input[name="exportFormat"]:checked'
+        ).value;
+        window.location.href =
+          "{{ url_for('admin.export_data') }}?format=" + format;
+      });
+    }
+
+    // 文件上传验证
+    const importForm = document.getElementById("import-form");
+    const fileInput = document.getElementById("db_file");
+
+    importForm.addEventListener("submit", function (e) {
+      if (!fileInput.files || fileInput.files.length === 0) {
+        e.preventDefault();
+        alert("请选择要上传的数据库文件");
+        return false;
+      }
+
+      const fileName = fileInput.files[0].name;
+      const fileExt = fileName
+        .substring(fileName.lastIndexOf("."))
+        .toLowerCase();
+      const validExtensions = [".db", ".db3", ".sqlite", ".sqlite3"];
+
+      if (!validExtensions.includes(fileExt)) {
+        e.preventDefault();
+        alert("请选择有效的SQLite数据库文件 (.db, .db3, .sqlite, .sqlite3)");
+        return false;
+      }
+
+      // 验证通过，显示加载状态
+      const submitBtn = this.querySelector('button[type="submit"]');
+      submitBtn.innerHTML =
+        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 导入中...';
+      submitBtn.disabled = true;
+
+      return true;
+    });
+
+    // 文件选择预览
+    fileInput.addEventListener("change", function () {
+      if (this.files.length > 0) {
+        const fileName = this.files[0].name;
+        const fileExt = fileName
+          .substring(fileName.lastIndexOf("."))
+          .toLowerCase();
+        const validExtensions = [".db", ".db3", ".sqlite", ".sqlite3"];
+
+        if (!validExtensions.includes(fileExt)) {
+          alert("请选择有效的SQLite数据库文件 (.db, .db3, .sqlite, .sqlite3)");
+          this.value = ""; // 清空选择
+        }
+      }
+    });
+
+    // 清空链接确认
+    const clearLinksConfirm = document.getElementById("clearLinksConfirm");
+    const clearLinksBtn = document.getElementById("clearLinksBtn");
+
+    clearLinksConfirm.addEventListener("input", function () {
+      clearLinksBtn.disabled = this.value !== "确认删除";
+    });
+
+    clearLinksBtn.addEventListener("click", function () {
+      // 显示加载状态
+      this.innerHTML =
+        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在处理...';
+      this.disabled = true;
+
+      // 发送清空请求
+      fetch('{{ url_for("admin.clear_websites") }}', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document.querySelector('input[name="csrf_token"]')
+            .value,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            // 关闭模态框
+            const modal = bootstrap.Modal.getInstance(
+              document.getElementById("clearLinksModal")
+            );
+            modal.hide();
+
+            // 显示成功消息
+            alert("成功清空所有链接数据！");
+            location.reload();
+          } else {
+            alert("操作失败: " + data.message);
+            this.innerHTML = "确认清空";
+            this.disabled = false;
+          }
+        })
+        .catch((error) => {
+          alert("发生错误: " + error);
+          this.innerHTML = "确认清空";
+          this.disabled = false;
+        });
+    });
+
+    // 清空所有数据确认
+    const clearAllConfirm = document.getElementById("clearAllConfirm");
+    const clearAllBtn = document.getElementById("clearAllBtn");
+
+    clearAllConfirm.addEventListener("input", function () {
+      clearAllBtn.disabled = this.value !== "我确认清空所有数据";
+    });
+
+    clearAllBtn.addEventListener("click", function () {
+      // 显示加载状态
+      this.innerHTML =
+        '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 正在处理...';
+      this.disabled = true;
+
+      // 发送清空请求
+      fetch('{{ url_for("admin.clear_all_data") }}', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document.querySelector('input[name="csrf_token"]')
+            .value,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            // 关闭模态框
+            const modal = bootstrap.Modal.getInstance(
+              document.getElementById("clearAllModal")
+            );
+            modal.hide();
+
+            // 显示成功消息
+            alert("成功清空所有数据！");
+            location.reload();
+          } else {
+            alert("操作失败: " + data.message);
+            this.innerHTML = "确认清空所有数据";
+            this.disabled = false;
+          }
+        })
+        .catch((error) => {
+          alert("发生错误: " + error);
+          this.innerHTML = "确认清空所有数据";
+          this.disabled = false;
+        });
+    });
+
+    // 一键抓取图标相关代码
+    const startIconFetchBtn = document.getElementById("startIconFetch");
+    const stopIconFetchBtn = document.getElementById("stopIconFetch");
+    const iconFetchProgress = document.getElementById("iconFetchProgress");
+    const iconFetchComplete = document.getElementById("iconFetchComplete");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    const progressPercent = document.getElementById("progressPercent");
+    const totalCount = document.getElementById("totalCount");
+    const processedCount = document.getElementById("processedCount");
+    const successCount = document.getElementById("successCount");
+    const failedCount = document.getElementById("failedCount");
+    const elapsedTime = document.getElementById("elapsedTime");
+    const completeMessage = document.getElementById("completeMessage");
+
+    let statusCheckInterval;
+
+    // 开始抓取图标
+    startIconFetchBtn.addEventListener("click", function () {
+      fetch('{{ url_for("admin.batch_fetch_icons") }}', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document.querySelector('input[name="csrf_token"]')
+            .value,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            // 显示进度条和停止按钮
+            iconFetchProgress.style.display = "block";
+            stopIconFetchBtn.style.display = "inline-block";
+            startIconFetchBtn.style.display = "none";
+            iconFetchComplete.style.display = "none";
+
+            // 开始定时查询状态
+            statusCheckInterval = setInterval(checkFetchStatus, 1000);
+          } else {
+            alert(data.message);
+          }
+        })
+        .catch((error) => {
+          alert("启动抓取任务失败: " + error);
+        });
+    });
+
+    // 停止抓取图标
+    stopIconFetchBtn.addEventListener("click", function () {
+      fetch('{{ url_for("admin.batch_fetch_icons_stop") }}', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": document.querySelector('input[name="csrf_token"]')
+            .value,
+        },
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            stopIconFetchBtn.disabled = true;
+            stopIconFetchBtn.innerHTML =
+              '<i class="bi bi-hourglass-split"></i> 正在停止...';
+          } else {
+            alert(data.message);
+          }
+        })
+        .catch((error) => {
+          alert("停止抓取任务失败: " + error);
+        });
+    });
+
+    // 查询抓取状态
+    function checkFetchStatus() {
+      fetch('{{ url_for("admin.batch_fetch_icons_status") }}')
+        .then((response) => response.json())
+        .then((data) => {
+          // 更新进度条和统计信息
+          progressBar.style.width = data.percent + "%";
+          progressBar.setAttribute("aria-valuenow", data.percent);
+          progressPercent.textContent = data.percent + "%";
+
+          totalCount.textContent = "总计: " + data.total;
+          processedCount.textContent = "已处理: " + data.processed;
+          successCount.textContent = "成功: " + data.success;
+          failedCount.textContent = "失败: " + data.failed;
+          elapsedTime.textContent = "用时: " + data.elapsed_time;
+
+          // 进度文本
+          if (data.is_running) {
+            if (data.total > 0) {
+              progressText.textContent = `正在处理... (${data.processed}/${data.total})`;
+            } else {
+              progressText.textContent = "正在查询缺失图标的网站...";
+            }
+          } else {
+            // 如果已经停止
+            clearInterval(statusCheckInterval);
+
+            // 显示完成信息
+            progressText.textContent = "处理完成";
+            iconFetchComplete.style.display = "block";
+            completeMessage.textContent = `共处理 ${data.processed} 个网站，成功 ${data.success} 个，失败 ${data.failed} 个，用时 ${data.elapsed_time}。`;
+
+            // 重置按钮状态
+            startIconFetchBtn.style.display = "inline-block";
+            stopIconFetchBtn.style.display = "none";
+            stopIconFetchBtn.disabled = false;
+            stopIconFetchBtn.innerHTML =
+              '<i class="bi bi-stop-fill"></i> 停止抓取';
+          }
+        })
+        .catch((error) => {
+          console.error("查询状态失败:", error);
+        });
+    }
+
+    // 检查是否有正在进行的任务
+    checkFetchStatus();
+  });
+
+  // 死链检测功能
+  document.addEventListener("DOMContentLoaded", function () {
+    const startButton = document.getElementById("startDeadlinkCheck");
+    const stopButton = document.getElementById("stopDeadlinkCheck");
+    const viewResultsButton = document.getElementById("viewDeadlinkResults");
+    const progressArea = document.getElementById("deadlinkProgress");
+    const progressBar = document.getElementById("deadlinkProgressBar");
+    const progressText = document.getElementById("deadlinkProgressText");
+    const progressPercent = document.getElementById("deadlinkProgressPercent");
+    const completeAlert = document.getElementById("deadlinkComplete");
+    const completeMessage = document.getElementById("deadlinkCompleteMessage");
+    const totalLinks = document.getElementById("totalLinks");
+    const processedLinks = document.getElementById("processedLinks");
+    const validLinks = document.getElementById("validLinks");
+    const invalidLinks = document.getElementById("invalidLinks");
+    const elapsedTime = document.getElementById("deadlinkElapsedTime");
+    const clearRecordsButton = document.getElementById("clearDeadlinkRecords");
+
+    let checkIntervalId = null;
+
+    // 开始检测
+    startButton.addEventListener("click", function () {
+      if (
+        confirm(
+          "确定要开始死链检测吗？此过程可能需要较长时间，并会增加服务器负载。"
+        )
+      ) {
+        fetch('{{ url_for("admin.batch_check_deadlinks") }}', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token() }}",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              startButton.style.display = "none";
+              stopButton.style.display = "inline-block";
+              viewResultsButton.style.display = "none";
+              progressArea.style.display = "block";
+              completeAlert.style.display = "none";
+              startStatusCheck();
+            } else {
+              alert(data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("启动检测失败，请检查网络连接并重试");
+          });
+      }
+    });
+
+    // 停止检测
+    stopButton.addEventListener("click", function () {
+      if (confirm("确定要停止检测吗？已检测的数据将被保留。")) {
+        fetch('{{ url_for("admin.batch_check_deadlinks_stop") }}', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token() }}",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              stopButton.disabled = true;
+              stopButton.innerHTML =
+                '<i class="bi bi-hourglass-split"></i> 正在停止...';
+            } else {
+              alert(data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("停止检测失败，请检查网络连接并重试");
+          });
+      }
+    });
+
+    // 定期检查状态
+    function startStatusCheck() {
+      checkStatus(); // 立即检查一次
+      checkIntervalId = setInterval(checkStatus, 1000); // 每秒检查一次
+    }
+
+    function stopStatusCheck() {
+      if (checkIntervalId) {
+        clearInterval(checkIntervalId);
+        checkIntervalId = null;
+      }
+    }
+
+    function checkStatus() {
+      fetch('{{ url_for("admin.batch_check_deadlinks_status") }}')
+        .then((response) => response.json())
+        .then((data) => {
+          // 更新UI
+          const percent = data.percent || 0;
+          progressBar.style.width = `${percent}%`;
+          progressBar.setAttribute("aria-valuenow", percent);
+          progressPercent.textContent = `${percent}%`;
+
+          totalLinks.textContent = `总计: ${data.total}`;
+          processedLinks.textContent = `已处理: ${data.processed}`;
+          validLinks.textContent = `有效: ${data.valid}`;
+          invalidLinks.textContent = `无效: ${data.invalid}`;
+          elapsedTime.textContent = `用时: ${data.elapsed_time}`;
+
+          // 进度文本
+          if (data.is_running) {
+            if (data.total > 0) {
+              progressText.textContent = `正在处理... (${data.processed}/${data.total})`;
+            } else {
+              progressText.textContent = "正在检测链接...";
+            }
+          } else {
+            // 如果已经停止
+            if (data.processed > 0) {
+              stopStatusCheck();
+
+              // 显示完成信息
+              progressText.textContent = "处理完成";
+              completeAlert.style.display = "block";
+              completeMessage.textContent = `共检测 ${data.total} 个链接，有效 ${data.valid} 个，无效 ${data.invalid} 个，用时 ${data.elapsed_time}。`;
+
+              // 重置按钮状态
+              startButton.style.display = "inline-block";
+              stopButton.style.display = "none";
+              stopButton.disabled = false;
+              stopButton.innerHTML = '<i class="bi bi-stop-fill"></i> 停止检测';
+              viewResultsButton.style.display = "inline-block";
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          stopStatusCheck();
+        });
+    }
+
+    // 清空记录按钮点击事件
+    clearRecordsButton.addEventListener("click", function () {
+      if (confirm("确定要清空所有死链检测记录吗？此操作不可恢复！")) {
+        fetch('{{ url_for("admin.clear_deadlink_records") }}', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token() }}",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              alert(data.message);
+              // 刷新页面
+              location.reload();
+            } else {
+              alert("清空失败: " + data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("清空出错:", error);
+            alert("清空请求出错，请查看控制台");
+          });
+      }
+    });
+
+    // 检查是否有正在进行的任务
+    checkStatus();
+  });
+</script>
+{% endblock %}
