@@ -280,15 +280,83 @@ docker-compose up -d
 └── run.py                # Flask 应用启动入口 (开发用)
 ```
 
-## 📝 注意事项
+ ✅ 已完成的功能
 
-- 首次部署后，请立即修改默认的管理员密码
-- Docker 部署时请确保 8988 端口未被占用
-- 为保证数据安全，请定期备份 `data` 目录
+  1. 数据库层面
 
-## 📄 许可证
+  - 在SiteSettings模型中添加了7个WebDAV相关字段，所有字段都有合适的默认值
+  - 创建了正确的数据库迁移文件，使用批量操作确保SQLite兼容性
+  - 修复了默认设置对象，确保异常情况下模板不会出错
 
-MIT License - 详见 LICENSE 文件
+  2. 后端功能
+
+  - 完整的WebDAV工具模块(app/utils/webdav_backup.py)，支持HTTP/HTTPS
+  - 集成到现有备份系统，支持自动WebDAV备份
+  - 新增3个API端点：测试连接、单文件上传、批量上传
+  - 使用Base64编码安全存储密码（虽然不是强加密，但避免了明文存储）
+
+  3. 前端界面
+
+  - 在站点设置页面新增**"WebDAV备份"标签页**，包含完整的配置界面
+  - 在备份管理页面添加WebDAV相关按钮：
+    - 单个文件的"WebDAV"上传按钮
+    - 批量"WebDAV上传"按钮
+  - 完整的JavaScript交互：测试连接、上传进度显示、错误处理
+
+  4. 用户体验
+
+  - 直观的图形化界面，所有功能都有对应的按钮和提示
+  - 启用/禁用切换，动态显示配置选项
+  - 实时连接测试功能
+  - 详细的成功/失败提示信息
+
+  🔧 技术特点
+
+  1. 完全向后兼容 - 所有新字段都有默认值，不影响现有功能
+  2. 协议支持完整 - 支持HTTP和HTTPS WebDAV服务器
+  3. 错误处理健全 - 完善的异常处理和用户友好的错误提示
+  4. 安全考虑 - 密码编码存储，文件名安全检查，CSRF保护
+  5. 性能优化 - 批量操作支持，后台异步处理
+
+  🎯 用户交互流程
+
+  1. 配置WebDAV:
+    - 进入管理后台 > 站点设置 > WebDAV备份标签页
+    - 填写服务器信息并测试连接
+    - 启用自动备份选项
+  2. 手动备份:
+    - 在管理后台 > 备份管理页面
+    - 点击单个文件的"WebDAV"按钮进行上传
+    - 或使用"批量WebDAV上传"一次性上传所有备份
+  3. 自动备份:
+    - 启用自动备份后，每次创建本地备份时会自动上传到WebDAV
+    - 支持保留/删除本地备份选项
+
+  🚨 重要修复
+
+  1. 迁移文件修正 - 移除了可能导致SQLite问题的默认值设置
+  2. 异常处理增强 - 在全局settings注入中添加了WebDAV字段的默认值
+  3. 导入清理 - 移除了WebDAV模块中不必要的导入
+
+  📁 涉及的文件
+
+  - app/models.py - 添加WebDAV字段
+  - app/utils/webdav_backup.py - 新建WebDAV工具模块
+  - app/utils/__init__.py - 新建utils包初始化
+  - app/admin/forms.py - 添加WebDAV表单字段
+  - app/admin/routes.py - 集成WebDAV功能到备份和设置
+  - app/templates/admin/site_settings.html - 添加WebDAV配置界面
+  - app/templates/admin/backup_list.html - 添加WebDAV操作按钮
+  - app/__init__.py - 修复默认设置兼容性
+  - migrations/versions/add_webdav_backup_fields.py - 数据库迁移
+  - CLAUDE.md - 更新文档
+
+  🔄 启用步骤
+
+  1. 运行数据库迁移：flask db upgrade
+  2. 在管理后台配置WebDAV设置
+  3. 测试连接确保配置正确
+  4. 启用自动备份或手动使用备份功能
 
 ## 👨‍💻 贡献
 
