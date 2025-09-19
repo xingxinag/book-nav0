@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  nav:
+    build: .
+    container_name: nav
+    restart: always
+    ports:
+      - "8988:80" # Nginx端口
+    volumes:
+      - ./data:/data # 数据目录（包含数据库）
+      - ./data/backups:/app/app/backups # 备份目录
+      - ./data/uploads:/app/app/static/uploads # 上传文件目录（静态文件中的上传目录）
+      - ./config/nginx:/etc/nginx/http.d # Nginx配置
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=sqlite:////data/app.db # 显式设置数据库路径到挂载的目录
